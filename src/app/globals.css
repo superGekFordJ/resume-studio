@@ -1,0 +1,157 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 29% 95%; /* Light Gray #F0F2F5 */
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 231 48% 54%; /* Deep Blue #3F51B5 */
+    --primary-foreground: 0 0% 98%;
+    --secondary: 220 15% 90%;
+    --secondary-foreground: 240 10% 3.9%;
+    --muted: 220 15% 85%;
+    --muted-foreground: 240 5% 45.1%;
+    --accent: 36 100% 50%; /* Orange #FF9800 */
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 15% 80%;
+    --input: 220 15% 88%;
+    --ring: 231 48% 54%; /* Primary color for rings */
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+
+    /* Sidebar specific colors (can be adjusted if a dedicated sidebar component is used) */
+    --sidebar-background: 231 48% 54%; /* Primary color */
+    --sidebar-foreground: 0 0% 98%; /* Primary foreground */
+    --sidebar-primary: 36 100% 50%; /* Accent color for primary actions in sidebar */
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 231 48% 60%; /* Slightly lighter primary for accents */
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 231 48% 45%; /* Darker primary for borders */
+    --sidebar-ring: 36 100% 50%; /* Accent for rings in sidebar */
+  }
+
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 231 48% 60%; /* Lighter Deep Blue for dark mode */
+    --primary-foreground: 240 10% 3.9%;
+    --secondary: 240 5% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 5% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 36 100% 55%; /* Slightly adjusted Orange for dark mode */
+    --accent-foreground: 240 10% 3.9%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5% 14.9%;
+    --input: 240 5% 14.9%;
+    --ring: 231 48% 60%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+
+    --sidebar-background: 240 10% 5.9%; 
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 36 100% 55%;
+    --sidebar-primary-foreground: 240 10% 3.9%;
+    --sidebar-accent: 240 10% 10.9%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 240 10% 10.9%;
+    --sidebar-ring: 36 100% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  .font-headline {
+    font-family: var(--font-space-grotesk), sans-serif;
+  }
+  .font-body {
+    font-family: var(--font-inter), sans-serif;
+  }
+}
+
+/* A4 Canvas specific styles */
+.a4-canvas-container {
+  @apply p-4 md:p-8 bg-muted flex-grow overflow-y-auto flex justify-center items-start;
+}
+
+.a4-canvas {
+  width: 21cm;
+  min-height: 29.7cm; /* Using min-height to allow content to grow if needed, but target single page */
+  padding: 1.5cm 2cm; /* Typical A4 margins: top/bottom 1.5cm, left/right 2cm */
+  @apply bg-card shadow-lg transition-all duration-300 ease-in-out;
+  transform-origin: top center;
+}
+
+/* Responsive scaling for smaller screens */
+@media (max-width: 1024px) { /* Adjust breakpoint as needed */
+  .a4-canvas {
+    /* Scale down to fit width, maintaining aspect ratio. 210mm is A4 width. */
+    /* For example, if viewport is 800px, scale = 800 / (21 * CSS_CM_TO_PX) */
+    /* This requires JS or more complex CSS. For now, provide horizontal scroll. */
+    /* A simpler approach: use max-width and let it shrink, or fixed smaller size */
+  }
+}
+
+/* Helper for print (though actual PDF generation would be better) */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .printable-area, .printable-area * {
+    visibility: visible;
+  }
+  .printable-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+  }
+  .a4-canvas {
+    box-shadow: none;
+    margin: 0;
+    width: 210mm;
+    height: 297mm;
+    overflow: hidden; /* Crucial for single page fitting */
+  }
+  /* Hide non-printable elements */
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Custom style for autocomplete toggle switch */
+.autocomplete-toggle-switch[data-state=checked] {
+  background-color: hsl(var(--accent));
+}
+    
