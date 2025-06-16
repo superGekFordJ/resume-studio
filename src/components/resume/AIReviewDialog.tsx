@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ThumbsUp, AlertTriangle, Lightbulb } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface AIReviewDialogProps {
   isOpen: boolean;
@@ -63,14 +65,18 @@ export default function AIReviewDialog({
                   <AlertTriangle className="mr-2 h-5 w-5 text-primary" />
                   Overall Quality Assessment
                 </h3>
-                <p className="text-foreground/90 whitespace-pre-line">{reviewContent.overallQuality}</p>
+                <ReactMarkdown>
+                  {reviewContent.overallQuality}
+                </ReactMarkdown>
               </div>
               <div>
                 <h3 className="font-semibold text-lg mb-2 flex items-center">
                   <Lightbulb className="mr-2 h-5 w-5 text-accent" />
                   Actionable Suggestions
                 </h3>
-                <p className="text-foreground/90 whitespace-pre-line">{reviewContent.suggestions}</p>
+                <ReactMarkdown>
+                  {reviewContent.suggestions}
+                </ReactMarkdown>
               </div>
             </div>
           )}

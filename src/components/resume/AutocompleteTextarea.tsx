@@ -1,23 +1,25 @@
-
 // src/components/resume/AutocompleteTextarea.tsx
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Textarea } from "@/components/ui/textarea";
-import type { TextareaProps } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { autocompleteInput, AutocompleteInputInput } from '@/ai/flows/autocomplete-input';
 import { Loader2 } from 'lucide-react';
-import type { SectionType, SectionItem, ExperienceEntry, EducationEntry, SkillEntry, CustomTextEntry, ResumeSection as ResumeSectionType } from '@/types/resume';
+import { SectionType, SectionItem, ExperienceEntry, EducationEntry, SkillEntry, CustomTextEntry, ResumeSection } from '@/types/resume';
+import { DynamicResumeSection } from '@/types/schema';
 
-interface AutocompleteTextareaProps extends Omit<TextareaProps, 'onChange' | 'value'> {
+// Union type to support both legacy and dynamic sections
+type AllSectionTypes = ResumeSection | DynamicResumeSection;
+
+interface AutocompleteTextareaProps extends Omit<React.ComponentProps<'textarea'>, 'onChange' | 'value'> {
   value: string; 
   onValueChange: (value: string) => void;
   debounceDelay?: number;
   userJobTitle?: string;
-  sectionType?: SectionType | 'personalDetailsField';
-  currentItem?: SectionItem | { fieldName: string };
-  allResumeSections?: ResumeSectionType[];
+  sectionType?: SectionType | 'personalDetailsField' | string; // Allow dynamic schema IDs
+  currentItem?: SectionItem | { fieldName: string } | { data: Record<string, any> }; // Support dynamic items
+  allResumeSections?: AllSectionTypes[];
   currentSectionId?: string | null;
   forcedSuggestion: string | null; 
   onForcedSuggestionAccepted?: () => void;
@@ -98,22 +100,60 @@ export default function AutocompleteTextarea({
       if (sec.id === currentSectionId) return; 
       if (!sec.visible) return;
 
-      contextStr += `Other Section: ${sec.title} (Type: ${sec.type})\n`;
-      if (sec.type === 'summary' && sec.items.length > 0) {
-         const content = (sec.items[0] as CustomTextEntry).content;
-         if (content) contextStr += `  Content: ${content.substring(0, 100)}...\n`;
-      } else if (sec.type === 'experience' && sec.items.length > 0) {
-        const expPreview = sec.items.slice(0,1).map(e => `${(e as ExperienceEntry).jobTitle} at ${(e as ExperienceEntry).company}: ${(e as ExperienceEntry).description.substring(0,50)}...`).join('; ');
-        if (expPreview) contextStr += `  Recent Experience: ${expPreview}...\n`;
-      } else if (sec.type === 'education' && sec.items.length > 0) {
-        const eduPreview = sec.items.slice(0,1).map(e => `${(e as EducationEntry).degree} at ${(e as EducationEntry).institution}`).join('; ');
-        if (eduPreview) contextStr += `  Recent Education: ${eduPreview}...\n`;
-      } else if (sec.type === 'skills' && sec.items.length > 0) {
-        const skillNames = sec.items.slice(0, 5).map(s => (s as SkillEntry).name).join(', ');
-        if (skillNames) contextStr += `  Skills: ${skillNames}...\n`;
-      } else if (sec.type === 'customText' && sec.items.length > 0 && !sec.isList) {
-         const content = (sec.items[0] as CustomTextEntry).content;
-         if (content) contextStr += `  "${sec.title}" Content: ${content.substring(0, 100)}...\n`;
+      // Check if this is a dynamic section or legacy section
+      if ('schemaId' in sec) {
+        // Dynamic section
+        const dynamicSec = sec as DynamicResumeSection;
+        contextStr += `Other Section: ${dynamicSec.title} (Dynamic Schema: ${dynamicSec.schemaId})\n`;
+        if (dynamicSec.items && dynamicSec.items.length > 0) {
+          // Show all items for dynamic sections, not just the first one
+          dynamicSec.items.forEach((item: any, index: number) => {
+            if (item && item.data) {
+              switch (dynamicSec.schemaId) {
+                case 'advanced-skills':
+                  contextStr += `  Skills Category ${index + 1}: ${item.data.category || 'N/A'} - ${Array.isArray(item.data.skills) ? item.data.skills.join(', ') : item.data.skills || 'N/A'}\n`;
+                  break;
+                case 'projects':
+                  // Don't truncate description for better context
+                  contextStr += `  Project ${index + 1}: ${item.data.name || 'Unnamed'} - ${item.data.description || 'No description'}\n`;
+                  if (item.data.technologies && Array.isArray(item.data.technologies)) {
+                    contextStr += `    Technologies: ${item.data.technologies.join(', ')}\n`;
+                  }
+                  break;
+                default:
+                  // Generic dynamic section preview - show more fields
+                  const preview = Object.entries(item.data).slice(0, 3).map(([key, value]) => {
+                    if (typeof value === 'string' && value.length > 100) {
+                      return `${key}: ${value.substring(0, 100)}...`;
+                    }
+                    return `${key}: ${value}`;
+                  }).join(', ');
+                  contextStr += `  Item ${index + 1}: ${preview}\n`;
+                  break;
+              }
+            }
+          });
+        }
+      } else {
+        // Legacy section
+        const legacySec = sec as ResumeSection;
+        contextStr += `Other Section: ${legacySec.title} (Type: ${legacySec.type})\n`;
+        if (legacySec.type === 'summary' && legacySec.items.length > 0) {
+           const content = (legacySec.items[0] as CustomTextEntry).content;
+           if (content) contextStr += `  Content: ${content.substring(0, 200)}...\n`;
+        } else if (legacySec.type === 'experience' && legacySec.items.length > 0) {
+          const expPreview = legacySec.items.slice(0,2).map((e: any) => `${(e as ExperienceEntry).jobTitle} at ${(e as ExperienceEntry).company}: ${(e as ExperienceEntry).description.substring(0,150)}...`).join('; ');
+          if (expPreview) contextStr += `  Recent Experience: ${expPreview}\n`;
+        } else if (legacySec.type === 'education' && legacySec.items.length > 0) {
+          const eduPreview = legacySec.items.slice(0,2).map((e: any) => `${(e as EducationEntry).degree} at ${(e as EducationEntry).institution}`).join('; ');
+          if (eduPreview) contextStr += `  Recent Education: ${eduPreview}\n`;
+        } else if (legacySec.type === 'skills' && legacySec.items.length > 0) {
+          const skillNames = legacySec.items.slice(0, 8).map((s: any) => (s as SkillEntry).name).join(', ');
+          if (skillNames) contextStr += `  Skills: ${skillNames}\n`;
+        } else if (legacySec.type === 'customText' && legacySec.items.length > 0 && !legacySec.isList) {
+           const content = (legacySec.items[0] as CustomTextEntry).content;
+           if (content) contextStr += `  "${legacySec.title}" Content: ${content.substring(0, 200)}...\n`;
+        }
       }
     });
     return contextStr.trim() ? contextStr : undefined;
@@ -127,7 +167,7 @@ export default function AutocompleteTextarea({
       return;
     }
     
-    if (text.trim().length < 1 && sectionType !== 'summary' && sectionType !== 'customText') { 
+    if (text.trim().length < 0 && sectionType !== 'summary' && sectionType !== 'customText') { 
       setAiSuggestion(null);
       return;
     }
@@ -137,12 +177,22 @@ export default function AutocompleteTextarea({
       const currentItemContext = buildCurrentItemContext();
       const otherSectionsSummary = buildOtherSectionsContext();
 
+      // Enhanced input for dynamic sections
       const input: AutocompleteInputInput = {
         inputText: text,
         userJobTitle,
         sectionType: sectionType,
         currentItemContext,
         otherSectionsContext: otherSectionsSummary,
+        // Add enhanced context for dynamic sections
+        fieldId: props.name, // Use the field name as fieldId if available
+        currentItemData: currentItem && typeof currentItem === 'object' && 'data' in currentItem 
+          ? (currentItem as any).data 
+          : currentItem,
+        allResumeData: allResumeSections ? {
+          sections: allResumeSections,
+          personalDetails: userJobTitle ? { jobTitle: userJobTitle } : {}, // Include available personal details
+        } : undefined,
       };
       const result = await autocompleteInput(input);
 
@@ -164,7 +214,7 @@ export default function AutocompleteTextarea({
     } finally {
       setIsLoading(false);
     }
-  }, [userJobTitle, sectionType, buildCurrentItemContext, buildOtherSectionsContext, forcedSuggestion, isAutocompleteEnabledGlobally]);
+  }, [userJobTitle, sectionType, buildCurrentItemContext, buildOtherSectionsContext, forcedSuggestion, isAutocompleteEnabledGlobally, currentItem, allResumeSections, props.name]);
 
 
   const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -255,21 +305,22 @@ export default function AutocompleteTextarea({
       {isDisplayingInternalSuggestion && suggestionForInternalOverlay && (
          <div
             style={{
-                position: 'absolute',
-                top: 0, left: 0, right: 0, bottom: 0,
-                paddingTop: textareaRef.current?.style.paddingTop || '8px', // Match textarea padding
-                paddingRight: textareaRef.current?.style.paddingRight || '12px',
-                paddingBottom: textareaRef.current?.style.paddingBottom || '8px',
-                paddingLeft: textareaRef.current?.style.paddingLeft || '12px',
-                pointerEvents: 'none',
-                whiteSpace: 'pre-wrap',
-                overflow: 'hidden',
-                boxSizing: 'border-box',
-                fontFamily: 'inherit', // Inherit font family
-                fontSize: 'inherit',   // Inherit font size
-                lineHeight: 'inherit', // Inherit line height
-                borderColor: 'transparent',
-                wordBreak: 'break-word',
+              position: 'absolute',
+              top: 0, left: 0, right: 0, bottom: 0,
+              padding: 'inherit',
+              fontSize: 'inherit',
+              fontFamily: 'inherit',
+              color: 'transparent',
+              pointerEvents: 'none',
+              display: 'inline-block',
+              whiteSpace: 'pre-wrap',
+              overflow: 'hidden',
+              boxSizing: 'border-box',
+              lineHeight: 'inherit', // Explicitly inherit line-height
+              borderColor: 'transparent', // Ensure no border from overlay itself
+              // Match textarea's specific padding from ShadCN Textarea if possible
+              // Default is px-3 py-2. Use 'inherit' for padding if parent div has it.
+              // This needs to be dynamic based on actual textarea style
             }}
             className={cn(
               "absolute inset-0 pointer-events-none overflow-hidden whitespace-pre-wrap border border-transparent",

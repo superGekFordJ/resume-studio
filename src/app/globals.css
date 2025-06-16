@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -102,11 +101,28 @@
 }
 
 .a4-canvas {
-  width: 21cm;
-  min-height: 29.7cm; /* Using min-height to allow content to grow if needed, but target single page */
-  padding: 1.5cm 2cm; /* Typical A4 margins: top/bottom 1.5cm, left/right 2cm */
+  width: 210mm;
+  min-height: 297mm; /* Using min-height to allow content to grow if needed, but target single page */
+  padding: 20mm 25mm; /* Consistent margins: top/bottom 20mm, left/right 25mm */
   @apply bg-card shadow-lg transition-all duration-300 ease-in-out;
   transform-origin: top center;
+  
+  /* Ensure consistent text rendering */
+  line-height: 1.4;
+  font-size: 11px;
+  
+  /* Better text rendering for consistent display */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  
+  /* Ensure consistent box model */
+  box-sizing: border-box;
+  
+  /* Prevent content overflow */
+  overflow: hidden;
+  word-wrap: break-word;
+  hyphens: auto;
 }
 
 /* Responsive scaling for smaller screens */
@@ -119,39 +135,94 @@
   }
 }
 
-/* Helper for print (though actual PDF generation would be better) */
+/* Enhanced print styles for exact WYSIWYG rendering */
 @media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+  
+  @page {
+    size: A4;
+    margin: 0;
+  }
+  
+  body {
+    margin: 0;
+    padding: 0;
+    background: white !important;
+  }
+  
   body * {
     visibility: hidden;
   }
+  
   .printable-area, .printable-area * {
     visibility: visible;
   }
+  
   .printable-area {
     position: absolute;
     left: 0;
     top: 0;
-    width: 100%;
-    height: 100%;
-    padding: 0;
-    margin: 0;
-    box-shadow: none;
+    width: 210mm !important;
+    height: 297mm !important;
+    padding: 20mm 25mm !important; /* Same as display version */
+    margin: 0 !important;
+    box-shadow: none !important;
+    background: white !important;
+    
+    /* Ensure exact same text rendering as display */
+    font-size: 11px !important;
+    line-height: 1.4 !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    
+    /* Consistent text wrapping */
+    word-wrap: break-word;
+    hyphens: auto;
+    overflow: hidden;
   }
+  
   .a4-canvas {
-    box-shadow: none;
-    margin: 0;
-    width: 210mm;
-    height: 297mm;
-    overflow: hidden; /* Crucial for single page fitting */
+    box-shadow: none !important;
+    margin: 0 !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    padding: 20mm 25mm !important; /* Consistent with display */
+    overflow: hidden !important;
+    
+    /* Ensure exact font rendering match */
+    font-size: 11px !important;
+    line-height: 1.4 !important;
   }
+  
   /* Hide non-printable elements */
   .no-print {
     display: none !important;
+  }
+  
+  /* Ensure text doesn't break across pages */
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+  }
+  
+  /* Prevent orphans and widows */
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+  
+  /* Ensure consistent image sizing */
+  img {
+    max-width: 100% !important;
+    height: auto !important;
   }
 }
 
 /* Custom style for autocomplete toggle switch */
 .autocomplete-toggle-switch[data-state=checked] {
-  background-color: hsl(var(--accent));
+  background-color: (var(--accent));
 }
     
