@@ -1,4 +1,3 @@
-
 // src/components/resume/SectionEditor.tsx
 "use client";
 
@@ -7,7 +6,6 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   ResumeData,
   PersonalDetails,
-  Section,
   SectionItem,
   ExperienceEntry,
   EducationEntry,
@@ -15,7 +13,10 @@ import {
   CustomTextEntry,
   SectionType,
   ResumeSection,
+  isExtendedResumeData,
+  isLegacyResumeData,
 } from "@/types/resume";
+import type { DynamicResumeSection, DynamicSectionItem } from '@/types/schema';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -25,6 +26,9 @@ import { Switch } from "@/components/ui/switch";
 import { improveResumeSection, ImproveResumeSectionInput } from '@/ai/flows/improve-resume-section';
 import { useToast } from '@/hooks/use-toast';
 import AutocompleteTextarea from './AutocompleteTextarea';
+import AvatarUploader from '@/components/resume/AvatarUploader';
+import DynamicFieldRenderer from './DynamicFieldRenderer';
+import { SchemaRegistry } from '@/lib/schemaRegistry';
 import { cn } from "@/lib/utils";
 
 interface SectionEditorProps {
@@ -45,13 +49,13 @@ export default function SectionEditor({
   onToggleAutocomplete,
 }: SectionEditorProps) {
   const { toast } = useToast();
-  const [localData, setLocalData] = useState<PersonalDetails | Section | null>(null);
+  const schemaRegistry = SchemaRegistry.getInstance();
+  const [localData, setLocalData] = useState<PersonalDetails | ResumeSection | DynamicResumeSection | null>(null);
   const [aiPrompt, setAiPrompt] = useState('');
   const [isImproving, setIsImproving] = useState(false);
   
   const [fieldBeingImproved, setFieldBeingImproved] = useState<{ uniqueFieldId: string, originalText: string } | null>(null);
   const [improvementAISuggestion, setImprovementAISuggestion] = useState<string | null>(null);
-
 
   useEffect(() => {
     const isEditingPersonalDetails = targetToEdit === 'personalDetails';
@@ -76,7 +80,7 @@ export default function SectionEditor({
 
   const handlePersonalDetailsFieldChange = (fieldName: keyof PersonalDetails, value: string) => {
     if (localData && 'fullName' in localData) { 
-      const uniqueFieldId = constructUniqueFieldId(true, fieldName, undefined, 'personalDetailsField');
+      const uniqueFieldId = constructUniqueFieldId(true, fieldName, undefined, undefined);
       if(fieldBeingImproved?.uniqueFieldId === uniqueFieldId && value !== fieldBeingImproved.originalText && value !== improvementAISuggestion) {
         onRejectAIImprovement(); 
       }
@@ -90,8 +94,9 @@ export default function SectionEditor({
     }
   };
 
+  // Handle changes for legacy section items
   const handleItemChange = (itemId: string, fieldName: string, value: string, sectionType: SectionType) => {
-    if (localData && 'items' in localData) { 
+    if (localData && 'items' in localData && 'type' in localData) { 
       const uniqueFieldId = constructUniqueFieldId(false, fieldName, itemId, sectionType);
        if(fieldBeingImproved?.uniqueFieldId === uniqueFieldId && value !== fieldBeingImproved.originalText && value !== improvementAISuggestion) {
         onRejectAIImprovement(); 
@@ -103,45 +108,89 @@ export default function SectionEditor({
     }
   };
 
+  // Handle changes for dynamic section items
+  const handleDynamicItemChange = (itemId: string, fieldName: string, value: any) => {
+    if (localData && 'items' in localData && 'schemaId' in localData) {
+      const section = localData as DynamicResumeSection;
+      const updatedItems = section.items.map(item =>
+        item.id === itemId 
+          ? { ...item, data: { ...item.data, [fieldName]: value } }
+          : item
+      );
+      setLocalData({ ...section, items: updatedItems });
+    }
+  };
+
   const handleAddItem = () => {
-    if (localData && 'items' in localData && 'type' in localData) {
-      const section = localData as Section;
-      const newItemId = `${section.type}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-      let newItem: SectionItem;
-      switch (section.type) {
-        case 'experience':
-          newItem = { id: newItemId, jobTitle: '', company: '', startDate: '', endDate: '', description: '' } as ExperienceEntry;
-          break;
-        case 'education':
-          newItem = { id: newItemId, degree: '', institution: '', graduationYear: '', details: '' } as EducationEntry;
-          break;
-        case 'skills':
-          newItem = { id: newItemId, name: '' } as SkillEntry;
-          break;
-        case 'summary': 
-        case 'customText':
-          if (section.isList) { 
-            newItem = { id: newItemId, content: '' } as CustomTextEntry;
-          } else {
-            if (section.items.length === 0) {
-                 newItem = { id: newItemId, content: '' } as CustomTextEntry;
-            } else {
-                toast({ variant: "destructive", title: "Cannot Add Item", description: `This section type (${section.type}) is not a list or already has content.` });
-                return;
-            }
+    if (localData && 'items' in localData) {
+      // Check if this is a dynamic section
+      if ('schemaId' in localData) {
+        const section = localData as DynamicResumeSection;
+        const sectionSchema = schemaRegistry.getSectionSchema(section.schemaId);
+        if (!sectionSchema) return;
+
+        const newItemId = `${section.schemaId}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+        const newDynamicItem: DynamicSectionItem = {
+          id: newItemId,
+          schemaId: section.schemaId,
+          data: {},
+          metadata: {
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            aiGenerated: false
           }
-          break;
-        default:
-          return;
+        };
+        
+        setLocalData({ ...section, items: [...section.items, newDynamicItem] });
+      } else if ('type' in localData) {
+        // Legacy section handling
+        const section = localData as ResumeSection;
+        const newItemId = `${section.type}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+        let newItem: SectionItem;
+        switch (section.type) {
+          case 'experience':
+            newItem = { id: newItemId, jobTitle: '', company: '', startDate: '', endDate: '', description: '' } as ExperienceEntry;
+            break;
+          case 'education':
+            newItem = { id: newItemId, degree: '', institution: '', graduationYear: '', details: '' } as EducationEntry;
+            break;
+          case 'skills':
+            newItem = { id: newItemId, name: '' } as SkillEntry;
+            break;
+          case 'summary': 
+          case 'customText':
+            if (section.isList) { 
+              newItem = { id: newItemId, content: '' } as CustomTextEntry;
+            } else {
+              if (section.items.length === 0) {
+                   newItem = { id: newItemId, content: '' } as CustomTextEntry;
+              } else {
+                  toast({ variant: "destructive", title: "Cannot Add Item", description: `This section type (${section.type}) is not a list or already has content.` });
+                  return;
+              }
+            }
+            break;
+          default:
+            return;
+        }
+        setLocalData({ ...section, items: [...section.items, newItem] });
       }
-      setLocalData({ ...section, items: [...section.items, newItem] });
     }
   };
 
   const handleRemoveItem = (itemId: string) => {
     if (localData && 'items' in localData) { 
-      const updatedItems = (localData.items as SectionItem[]).filter(item => item.id !== itemId);
-      setLocalData({ ...localData, items: updatedItems });
+      if ('schemaId' in localData) {
+        // Dynamic section
+        const section = localData as DynamicResumeSection;
+        const updatedItems = section.items.filter(item => item.id !== itemId);
+        setLocalData({ ...section, items: updatedItems });
+      } else {
+        // Legacy section
+        const section = localData as ResumeSection;
+        const updatedItems = section.items.filter(item => item.id !== itemId);
+        setLocalData({ ...section, items: updatedItems });
+      }
     }
   };
 
@@ -157,7 +206,7 @@ export default function SectionEditor({
     } else if (currentEditingSectionId && 'title' in localData) {
       updatedResumeData = {
         ...resumeData,
-        sections: resumeData.sections.map(s => s.id === currentEditingSectionId ? localData as Section : s),
+        sections: resumeData.sections.map(s => s.id === currentEditingSectionId ? localData as (ResumeSection | DynamicResumeSection) : s),
       };
     } else {
       return;
@@ -198,29 +247,90 @@ export default function SectionEditor({
     }
   }, []);
 
-  const buildOtherSectionsContextForAI = useCallback((allResumeSections: ResumeSection[], currentSectionIdToExclude: string | null): string | undefined => {
+  const buildOtherSectionsContextForAI = useCallback((allResumeSections: any[], currentSectionIdToExclude: string | null): string | undefined => {
     if (!allResumeSections || allResumeSections.length === 0) return undefined;
     
     let contextStr = "";
     allResumeSections.forEach(sec => {
       if (sec.id === currentSectionIdToExclude) return; 
+      if (!sec.visible) return;
       
-      contextStr += `Section: ${sec.title} (Type: ${sec.type})\n`;
-      if (sec.type === 'summary' && sec.items.length > 0) {
-        const summaryItem = sec.items[0] as CustomTextEntry;
-        if (summaryItem.content) contextStr += `  Content: ${summaryItem.content.substring(0, 100)}...\n`;
-      } else if (sec.type === 'skills' && sec.items.length > 0) {
-        const skillNames = sec.items.slice(0, 5).map(s => (s as SkillEntry).name).join(', ');
-        if (skillNames) contextStr += `  Skills: ${skillNames}...\n`;
-      } else if (sec.type === 'experience' && sec.items.length > 0) {
-        const expPreview = sec.items.slice(0,1).map(e => `${(e as ExperienceEntry).jobTitle} at ${(e as ExperienceEntry).company}: ${(e as ExperienceEntry).description.substring(0,50)}...`).join('; ');
-        if (expPreview) contextStr += `  Recent Experience: ${expPreview}...\n`;
-      } else if (sec.type === 'education' && sec.items.length > 0) {
-        const eduPreview = sec.items.slice(0,1).map(e => `${(e as EducationEntry).degree} at ${(e as EducationEntry).institution}`).join('; ');
-        if (eduPreview) contextStr += `  Recent Education: ${eduPreview}...\n`;
-      } else if (sec.type === 'customText' && sec.items.length > 0) {
-         const content = (sec.items[0] as CustomTextEntry).content;
-         if (content) contextStr += `  "${sec.title}" Content: ${content.substring(0, 100)}...\n`;
+      // Check if this is a dynamic section or legacy section
+      if ('schemaId' in sec) {
+        // Dynamic section
+        contextStr += `Section: ${sec.title} (Dynamic Schema: ${sec.schemaId})\n`;
+        if (sec.items && sec.items.length > 0) {
+          // Show all items for dynamic sections, not just the first one
+          sec.items.forEach((item: any, index: number) => {
+            if (item && item.data) {
+              switch (sec.schemaId) {
+                case 'advanced-skills':
+                  contextStr += `  Skills Category ${index + 1}: ${item.data.category || 'N/A'} - ${Array.isArray(item.data.skills) ? item.data.skills.join(', ') : item.data.skills || 'N/A'}\n`;
+                  if (item.data.proficiency) {
+                    contextStr += `    Proficiency: ${item.data.proficiency}\n`;
+                  }
+                  if (item.data.yearsOfExperience) {
+                    contextStr += `    Experience: ${item.data.yearsOfExperience} years\n`;
+                  }
+                  break;
+                case 'projects':
+                  // Don't truncate description for better context
+                  contextStr += `  Project ${index + 1}: ${item.data.name || 'Unnamed'}\n`;
+                  if (item.data.description) {
+                    contextStr += `    Description: ${item.data.description}\n`;
+                  }
+                  if (item.data.technologies && Array.isArray(item.data.technologies)) {
+                    contextStr += `    Technologies: ${item.data.technologies.join(', ')}\n`;
+                  }
+                  if (item.data.url) {
+                    contextStr += `    URL: ${item.data.url}\n`;
+                  }
+                  if (item.data.startDate || item.data.endDate) {
+                    contextStr += `    Duration: ${item.data.startDate || 'N/A'} - ${item.data.endDate || 'Present'}\n`;
+                  }
+                  break;
+                default:
+                  // Generic dynamic section preview - show more fields
+                  const preview = Object.entries(item.data).slice(0, 4).map(([key, value]) => {
+                    if (typeof value === 'string' && value.length > 200) {
+                      return `${key}: ${value.substring(0, 200)}...`;
+                    } else if (Array.isArray(value)) {
+                      return `${key}: ${value.join(', ')}`;
+                    }
+                    return `${key}: ${value}`;
+                  }).join('\n    ');
+                  contextStr += `  Item ${index + 1}:\n    ${preview}\n`;
+                  break;
+              }
+            }
+          });
+        }
+      } else {
+        // Legacy section
+        contextStr += `Section: ${sec.title} (Type: ${sec.type})\n`;
+        if (sec.type === 'summary' && sec.items.length > 0) {
+          const summaryItem = sec.items[0] as CustomTextEntry;
+          if (summaryItem.content) contextStr += `  Content: ${summaryItem.content.substring(0, 300)}...\n`;
+        } else if (sec.type === 'skills' && sec.items.length > 0) {
+          const skillNames = sec.items.slice(0, 10).map((s: any) => (s as SkillEntry).name).join(', ');
+          if (skillNames) contextStr += `  Skills: ${skillNames}\n`;
+        } else if (sec.type === 'experience' && sec.items.length > 0) {
+          // Show more experience items with full descriptions
+          const expPreview = sec.items.slice(0,3).map((e: any) => {
+            const exp = e as ExperienceEntry;
+            return `${exp.jobTitle} at ${exp.company} (${exp.startDate} - ${exp.endDate}): ${exp.description}`;
+          }).join('\n  ');
+          if (expPreview) contextStr += `  Experience:\n  ${expPreview}\n`;
+        } else if (sec.type === 'education' && sec.items.length > 0) {
+          const eduPreview = sec.items.slice(0,3).map((e: any) => {
+            const edu = e as EducationEntry;
+            return `${edu.degree} at ${edu.institution} (${edu.graduationYear})${edu.details ? ': ' + edu.details : ''}`;
+          }).join('\n  ');
+          if (eduPreview) contextStr += `  Education:\n  ${eduPreview}\n`;
+        } else if (sec.type === 'customText' && sec.items.length > 0) {
+           const content = (sec.items[0] as CustomTextEntry).content;
+           if (content) contextStr += `  "${sec.title}" Content: ${content.substring(0, 300)}...\n`;
+        }
       }
     });
     return contextStr.trim() ? contextStr : undefined;
@@ -238,19 +348,78 @@ export default function SectionEditor({
     setIsImproving(true);
 
     const { isPersonal, fieldName, itemId, sectionType } = deconstructUniqueFieldId(uniqueFieldId);
-    let currentItemForContext: SectionItem | undefined = undefined;
+    let currentItemContext: string | undefined = undefined;
     let currentSectionIdForContext: string | null = null;
-    let actualSectionTypeForAI: SectionType | 'personalDetailsField' | undefined = sectionType;
-
+    let actualSectionTypeForAI: SectionType | 'personalDetailsField' | string | undefined = sectionType;
+    let currentItemData: any = undefined;
+    let allResumeData: any = undefined;
 
     if (isPersonal) {
         actualSectionTypeForAI = 'personalDetailsField';
-    } else if (itemId && sectionType && localData && 'items' in localData) {
-        currentItemForContext = (localData.items as SectionItem[]).find(it => it.id === itemId);
-        currentSectionIdForContext = (localData as Section).id;
+        currentItemContext = buildCurrentItemContextForAI(isPersonal, fieldName, undefined, undefined);
+    } else if (itemId && localData && 'items' in localData) {
+        currentSectionIdForContext = localData.id;
+        
+        // Check if this is a dynamic section
+        if ('schemaId' in localData) {
+          // Dynamic section
+          const dynamicSection = localData as any; // DynamicResumeSection
+          actualSectionTypeForAI = dynamicSection.schemaId;
+          
+          const dynamicItem = dynamicSection.items.find((item: any) => item.id === itemId);
+          if (dynamicItem) {
+            currentItemData = dynamicItem.data;
+            allResumeData = {
+              sections: resumeData.sections,
+              personalDetails: resumeData.personalDetails
+            };
+            
+            // Build context for dynamic sections
+            switch (dynamicSection.schemaId) {
+              case 'advanced-skills':
+                currentItemContext = `Advanced Skills Category: ${currentItemData.category || 'N/A'}, Skills: ${Array.isArray(currentItemData.skills) ? currentItemData.skills.join(', ') : currentItemData.skills || 'N/A'}, Field being edited: ${fieldName}`;
+                if (currentItemData.proficiency) {
+                  currentItemContext += `, Proficiency: ${currentItemData.proficiency}`;
+                }
+                if (currentItemData.yearsOfExperience) {
+                  currentItemContext += `, Experience: ${currentItemData.yearsOfExperience} years`;
+                }
+                break;
+              case 'projects':
+                currentItemContext = `Project: ${currentItemData.name || 'Unnamed'}`;
+                if (currentItemData.description) {
+                  currentItemContext += `, Description: ${currentItemData.description}`;
+                }
+                if (currentItemData.technologies && Array.isArray(currentItemData.technologies)) {
+                  currentItemContext += `, Technologies: ${currentItemData.technologies.join(', ')}`;
+                }
+                currentItemContext += `, Field being edited: ${fieldName}`;
+                break;
+              default:
+                currentItemContext = `Dynamic section item (${dynamicSection.schemaId}), Field being edited: ${fieldName}`;
+                // Add more context from the item data
+                const contextFields = Object.entries(currentItemData).slice(0, 3).map(([key, value]) => {
+                  if (typeof value === 'string' && value.length > 100) {
+                    return `${key}: ${value.substring(0, 100)}...`;
+                  } else if (Array.isArray(value)) {
+                    return `${key}: ${value.join(', ')}`;
+                  }
+                  return `${key}: ${value}`;
+                }).join(', ');
+                if (contextFields) {
+                  currentItemContext += `, Context: ${contextFields}`;
+                }
+                break;
+            }
+          }
+        } else {
+          // Legacy section
+          const legacySection = localData as any; // ResumeSection
+          const currentItemForContext = legacySection.items.find((it: any) => it.id === itemId);
+          currentItemContext = buildCurrentItemContextForAI(isPersonal, fieldName, currentItemForContext, sectionType);
+        }
     }
     
-    const currentItemContext = buildCurrentItemContextForAI(isPersonal, fieldName, currentItemForContext, sectionType);
     const otherSectionsContext = buildOtherSectionsContextForAI(resumeData.sections, isPersonal ? null : currentSectionIdForContext);
 
     try {
@@ -261,6 +430,10 @@ export default function SectionEditor({
         sectionType: actualSectionTypeForAI,
         currentItemContext: currentItemContext,
         otherSectionsContext: otherSectionsContext,
+        // Enhanced context for dynamic sections
+        fieldId: fieldName,
+        currentItemData: currentItemData,
+        allResumeData: allResumeData,
       };
       const result = await improveResumeSection(input);
 
@@ -289,7 +462,7 @@ export default function SectionEditor({
         const updatedItems = (localData.items as SectionItem[]).map(item =>
           item.id === itemId ? { ...item, [fieldName]: improvementAISuggestion } : item
         );
-        setLocalData(prev => ({ ...(prev as Section), items: updatedItems }));
+        setLocalData(prev => ({ ...(prev as ResumeSection), items: updatedItems }));
       }
       toast({ title: "AI Improvement Applied" });
     }
@@ -341,9 +514,20 @@ export default function SectionEditor({
     const pd = localData as PersonalDetails;
     return (
       <>
+        {/* Avatar Upload Section */}
+        <div className="mb-6">
+          <Label className="text-sm font-medium">Profile Photo</Label>
+          <div className="mt-2">
+            <AvatarUploader
+              value={pd.avatar}
+              onChange={(value) => handlePersonalDetailsFieldChange('avatar', value || '')}
+            />
+          </div>
+        </div>
+        
         <div className="space-y-3">
-          {(Object.keys(pd) as Array<keyof PersonalDetails>).map(key => {
-            const uniqueFieldId = constructUniqueFieldId(true, key, undefined, 'personalDetailsField');
+          {(Object.keys(pd) as Array<keyof PersonalDetails>).filter(key => key !== 'avatar').map(key => {
+            const uniqueFieldId = constructUniqueFieldId(true, key, undefined);
             const currentValue = pd[key] || '';
             const isThisFieldBeingImproved = fieldBeingImproved?.uniqueFieldId === uniqueFieldId;
             
@@ -380,7 +564,83 @@ export default function SectionEditor({
   };
 
   const renderSectionForm = () => {
-    const section = localData as Section;
+    if (!localData || !('title' in localData)) return null;
+
+    // Check if this is a dynamic section
+    if ('schemaId' in localData) {
+      return renderDynamicSectionForm();
+    } else {
+      return renderLegacySectionForm();
+    }
+  };
+
+  const renderDynamicSectionForm = () => {
+    const section = localData as DynamicResumeSection;
+    const sectionSchema = schemaRegistry.getSectionSchema(section.schemaId);
+    if (!sectionSchema) return <div>Schema not found for {section.schemaId}</div>;
+
+    return (
+      <>
+        <div>
+          <Label htmlFor="sectionTitle">Section Title</Label>
+          <Input id="sectionTitle" value={section.title} onChange={handleSectionTitleChange} />
+        </div>
+
+        {sectionSchema.type === 'list' && section.items.map((item, index) => (
+          <Card key={item.id} className="my-4 p-3 space-y-2 bg-muted/50">
+            <div className="flex justify-between items-center mb-2">
+              <h4 className="font-medium text-sm">Item {index + 1}</h4>
+              <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.id)} className="text-destructive hover:text-destructive/80">
+                <Trash2 size={16} />
+              </Button>
+            </div>
+            <div className="space-y-3">
+              {sectionSchema.fields.map(field => (
+                                 <DynamicFieldRenderer
+                   key={field.id}
+                   field={field}
+                   value={item.data[field.id]}
+                   onChange={(value) => handleDynamicItemChange(item.id, field.id, value)}
+                   userJobTitle={resumeData.personalDetails.jobTitle}
+                   currentItem={item as any}
+                   allResumeSections={isLegacyResumeData(resumeData) ? resumeData.sections : resumeData.sections.filter(s => 'type' in s) as ResumeSection[]}
+                   currentSectionId={section.id}
+                   isAutocompleteEnabled={isAutocompleteEnabled}
+                 />
+              ))}
+            </div>
+          </Card>
+        ))}
+
+        {sectionSchema.type === 'single' && section.items.length > 0 && (
+          <div className="space-y-3">
+            {sectionSchema.fields.map(field => (
+                             <DynamicFieldRenderer
+                 key={field.id}
+                 field={field}
+                 value={section.items[0].data[field.id]}
+                 onChange={(value) => handleDynamicItemChange(section.items[0].id, field.id, value)}
+                 userJobTitle={resumeData.personalDetails.jobTitle}
+                 currentItem={section.items[0] as any}
+                 allResumeSections={isLegacyResumeData(resumeData) ? resumeData.sections : resumeData.sections.filter(s => 'type' in s) as ResumeSection[]}
+                 currentSectionId={section.id}
+                 isAutocompleteEnabled={isAutocompleteEnabled}
+               />
+            ))}
+          </div>
+        )}
+
+        {sectionSchema.type === 'list' && (
+          <Button variant="outline" size="sm" onClick={handleAddItem} className="mt-2">
+            <PlusCircle size={16} className="mr-2" /> Add Item
+          </Button>
+        )}
+      </>
+    );
+  };
+
+  const renderLegacySectionForm = () => {
+    const section = localData as ResumeSection;
     return (
       <>
         <div>
@@ -488,7 +748,7 @@ export default function SectionEditor({
       />
   );
 
-  const editorTitle = isCurrentlyEditingPersonalDetails ? "Personal Details" : (localData && 'title' in localData ? (localData as Section).title : "Edit Section");
+  const editorTitle = isCurrentlyEditingPersonalDetails ? "Personal Details" : (localData && 'title' in localData ? (localData as ResumeSection).title : "Edit Section");
 
   return (
     <Card className="sticky top-[calc(theme(spacing.16)+1rem)] max-h-[calc(100vh-theme(spacing.16)-2rem)] flex flex-col no-print">
@@ -548,7 +808,7 @@ interface AIFieldTextareaProps {
   userJobTitle?: string;
   sectionType?: SectionType | 'personalDetailsField';
   currentItem?: SectionItem | { fieldName: string }; 
-  allResumeSections: Section[]; 
+  allResumeSections: ResumeSection[]; 
   currentSectionId: string | null; 
   className?: string;
   placeholder?: string;

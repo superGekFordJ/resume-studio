@@ -38,6 +38,11 @@ Resume Text:
 {{{resumeText}}}
 
 Respond in a professional and helpful tone.`,
+  config: {
+    temperature: 0.3,
+    maxOutputTokens: 2048,
+    topP: 0.95
+  }
 });
 
 const reviewResumeFlow = ai.defineFlow(

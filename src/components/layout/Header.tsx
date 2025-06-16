@@ -1,12 +1,30 @@
 import { Button } from "@/components/ui/button";
-import { FileText, Download, Eye, Sparkles } from "lucide-react";
+import { FileText, Download, Eye, Sparkles, Printer, ChevronDown } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface HeaderProps {
   onReviewResume: () => void;
-  onExportPdf: () => void; // Placeholder for PDF export functionality
+  onExportPdf: () => void;
+  onPrint?: () => void;
 }
 
-export default function Header({ onReviewResume, onExportPdf }: HeaderProps) {
+export default function Header({ onReviewResume, onExportPdf, onPrint }: HeaderProps) {
+  const handlePrint = async () => {
+    try {
+      const { printResume } = await import('@/lib/pdfExport');
+      printResume();
+    } catch (error) {
+      console.error('Print error:', error);
+      // Fallback to browser print
+      window.print();
+    }
+  };
+
   return (
     <header className="bg-card border-b sticky top-0 z-40 no-print">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -21,10 +39,26 @@ export default function Header({ onReviewResume, onExportPdf }: HeaderProps) {
             <Sparkles className="mr-2 h-4 w-4" />
             AI Review
           </Button>
-          <Button variant="default" size="sm" onClick={onExportPdf}>
-            <Download className="mr-2 h-4 w-4" />
-            Export PDF
-          </Button>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="default" size="sm">
+                <Download className="mr-2 h-4 w-4" />
+                Export
+                <ChevronDown className="ml-1 h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={onExportPdf}>
+                <Download className="mr-2 h-4 w-4" />
+                Download PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onPrint || handlePrint}>
+                <Printer className="mr-2 h-4 w-4" />
+                Print Resume
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>

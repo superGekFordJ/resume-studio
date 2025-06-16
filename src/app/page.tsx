@@ -57,18 +57,78 @@ export default function ResumeStudioPage() {
 
   const stringifyResumeForReview = (data: ResumeData): string => {
     let content = `Resume for ${data.personalDetails.fullName} (${data.personalDetails.jobTitle})\n\nContact: ${data.personalDetails.email} | ${data.personalDetails.phone} | ${data.personalDetails.address}\nLinks: LinkedIn: ${data.personalDetails.linkedin || 'N/A'}, GitHub: ${data.personalDetails.github || 'N/A'}, Portfolio: ${data.personalDetails.portfolio || 'N/A'}\n\n`;
+    
     data.sections.forEach(section => {
       if (section.visible) {
         content += `--- ${section.title.toUpperCase()} ---\n`;
-        if (section.type === 'summary' || section.type === 'customText') {
-          content += `${(section.items[0] as any)?.content || ''}\n\n`;
-        } else {
-          section.items.forEach(item => {
-            if ('jobTitle' in item) content += `${item.jobTitle} at ${item.company} (${item.startDate} - ${item.endDate})\n${item.description}\n\n`;
-            else if ('degree' in item) content += `${item.degree} from ${item.institution} (${item.graduationYear})\n${item.details || ''}\n\n`;
-            else if ('name' in item) content += `- ${item.name}\n`;
+        
+        // Check if this is a dynamic section (has schemaId) or legacy section (has type)
+        if ('schemaId' in section) {
+          // Dynamic section
+          const dynamicSection = section as any; // DynamicResumeSection
+          content += `[Dynamic Section - Schema: ${dynamicSection.schemaId}]\n`;
+          
+          dynamicSection.items.forEach((item: any) => {
+            // item is DynamicSectionItem with data property
+            const itemData = item.data;
+            
+            switch (dynamicSection.schemaId) {
+              case 'advanced-skills':
+                content += `Category: ${itemData.category || 'N/A'}\n`;
+                if (Array.isArray(itemData.skills)) {
+                  content += `Skills: ${itemData.skills.join(', ')}\n`;
+                } else if (itemData.skills) {
+                  content += `Skills: ${itemData.skills}\n`;
+                }
+                if (itemData.proficiency) content += `Proficiency: ${itemData.proficiency}\n`;
+                if (itemData.yearsOfExperience) content += `Experience: ${itemData.yearsOfExperience} years\n`;
+                content += '\n';
+                break;
+                
+              case 'projects':
+                content += `Project: ${itemData.name || 'Unnamed Project'}\n`;
+                if (itemData.description) content += `Description: ${itemData.description}\n`;
+                if (itemData.url) content += `URL: ${itemData.url}\n`;
+                if (Array.isArray(itemData.technologies)) {
+                  content += `Technologies: ${itemData.technologies.join(', ')}\n`;
+                } else if (itemData.technologies) {
+                  content += `Technologies: ${itemData.technologies}\n`;
+                }
+                if (itemData.startDate || itemData.endDate) {
+                  content += `Duration: ${itemData.startDate || 'N/A'} - ${itemData.endDate || 'Present'}\n`;
+                }
+                content += '\n';
+                break;
+                
+              default:
+                // Generic dynamic section handling
+                content += `[${dynamicSection.schemaId} item]\n`;
+                Object.entries(itemData).forEach(([key, value]) => {
+                  if (value) {
+                    if (Array.isArray(value)) {
+                      content += `${key}: ${value.join(', ')}\n`;
+                    } else {
+                      content += `${key}: ${value}\n`;
+                    }
+                  }
+                });
+                content += '\n';
+                break;
+            }
           });
-          if (section.type === 'skills') content += '\n';
+        } else {
+          // Legacy section
+          const legacySection = section as any;
+          if (legacySection.type === 'summary' || legacySection.type === 'customText') {
+            content += `${(legacySection.items[0] as any)?.content || ''}\n\n`;
+          } else {
+            legacySection.items.forEach((item: any) => {
+              if ('jobTitle' in item) content += `${item.jobTitle} at ${item.company} (${item.startDate} - ${item.endDate})\n${item.description}\n\n`;
+              else if ('degree' in item) content += `${item.degree} from ${item.institution} (${item.graduationYear})\n${item.details || ''}\n\n`;
+              else if ('name' in item) content += `- ${item.name}\n`;
+            });
+            if (legacySection.type === 'skills') content += '\n';
+          }
         }
       }
     });
@@ -92,13 +152,21 @@ export default function ResumeStudioPage() {
     }
   };
 
-  const handleExportPdf = () => {
-    toast({ title: "Export PDF", description: "This feature is coming soon!" });
-    const printableArea = document.getElementById('resume-canvas-printable-area');
-    if (printableArea) {
-        window.print();
-    } else {
-        toast({ variant: "destructive", title: "Error", description: "Printable area not found." });
+  const handleExportPdf = async () => {
+    try {
+      const { exportResumeToPDF } = await import('@/lib/pdfExport');
+      await exportResumeToPDF(resumeData);
+      toast({ 
+        title: "PDF Export Ready", 
+        description: "Please use your browser's print dialog to save as PDF for best quality." 
+      });
+    } catch (error) {
+      console.error('PDF export error:', error);
+      toast({ 
+        variant: "destructive", 
+        title: "Export Failed", 
+        description: "Failed to export PDF. Please try again." 
+      });
     }
   };
 

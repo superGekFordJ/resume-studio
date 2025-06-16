@@ -1,4 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
+// Import the new schema types for extended functionality
+import type { ExtendedResumeData } from './schema';
 
 export interface PersonalDetails {
   fullName: string;
@@ -9,6 +11,7 @@ export interface PersonalDetails {
   linkedin?: string;
   github?: string;
   portfolio?: string;
+  avatar?: string; // Base64 encoded image or URL
 }
 
 export interface ExperienceEntry {
@@ -58,10 +61,24 @@ export interface ResumeSection {
   // content?: string; // For single-content sections like summary
 }
 
-export interface ResumeData {
+// Legacy resume data structure (for backward compatibility)
+export interface LegacyResumeData {
   personalDetails: PersonalDetails;
   sections: ResumeSection[];
   templateId: string; // e.g., 'classic', 'modern'
+}
+
+// Main ResumeData type that supports both legacy and extended formats
+export type ResumeData = LegacyResumeData | ExtendedResumeData;
+
+// Type guard to check if resume data is using the new extended format
+export function isExtendedResumeData(data: ResumeData): data is ExtendedResumeData {
+  return 'schemaVersion' in data;
+}
+
+// Type guard to check if resume data is using the legacy format
+export function isLegacyResumeData(data: ResumeData): data is LegacyResumeData {
+  return !('schemaVersion' in data);
 }
 
 export const initialPersonalDetails: PersonalDetails = {
@@ -73,6 +90,7 @@ export const initialPersonalDetails: PersonalDetails = {
   linkedin: 'linkedin.com/in/yourprofile',
   github: 'github.com/yourusername',
   portfolio: 'yourportfolio.com',
+  avatar: 'https://placehold.co/200x283.png',
 };
 
 export const initialResumeData: ResumeData = {
@@ -136,7 +154,7 @@ export interface TemplateInfo {
 
 export const templates: TemplateInfo[] = [
   { id: 'default', name: 'Classic Professional', imageUrl: 'https://placehold.co/200x283.png', dataAiHint: 'resume template' },
-  { id: 'modern', name: 'Modern Minimalist', imageUrl: 'https://placehold.co/200x283.png', dataAiHint: 'modern resume' },
+  { id: 'modern-minimalist', name: 'Modern Minimalist', imageUrl: 'https://placehold.co/200x283.png', dataAiHint: 'modern resume' },
   { id: 'creative', name: 'Creative Impact', imageUrl: 'https://placehold.co/200x283.png', dataAiHint: 'creative design' },
 ];
 
