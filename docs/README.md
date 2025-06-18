@@ -58,12 +58,15 @@ AI 处理 → 内容优化 → 数据更新 → 实时预览
 ```
 App
 ├── Header (导航和操作)
-├── TemplateSelector (模板选择)
-├── SectionManager (章节管理)
+├── SidebarNavigator (两阶段侧边栏) ← 新增
+│   ├── Structure View (结构视图)
+│   │   ├── TemplateSelector (模板选择)
+│   │   └── SectionManager (章节管理)
+│   └── Content View (内容视图)
+│       └── SectionEditor (内容编辑)
+│           └── AutocompleteTextarea (AI 补全)
 ├── ResumeCanvas (简历渲染)
 │   └── Template Components (模板组件)
-├── SectionEditor (内容编辑)
-│   └── AutocompleteTextarea (AI 补全)
 └── AIReviewDialog (AI 评审)
 ```
 
@@ -104,6 +107,7 @@ UI 组件 → Genkit Flow → Gemini API → 处理结果 → UI 更新
 
 ### 主要组件
 - `ResumeCanvas` - 简历渲染容器
+- `SidebarNavigator` - 两阶段侧边栏导航器 (新增)
 - `SectionEditor` - 章节编辑器
 - `AutocompleteTextarea` - AI 补全输入框
 - `AIReviewDialog` - AI 评审对话框
@@ -161,5 +165,5 @@ firebase deploy
 
 ---
 
-**最后更新**: 2024年1月
-**文档版本**: v1.0.0 
+**最后更新**: 2025年6月
+**文档版本**: v1.1.0 - 两阶段侧边栏重构完成 

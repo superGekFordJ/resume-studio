@@ -100,6 +100,7 @@ interface SectionEditorProps {
   targetToEdit: string | 'personalDetails';                 // 编辑目标ID
   onUpdateResumeData: (updatedData: ResumeData) => void;     // 数据更新回调
   onCloseEditor: () => void;                                 // 关闭编辑器回调
+  onBack?: () => void;                                       // 返回导航回调 (新增)
   isAutocompleteEnabled: boolean;                            // 是否启用自动补全
   onToggleAutocomplete: (enabled: boolean) => void;         // 切换自动补全回调
 }
@@ -112,6 +113,7 @@ interface SectionEditorProps {
   targetToEdit={editingTarget}
   onUpdateResumeData={handleUpdateResumeData}
   onCloseEditor={handleCloseEditor}
+  onBack={handleBackToStructure}
   isAutocompleteEnabled={isAutocompleteEnabled}
   onToggleAutocomplete={setIsAutocompleteEnabled}
 />
@@ -123,10 +125,54 @@ interface SectionEditorProps {
 - AI 内容改进功能
 - 实时预览
 - 表单验证
+- **滚动优化**: 使用 ScrollArea 确保长内容可滚动
+- **自适应布局**: 根据是否在侧边栏导航器中调整布局
 
 ---
 
-### 5. AutocompleteTextarea
+### 5. SidebarNavigator
+
+两阶段侧边栏导航器，管理结构视图和内容视图之间的切换。
+
+#### Props
+```typescript
+interface SidebarNavigatorProps {
+  childrenStructure: React.ReactNode;                       // 结构视图内容
+  childrenContent: React.ReactNode;                         // 内容视图内容
+  isEditing: boolean;                                        // 是否处于编辑状态
+  onBack: () => void;                                        // 返回结构视图回调
+}
+```
+
+#### 使用示例
+```tsx
+<SidebarNavigator
+  isEditing={editingTarget !== null}
+  onBack={handleBackToStructure}
+  childrenStructure={
+    <ScrollArea className="h-full p-4">
+      <TemplateSelector />
+      <SectionManager />
+    </ScrollArea>
+  }
+  childrenContent={
+    <ScrollArea className="h-full">
+      <SectionEditor />
+    </ScrollArea>
+  }
+/>
+```
+
+#### 特性
+- **平滑动画**: 200ms 水平滑动过渡
+- **双视图管理**: 结构视图和内容视图的无缝切换
+- **返回导航**: 内容视图中的返回按钮
+- **响应式设计**: 适配不同屏幕尺寸
+- **性能优化**: 使用 CSS transform 实现硬件加速
+
+---
+
+### 6. AutocompleteTextarea
 
 支持 AI 自动补全的文本输入组件。
 
@@ -168,7 +214,7 @@ interface AutocompleteTextareaProps {
 
 ---
 
-### 6. AIReviewDialog
+### 7. AIReviewDialog
 
 AI 简历评审对话框组件。
 
