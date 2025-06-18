@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -9,11 +8,12 @@ import TemplateSelector from '@/components/resume/TemplateSelector';
 import ResumeCanvas from '@/components/resume/ResumeCanvas';
 import SectionEditor from '@/components/resume/SectionEditor';
 import SectionManager from '@/components/resume/SectionManager';
+import SidebarNavigator from '@/components/layout/SidebarNavigator';
 import AIReviewDialog from '@/components/resume/AIReviewDialog';
 import { reviewResume, ReviewResumeOutput } from '@/ai/flows/review-resume';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { PanelLeftOpen, PanelRightOpen } from 'lucide-react';
+import { PanelRightOpen } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from "@/lib/utils";
 
@@ -28,7 +28,6 @@ export default function ResumeStudioPage() {
   const [isReviewLoading, setIsReviewLoading] = useState(false);
 
   const [isLeftPanelOpen, setIsLeftPanelOpen] = useState(true);
-  const [isRightPanelOpen, setIsRightPanelOpen] = useState(true);
   const [isAutocompleteEnabled, setIsAutocompleteEnabled] = useState(true);
 
 
@@ -48,10 +47,13 @@ export default function ResumeStudioPage() {
 
   const handleEditSection = (targetId: string | 'personalDetails') => {
     setEditingTarget(targetId);
-    if (!isRightPanelOpen) setIsRightPanelOpen(true); 
   };
   
   const handleCloseEditor = () => {
+    setEditingTarget(null);
+  };
+
+  const handleBackToStructure = () => {
     setEditingTarget(null);
   };
 
@@ -175,72 +177,66 @@ export default function ResumeStudioPage() {
       <Header onReviewResume={handleReviewResume} onExportPdf={handleExportPdf} />
       <div className="flex flex-1 overflow-hidden">
         <aside className={cn(
-          "bg-card border-r transition-all duration-300 ease-in-out overflow-y-auto no-print",
-          isLeftPanelOpen ? "w-full md:w-[320px] lg:w-[360px] p-4" : "w-0 p-0 md:w-12 md:p-2"
+          "bg-card border-r transition-all duration-300 ease-in-out no-print",
+          isLeftPanelOpen ? "w-full md:w-[500px] lg:w-[800px]" : "w-0 md:w-12"
         )}>
           {isLeftPanelOpen ? (
-            <ScrollArea className="h-full">
-              <TemplateSelector
-                selectedTemplateId={selectedTemplateId}
-                onSelectTemplate={handleSelectTemplate}
-              />
-              <div className="mt-6">
-                <SectionManager 
-                  resumeData={resumeData} 
-                  onUpdateResumeData={handleUpdateResumeData}
-                  onEditSection={handleEditSection}
-                />
-              </div>
-            </ScrollArea>
+            <SidebarNavigator
+              isEditing={editingTarget !== null}
+              onBack={handleBackToStructure}
+              childrenStructure={
+                <ScrollArea className="h-full p-4">
+                  <TemplateSelector
+                    selectedTemplateId={selectedTemplateId}
+                    onSelectTemplate={handleSelectTemplate}
+                  />
+                  <div className="mt-6">
+                    <SectionManager 
+                      resumeData={resumeData} 
+                      onUpdateResumeData={handleUpdateResumeData}
+                      onEditSection={handleEditSection}
+                    />
+                  </div>
+                </ScrollArea>
+              }
+              childrenContent={
+                <div className="h-full">
+                  {editingTarget ? (
+                    <SectionEditor
+                      key={editingTarget} 
+                      resumeData={resumeData}
+                      targetToEdit={editingTarget} 
+                      onUpdateResumeData={handleUpdateResumeData}
+                      onCloseEditor={handleCloseEditor}
+                      onBack={handleBackToStructure}
+                      isAutocompleteEnabled={isAutocompleteEnabled}
+                      onToggleAutocomplete={setIsAutocompleteEnabled}
+                    />
+                  ) : (
+                    <div className="p-4">
+                      <p className="text-muted-foreground">No section selected for editing.</p>
+                    </div>
+                  )}
+                </div>
+              }
+            />
           ) : (
-             <Button variant="ghost" size="icon" onClick={() => setIsLeftPanelOpen(true)} className="mt-2">
-                <PanelRightOpen />
-             </Button>
+             <div className="hidden md:flex flex-col items-center p-2">
+               <Button variant="ghost" size="icon" onClick={() => setIsLeftPanelOpen(true)} className="mt-2">
+                  <PanelRightOpen />
+               </Button>
+             </div>
           )}
         </aside>
 
-        <main className="a4-canvas-container relative flex-grow">
+        <main className="a4-canvas-container relative flex-grow bg-muted/20">
            {!isLeftPanelOpen && (
              <Button variant="ghost" size="icon" onClick={() => setIsLeftPanelOpen(true)} className="absolute top-4 left-4 z-10 md:hidden no-print">
                 <PanelRightOpen />
              </Button>
            )}
            <ResumeCanvas resumeData={resumeData} />
-           {!isRightPanelOpen && (
-             <Button variant="ghost" size="icon" onClick={() => setIsRightPanelOpen(true)} className="absolute top-4 right-4 z-10 md:hidden no-print">
-                <PanelLeftOpen />
-             </Button>
-           )}
         </main>
-
-        <aside className={cn(
-          "bg-card border-l transition-all duration-300 ease-in-out overflow-y-auto no-print",
-           isRightPanelOpen ? "w-full md:w-[380px] lg:w-[420px] p-4" : "w-0 p-0 md:w-12 md:p-2"
-        )}>
-           {isRightPanelOpen ? (
-            <ScrollArea className="h-full">
-              {editingTarget ? (
-                <SectionEditor
-                  key={editingTarget} 
-                  resumeData={resumeData}
-                  targetToEdit={editingTarget} 
-                  onUpdateResumeData={handleUpdateResumeData}
-                  onCloseEditor={handleCloseEditor}
-                  isAutocompleteEnabled={isAutocompleteEnabled}
-                  onToggleAutocomplete={setIsAutocompleteEnabled}
-                />
-              ) : (
-                <div className="text-center p-10 text-muted-foreground">
-                  <p>Select an item from the left panel or resume to edit.</p>
-                </div>
-              )}
-            </ScrollArea>
-           ) : (
-            <Button variant="ghost" size="icon" onClick={() => setIsRightPanelOpen(true)} className="mt-2">
-               <PanelLeftOpen />
-            </Button>
-           )}
-        </aside>
       </div>
 
       <AIReviewDialog
@@ -254,13 +250,6 @@ export default function ResumeStudioPage() {
          {!isLeftPanelOpen && (
             <Button variant="secondary" size="icon" onClick={() => setIsLeftPanelOpen(true)}>
                 <PanelRightOpen />
-            </Button>
-         )}
-       </div>
-       <div className="fixed bottom-4 right-4 z-50 md:hidden no-print">
-         {!isRightPanelOpen && (
-            <Button variant="secondary" size="icon" onClick={() => setIsRightPanelOpen(true)}>
-                <PanelLeftOpen />
             </Button>
          )}
        </div>
