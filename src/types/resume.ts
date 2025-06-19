@@ -155,7 +155,7 @@ export interface TemplateInfo {
 export const templates: TemplateInfo[] = [
   { id: 'default', name: 'Classic Professional', imageUrl: 'https://placehold.co/200x283.png', dataAiHint: 'resume template' },
   { id: 'modern-minimalist', name: 'Modern Minimalist', imageUrl: 'https://placehold.co/200x283.png', dataAiHint: 'modern resume' },
-  { id: 'creative', name: 'Creative Impact', imageUrl: 'https://placehold.co/200x283.png', dataAiHint: 'creative design' },
+  { id: 'creative', name: 'Creative Two-Column', imageUrl: 'https://placehold.co/200x283.png', dataAiHint: 'creative design' },
 ];
 
 // Using dynamic imports for Lucide icons to avoid making them server components by default if not necessary.

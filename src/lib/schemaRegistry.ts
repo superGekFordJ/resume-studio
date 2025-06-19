@@ -124,6 +124,7 @@ export class SchemaRegistry implements ISchemaRegistry {
       },
       uiConfig: {
         icon: 'Award',
+        defaultRenderType: 'timeline',
         addButtonText: 'Add Certification',
         itemDisplayTemplate: '{name} - {issuer}',
         sortable: true
@@ -335,6 +336,7 @@ export class SchemaRegistry implements ISchemaRegistry {
       },
       uiConfig: {
         icon: 'FileText',
+        defaultRenderType: 'single-text',
         addButtonText: 'Add Summary'
       }
     };
@@ -418,6 +420,7 @@ export class SchemaRegistry implements ISchemaRegistry {
       },
       uiConfig: {
         icon: 'Briefcase',
+        defaultRenderType: 'timeline',
         addButtonText: 'Add Experience',
         itemDisplayTemplate: '{jobTitle} at {company}',
         sortable: true
@@ -495,6 +498,7 @@ export class SchemaRegistry implements ISchemaRegistry {
       },
       uiConfig: {
         icon: 'GraduationCap',
+        defaultRenderType: 'timeline',
         addButtonText: 'Add Education',
         itemDisplayTemplate: '{degree} from {institution}',
         sortable: true
@@ -536,6 +540,7 @@ export class SchemaRegistry implements ISchemaRegistry {
       },
       uiConfig: {
         icon: 'Wand2',
+        defaultRenderType: 'badge-list',
         addButtonText: 'Add Skill',
         itemDisplayTemplate: '{name}',
         sortable: true
@@ -580,6 +585,7 @@ export class SchemaRegistry implements ISchemaRegistry {
       },
       uiConfig: {
         icon: 'FilePlus2',
+        defaultRenderType: 'single-text',
         addButtonText: 'Add Content'
       }
     };

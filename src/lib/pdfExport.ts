@@ -43,7 +43,7 @@ export async function exportResumeToPDF(
       throw new Error('Could not open print window');
     }
 
-    // Enhanced CSS for perfect A4 PDF output
+    // Enhanced CSS for perfect A4 PDF output - matching Canvas styles exactly
     const pdfCSS = `
       <style type="text/css">
         @page {
@@ -55,6 +55,7 @@ export async function exportResumeToPDF(
           -webkit-print-color-adjust: exact !important;
           color-adjust: exact !important;
           print-color-adjust: exact !important;
+          box-sizing: border-box !important;
         }
         
         html, body {
@@ -72,13 +73,13 @@ export async function exportResumeToPDF(
           left: 0 !important;
           top: 0 !important;
           width: 210mm !important;
-          height: 297mm !important;
+          min-height: 297mm !important;
           padding: 20mm 25mm !important;
           margin: 0 !important;
           box-shadow: none !important;
           background: white !important;
           
-          /* Perfect text rendering - fix baseline alignment */
+          /* Match Canvas text rendering exactly */
           font-size: 11px !important;
           line-height: 1.4 !important;
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
@@ -86,18 +87,20 @@ export async function exportResumeToPDF(
           -moz-osx-font-smoothing: grayscale !important;
           text-rendering: optimizeLegibility !important;
           
-          /* Fix text baseline and vertical alignment */
-          vertical-align: baseline !important;
-          
-          /* Text layout optimization */
+          /* Ensure consistent layout */
           word-wrap: break-word !important;
           hyphens: auto !important;
           overflow: hidden !important;
           box-sizing: border-box !important;
-          
-          /* Ensure proper text flow */
-          white-space: normal !important;
-          text-align: left !important;
+        }
+        
+        /* Font families */
+        .font-headline {
+          font-family: 'Space Grotesk', sans-serif !important;
+        }
+        
+        .font-body {
+          font-family: 'Inter', sans-serif !important;
         }
         
         /* Ensure consistent text rendering */
@@ -106,7 +109,6 @@ export async function exportResumeToPDF(
           margin-top: 0 !important;
           margin-bottom: 0 !important;
           font-weight: 600 !important;
-          vertical-align: baseline !important;
           line-height: inherit !important;
         }
         
@@ -114,7 +116,6 @@ export async function exportResumeToPDF(
           orphans: 3 !important;
           widows: 3 !important;
           margin: 0 !important;
-          vertical-align: baseline !important;
           line-height: inherit !important;
         }
         
@@ -124,39 +125,19 @@ export async function exportResumeToPDF(
           display: inline-block !important;
         }
         
-        /* Fix flex item alignment */
-        .flex > * {
-          vertical-align: baseline !important;
-        }
-        
-        /* Ensure consistent spacing for all elements */
-        * {
-          vertical-align: baseline !important;
-          box-sizing: border-box !important;
-        }
-        
         /* Image optimization */
         img {
           max-width: 100% !important;
           height: auto !important;
-          -webkit-print-color-adjust: exact !important;
-          color-adjust: exact !important;
+          object-fit: cover !important;
         }
         
-        /* Fix text alignment and spacing */
-        .text-center {
-          text-align: center !important;
-        }
+        /* Text alignment classes */
+        .text-center { text-align: center !important; }
+        .text-left { text-align: left !important; }
+        .text-right { text-align: right !important; }
         
-        .text-left {
-          text-align: left !important;
-        }
-        
-        .text-right {
-          text-align: right !important;
-        }
-        
-        /* Ensure proper spacing */
+        /* Margin utilities */
         .mb-1 { margin-bottom: 0.25rem !important; }
         .mb-2 { margin-bottom: 0.5rem !important; }
         .mb-3 { margin-bottom: 0.75rem !important; }
@@ -164,252 +145,143 @@ export async function exportResumeToPDF(
         .mb-5 { margin-bottom: 1.25rem !important; }
         .mb-6 { margin-bottom: 1.5rem !important; }
         
+        .mt-0\\.5 { margin-top: 0.125rem !important; }
         .mt-1 { margin-top: 0.25rem !important; }
         .mt-2 { margin-top: 0.5rem !important; }
         .mt-3 { margin-top: 0.75rem !important; }
         
+        .mr-1 { margin-right: 0.25rem !important; }
+        .mr-2 { margin-right: 0.5rem !important; }
+        .ml-2 { margin-left: 0.5rem !important; }
+        .ml-4 { margin-left: 1rem !important; }
+        
+        /* Padding utilities */
+        .p-4 { padding: 1rem !important; }
+        .p-6 { padding: 1.5rem !important; }
+        .pb-0\\.5 { padding-bottom: 0.125rem !important; }
         .pb-1 { padding-bottom: 0.25rem !important; }
         .pb-2 { padding-bottom: 0.5rem !important; }
         .pb-3 { padding-bottom: 0.75rem !important; }
+        .pl-3 { padding-left: 0.75rem !important; }
+        
+        .px-2 { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
+        .py-0\\.5 { padding-top: 0.125rem !important; padding-bottom: 0.125rem !important; }
+        .py-1 { padding-top: 0.25rem !important; padding-bottom: 0.25rem !important; }
         
         /* Border styles */
-        .border-b {
-          border-bottom: 1px solid #e5e7eb !important;
-        }
+        .border { border-width: 1px !important; }
+        .border-2 { border-width: 2px !important; }
+        .border-3 { border-width: 3px !important; }
+        .border-4 { border-width: 4px !important; }
         
-        .border-primary\\/50 {
-          border-color: rgba(63, 81, 181, 0.5) !important;
-        }
+        .border-b { border-bottom-width: 1px !important; }
+        .border-b-2 { border-bottom-width: 2px !important; }
+        .border-l-2 { border-left-width: 2px !important; }
+        .border-r { border-right-width: 1px !important; }
         
-        /* Color classes */
-        .text-primary {
-          color: #3F51B5 !important;
-        }
+        .border-gray-200 { border-color: #e5e7eb !important; }
+        .border-gray-300 { border-color: #d1d5db !important; }
+        .border-primary { border-color: #3F51B5 !important; }
+        .border-primary\\/20 { border-color: rgba(63, 81, 181, 0.2) !important; }
+        .border-primary\\/50 { border-color: rgba(63, 81, 181, 0.5) !important; }
         
-        .text-muted-foreground {
-          color: #6b7280 !important;
-        }
-        
-        .text-foreground {
-          color: #111827 !important;
-        }
-        
-        .text-gray-800 {
-          color: #1f2937 !important;
-        }
-        
-        .text-gray-600 {
-          color: #4b5563 !important;
-        }
-        
-        .text-gray-700 {
-          color: #374151 !important;
-        }
-        
-        .text-gray-500 {
-          color: #6b7280 !important;
-        }
+        /* Color classes - matching Tailwind exactly */
+        .text-primary { color: #3F51B5 !important; }
+        .text-foreground { color: #111827 !important; }
+        .text-gray-400 { color: #9ca3af !important; }
+        .text-gray-500 { color: #6b7280 !important; }
+        .text-gray-600 { color: #4b5563 !important; }
+        .text-gray-700 { color: #374151 !important; }
+        .text-gray-800 { color: #1f2937 !important; }
+        .text-blue-700 { color: #1d4ed8 !important; }
+        .text-green-700 { color: #15803d !important; }
+        .text-purple-700 { color: #6b21a8 !important; }
         
         /* Background colors */
-        .bg-gray-200 {
-          background-color: #e5e7eb !important;
-        }
-        
-        .bg-secondary {
-          background-color: #f3f4f6 !important;
-        }
+        .bg-gray-50 { background-color: #f9fafb !important; }
+        .bg-gray-100 { background-color: #f3f4f6 !important; }
+        .bg-gray-200 { background-color: #e5e7eb !important; }
+        .bg-blue-100 { background-color: #dbeafe !important; }
+        .bg-green-100 { background-color: #dcfce7 !important; }
+        .bg-purple-100 { background-color: #f3e8ff !important; }
         
         /* Font weights */
-        .font-bold {
-          font-weight: 700 !important;
-        }
+        .font-bold { font-weight: 700 !important; }
+        .font-semibold { font-weight: 600 !important; }
+        .font-medium { font-weight: 500 !important; }
         
-        .font-semibold {
-          font-weight: 600 !important;
-        }
+        /* Font sizes - exact Canvas values */
+        .text-2xl { font-size: 1.5rem !important; line-height: 2rem !important; }
+        .text-xl { font-size: 1.25rem !important; line-height: 1.75rem !important; }
+        .text-lg { font-size: 1.125rem !important; line-height: 1.75rem !important; }
+        .text-base { font-size: 1rem !important; line-height: 1.5rem !important; }
+        .text-sm { font-size: 0.875rem !important; line-height: 1.25rem !important; }
+        .text-xs { font-size: 0.75rem !important; line-height: 1rem !important; }
         
-        .font-medium {
-          font-weight: 500 !important;
-        }
-        
-        /* Font sizes */
-        .text-2xl {
-          font-size: 1.5rem !important;
-          line-height: 2rem !important;
-        }
-        
-        .text-xl {
-          font-size: 1.25rem !important;
-          line-height: 1.75rem !important;
-        }
-        
-        .text-base {
-          font-size: 1rem !important;
-          line-height: 1.5rem !important;
-        }
-        
-        .text-sm {
-          font-size: 0.875rem !important;
-          line-height: 1.25rem !important;
-        }
-        
-        .text-xs {
-          font-size: 0.75rem !important;
-          line-height: 1rem !important;
-        }
-        
-        .text-\\[13px\\] {
-          font-size: 13px !important;
-        }
-        
-        .text-\\[12px\\] {
-          font-size: 12px !important;
-        }
-        
-        .text-\\[11px\\] {
-          font-size: 11px !important;
-        }
-        
-        .text-\\[10px\\] {
-          font-size: 10px !important;
-        }
-        
-        .text-\\[9px\\] {
-          font-size: 9px !important;
-        }
+        .text-\\[13px\\] { font-size: 13px !important; }
+        .text-\\[12px\\] { font-size: 12px !important; }
+        .text-\\[11px\\] { font-size: 11px !important; }
+        .text-\\[10px\\] { font-size: 10px !important; }
+        .text-\\[9px\\] { font-size: 9px !important; }
         
         /* Line heights */
-        .leading-\\[1\\.4\\] {
-          line-height: 1.4 !important;
-        }
+        .leading-\\[1\\.4\\] { line-height: 1.4 !important; }
         
         /* Flexbox */
-        .flex {
-          display: flex !important;
-        }
+        .flex { display: flex !important; }
+        .inline-flex { display: inline-flex !important; }
+        .flex-col { flex-direction: column !important; }
+        .flex-wrap { flex-wrap: wrap !important; }
+        .items-center { align-items: center !important; }
+        .items-start { align-items: flex-start !important; }
+        .justify-center { justify-content: center !important; }
+        .justify-between { justify-content: space-between !important; }
+        .flex-shrink-0 { flex-shrink: 0 !important; }
+        .flex-grow, .flex-1 { flex-grow: 1 !important; }
         
-        .flex-col {
-          flex-direction: column !important;
-        }
+        /* Gap utilities */
+        .gap-0 { gap: 0 !important; }
+        .gap-1 { gap: 0.25rem !important; }
+        .gap-2 { gap: 0.5rem !important; }
+        .gap-3 { gap: 0.75rem !important; }
+        .gap-4 { gap: 1rem !important; }
+        .gap-6 { gap: 1.5rem !important; }
         
-        .flex-wrap {
-          flex-wrap: wrap !important;
-        }
+        /* Space utilities */
+        .space-y-2 > * + * { margin-top: 0.5rem !important; }
         
-        .items-center {
-          align-items: center !important;
-        }
+        /* Display utilities */
+        .inline-block { display: inline-block !important; }
+        .h-full { height: 100% !important; }
+        .w-full { width: 100% !important; }
         
-        .items-start {
-          align-items: flex-start !important;
-        }
+        /* Size utilities */
+        .w-16 { width: 4rem !important; }
+        .h-16 { height: 4rem !important; }
+        .w-20 { width: 5rem !important; }
+        .h-20 { height: 5rem !important; }
+        .w-24 { width: 6rem !important; }
+        .h-24 { height: 6rem !important; }
+        .w-1\\/3 { width: 33.333333% !important; }
+        .w-2\\/3 { width: 66.666667% !important; }
         
-        .justify-center {
-          justify-content: center !important;
-        }
+        /* Border radius */
+        .rounded { border-radius: 0.25rem !important; }
+        .rounded-md { border-radius: 0.375rem !important; }
+        .rounded-full { border-radius: 9999px !important; }
         
-        .gap-1 {
-          gap: 0.25rem !important;
-        }
+        /* Other utilities */
+        .overflow-hidden { overflow: hidden !important; }
+        .object-cover { object-fit: cover !important; }
+        .whitespace-pre-line { white-space: pre-line !important; }
+        .uppercase { text-transform: uppercase !important; }
+        .tracking-wider { letter-spacing: 0.05em !important; }
         
-        .gap-3 {
-          gap: 0.75rem !important;
-        }
+        /* Two column layout specifics */
+        .mx-auto { margin-left: auto !important; margin-right: auto !important; }
         
-        .gap-4 {
-          gap: 1rem !important;
-        }
-        
-        /* Spacing utilities */
-        .space-y-1 > * + * {
-          margin-top: 0.25rem !important;
-        }
-        
-        .space-y-2 > * + * {
-          margin-top: 0.5rem !important;
-        }
-        
-        .space-y-3 > * + * {
-          margin-top: 0.75rem !important;
-        }
-        
-        /* Rounded corners */
-        .rounded-full {
-          border-radius: 9999px !important;
-        }
-        
-        .rounded-full {
-          border-radius: 9999px !important;
-        }
-        
-        /* Inline styles */
-        .inline-block {
-          display: inline-block !important;
-        }
-        
-        /* Padding for skill tags */
-        .px-2 {
-          padding-left: 0.5rem !important;
-          padding-right: 0.5rem !important;
-        }
-        
-        .py-1 {
-          padding-top: 0.25rem !important;
-          padding-bottom: 0.25rem !important;
-        }
-        
-        .mr-1 {
-          margin-right: 0.25rem !important;
-        }
-        
-        .mb-1 {
-          margin-bottom: 0.25rem !important;
-        }
-        
-        /* Avatar styles */
-        .w-16 {
-          width: 4rem !important;
-        }
-        
-        .h-16 {
-          height: 4rem !important;
-        }
-        
-        .w-20 {
-          width: 5rem !important;
-        }
-        
-        .h-20 {
-          height: 5rem !important;
-        }
-        
-        .overflow-hidden {
-          overflow: hidden !important;
-        }
-        
-        .object-cover {
-          object-fit: cover !important;
-        }
-        
-        .border-2 {
-          border-width: 2px !important;
-        }
-        
-        .border-3 {
-          border-width: 3px !important;
-        }
-        
-        .border-primary\\/20 {
-          border-color: rgba(63, 81, 181, 0.2) !important;
-        }
-        
-        .flex-shrink-0 {
-          flex-shrink: 0 !important;
-        }
-        
-        .flex-grow {
-          flex-grow: 1 !important;
-        }
+        /* Hover states - remove for print */
+        .hover\\:text-primary\\/80:hover { color: #3F51B5 !important; }
       </style>
     `;
 

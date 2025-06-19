@@ -42,7 +42,13 @@ src/
 │       │   ├── SectionEditor.tsx     # 章节编辑器
 │       │   ├── SectionManager.tsx    # 章节管理器
 │       │   └── DynamicFieldRenderer.tsx # 动态字段渲染器
+│       ├── rendering/          # 原子渲染组件 (新增)
+│       │   ├── BadgeListComponent.tsx   # 徽章列表组件
+│       │   ├── SimpleListComponent.tsx  # 简单列表组件
+│       │   ├── TitledBlockComponent.tsx # 标题块组件
+│       │   └── SingleTextComponent.tsx  # 单文本组件
 │       ├── templates/          # 模板组件
+│       │   ├── DefaultTemplate.tsx   # 默认模板 (新增)
 │       │   └── ModernTemplate.tsx    # 现代模板组件
 │       └── ui/                # UI 相关组件
 │           ├── AIReviewDialog.tsx    # AI 评审对话框
@@ -103,7 +109,7 @@ src/
                  +------------------------------------------------->
 ```
 
-### 3. 解耦渲染架构 (Decoupled Rendering Architecture)
+### 3. 解耦渲染架构 (Decoupled Rendering Architecture) - 混合渲染模型
 
 ```
        ResumeData                    SchemaRegistry
@@ -116,7 +122,7 @@ src/
                            |
                            v
                    RenderableResume
-                    (View Model)
+                 (View Model with defaultRenderType)
                            |
             +--------------+--------------+
             |                             |
@@ -125,13 +131,52 @@ src/
     (Screen Rendering)              (PDF Rendering)
             |                             |
             v                             v
-      PrintableResume                PrintableResume
-       (via React)                (via ReactDOMServer)
+      Template Components            Template Components
+       (Layout Dispatchers)           (Layout Dispatchers)
+            |                             |
+            v                             v
+      Atomic Rendering Components    Atomic Rendering Components
 ```
 
-- **统一视图模型**: `RenderableResume` 是屏幕和PDF渲染的统一数据格式
-- **独立渲染管线**: 屏幕渲染和PDF导出使用相同的组件但不同的渲染方式
-- **无DOM依赖**: PDF导出不再依赖实时DOM，而是通过服务端渲染生成HTML
+#### 混合渲染模型 ("Default + Override")
+
+新的架构引入了一个**混合渲染模型**，平衡了约定与灵活性：
+
+- **Schema 提供默认建议**: 每个 `SectionSchema` 的 `uiConfig` 中包含 `defaultRenderType`，建议该类型章节的默认渲染方式（如 `badge-list`、`timeline`、`simple-list` 等）。
+
+- **模板作为布局调度器**: 模板组件（如 `DefaultTemplate`、`ModernTemplate`）充当"布局调度器"，它们可以：
+  - 接受 Schema 的默认渲染建议
+  - 通过 `templateLayoutMap` 覆写特定章节的渲染方式
+  - 调度到相应的原子渲染组件
+
+- **原子渲染组件**: 可复用的渲染组件，专注于特定的展示逻辑：
+  - `BadgeListComponent`: 徽章式列表展示
+  - `SimpleListComponent`: 简单的项目符号列表
+  - `TitledBlockComponent`: 带标题的块状布局（时间线样式）
+  - `SingleTextComponent`: 单一文本内容展示
+
+**示例**：
+```typescript
+// 在模板中的混合渲染逻辑
+const renderSectionByRenderType = (section: RenderableSection) => {
+  // 模板特定的覆写规则
+  const templateLayoutMap = {
+    'skills': 'simple-list', // 覆写技能部分为简单列表
+  };
+
+  // 使用覆写或默认渲染类型
+  const finalRenderType = templateLayoutMap[section.schemaId] || section.defaultRenderType;
+
+  // 调度到相应的原子组件
+  switch (finalRenderType) {
+    case 'simple-list':
+      return <SimpleListComponent items={section.items} />;
+    case 'badge-list':
+      return <BadgeListComponent items={section.items} />;
+    // ... 其他渲染类型
+  }
+};
+```
 
 - **用户输入 → Schema 查询 → AI 处理 → UI 更新**
   1. 用户在 UI 组件中进行操作（例如，在 `AutocompleteTextarea` 中输入文本）。
@@ -160,6 +205,8 @@ src/
 ### 3. 扩展性
 - **添加新章节**: 只需在 `schemaRegistry.ts` 中定义一个新的 `SectionSchema` 并注册对应的 `ContextBuilderFunction`，UI 无需任何修改即可支持新章节的编辑和 AI 功能。
 - **添加新AI功能**: 只需创建一个新的 AI Flow，并在 `FieldSchema.aiHints.contextBuilders` 中为新功能添加一个 `contextBuilder` ID。
+- **添加新模板**: 创建新的模板组件，可以自由选择接受或覆写默认渲染建议。
+- **添加新渲染样式**: 创建新的原子渲染组件，在 Schema 中指定为默认，或在模板中作为覆写选项。
 
 ## 主要功能模块
 
@@ -180,13 +227,14 @@ src/
 - **可扩展**: 易于添加新模板
 - **组件化**: 每个模板都是独立的 React 组件
 - **主题支持**: 支持深色/浅色主题
+- **灵活渲染**: 通过混合渲染模型，模板可以保持个性化同时利用统一的原子组件
 
 ## 扩展性考虑
 
 ### 1. 新模板添加
 1. 创建新的模板组件
-2. 更新 `templates` 配置
-3. 在 `ResumeCanvas` 中注册
+2. 定义模板特定的 `templateLayoutMap`（可选）
+3. 在 `PrintableResume` 中注册
 
 ### 2. 新 AI 功能
 1. 在 `src/ai/flows/` 中定义新的 Flow
@@ -255,4 +303,109 @@ Schema Definition → SchemaRegistry → UI Components
                       AI Flows
 ```
 
-This architecture ensures maximum flexibility and maintainability while keeping the codebase clean and organized. 
+## Hybrid Rendering Model (Updated 2025-01-07)
+
+### Overview
+The hybrid rendering model provides a perfect balance between convention and flexibility:
+
+1. **Convention Through Defaults**
+   - Each schema defines a `defaultRenderType` suggesting the best way to render that section
+   - Provides consistency across different templates
+   - Makes it easy to add new sections with sensible defaults
+
+2. **Flexibility Through Overrides**
+   - Templates can override any section's rendering through `templateLayoutMap`
+   - Allows templates to maintain their unique character
+   - No need to modify schemas when creating specialized templates
+
+3. **Reusability Through Atomic Components**
+   - Shared atomic rendering components ensure consistency
+   - Templates focus on layout decisions, not implementation details
+   - Easy to add new rendering styles by creating new atomic components
+
+This architecture ensures maximum flexibility and maintainability while keeping the codebase clean and organized.
+
+## Template System (Updated 2025-01-07)
+
+### Template Architecture
+The template system follows the hybrid rendering model, allowing each template to maintain its unique design while leveraging shared atomic components:
+
+1. **Available Templates**
+   - **Classic Professional** (`default`): Traditional single-column layout with enhanced personal details rendering
+   - **Modern Minimalist** (`modern-minimalist`): Clean design with subtle styling
+   - **Creative Two-Column** (`creative`): Innovative two-column layout with sidebar for skills and contact info
+
+2. **Atomic Rendering Components**
+   - `BadgeListComponent`: Renders items as badges (e.g., skills)
+   - `SimpleListComponent`: Renders items as bullet points
+   - `TitledBlockComponent`: Timeline-style rendering for experiences/education
+   - `SingleTextComponent`: For single text content like summaries
+   - `ProjectItemComponent`: Specialized rendering for projects with tech tags
+   - `CertificationItemComponent`: Renders certifications with icons and validity
+   - `AdvancedSkillsComponent`: Groups skills by category with proficiency levels
+
+3. **Two-Column Layout Implementation**
+   The Creative template demonstrates how to implement complex layouts:
+   ```typescript
+   // Define which sections go into which column
+   const sidebarSections = ['skills', 'advanced-skills', 'languages', 'certifications'];
+   
+   const mainColumnSections = sections.filter(s => !sidebarSections.includes(s.schemaId));
+   const sideColumnSections = sections.filter(s => sidebarSections.includes(s.schemaId));
+   ```
+
+### How to Develop a New Template
+
+1. **Create Template Component**
+   - Create a new file in `src/components/resume/templates/`
+   - Accept a single prop: `{ resume: RenderableResume }`
+   - Implement layout-specific logic
+
+2. **Implement Rendering Dispatcher**
+   ```typescript
+   const renderSectionByRenderType = (section: RenderableSection) => {
+     // Define template-specific overrides
+     const templateLayoutMap: Record<string, string> = {
+       'skills': 'simple-list', // Override default
+     };
+     
+     // Use override or default
+     const finalRenderType = templateLayoutMap[section.schemaId] || section.defaultRenderType;
+     
+     // Dispatch to atomic components
+     switch (finalRenderType) {
+       case 'simple-list':
+         return <SimpleListComponent items={section.items} />;
+       // ... other cases
+     }
+   };
+   ```
+
+3. **Register Template**
+   - Add to `templates` array in `src/types/resume.ts`
+   - Add case in `PrintableResume.tsx` switch statement
+
+### WYSIWYG PDF Export
+The PDF export system ensures pixel-perfect consistency between screen and print:
+
+1. **Unified Styling**: PDF export uses the exact same CSS classes as Canvas rendering
+2. **Font Consistency**: Both Canvas and PDF use the same font families and sizes
+3. **Layout Preservation**: Margins, padding, and spacing are identical
+4. **Dynamic Field Handling**: Empty fields are filtered at the data transformation layer
+
+### Best Practices
+
+1. **Template Design**
+   - Focus on layout and visual hierarchy
+   - Leverage existing atomic components
+   - Only create new atomic components for truly unique rendering needs
+
+2. **Field Rendering**
+   - Always check for field values before rendering
+   - Use optional chaining (`?.`) for safe access
+   - Filter empty fields at the data layer when possible
+
+3. **Responsive Design**
+   - Design templates to work well at A4 size (210mm × 297mm)
+   - Consider print margins (20mm top/bottom, 25mm left/right)
+   - Test both screen and PDF output 
