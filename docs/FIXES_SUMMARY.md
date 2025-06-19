@@ -1,5 +1,41 @@
 # 修复总结 - Schema Refactor & AI Enhancement
 
+## ✅ Schema 驱动架构重构
+
+**问题**: 旧的 AI 集成架构导致逻辑分散、代码重复和难以扩展。
+- **上下文构建逻辑混乱**: 每个需要 AI 功能的 UI 组件（`SectionEditor`, `AutocompleteTextarea`）都包含大量手动构建 AI 上下文的逻辑。
+- **高耦合**: UI 组件与 AI Flow 的 Prompt 结构紧密耦合。
+- **难以扩展**: 添加新的简历章节需要修改多个 UI 组件才能使其支持 AI 功能。
+
+**解决方案**:
+- **引入单一数据源**: 将 `SchemaRegistry` (`src/lib/schemaRegistry.ts`) 作为唯一的真实来源，集中管理数据结构、UI 行为和 AI 交互逻辑。
+- **依赖倒置**: UI 组件不再"告诉"系统如何构建上下文，而是"询问"`SchemaRegistry` 需要什么上下文。
+- **统一上下文构建**:
+  - 创建 `schemaRegistry.buildAIContext(payload)` 方法，该方法根据传入的任务（`improve`/`autocomplete`）和 ID，利用 Schema 定义自动构建结构化的上下文对象 (`StructuredAIContext`)。
+  - 创建 `schemaRegistry.stringifyResumeForReview(resumeData)` 方法，统一生成供评审的简历文本。
+- **重构 AI Flows**:
+  - 更新 `autocomplete-input.ts` 和 `improve-resume-section.ts`，使其输入 Schema 接收一个统一的、结构化的 `context` 对象。
+- **"无知"的 UI 组件**:
+  - 移除 `SectionEditor.tsx` 和 `AutocompleteTextarea.tsx` 中所有手动构建上下文的函数 (`build...Context...`)。
+  - UI 组件现在只负责创建 `AIContextPayload` 并调用 `schemaRegistry`。
+
+**核心优势**:
+- **可维护性**: AI 相关逻辑集中在一处，易于修改和维护。
+- **可扩展性**: 为新章节添加 AI 支持现在只需更新 `SchemaRegistry` 中的 Schema 定义和 Context Builders，**无需修改任何 UI 组件**。
+- **稳定性**: 结构化的上下文使 AI Prompt 更加稳定和可预测。
+- **代码简洁**: 大幅减少了 UI 组件中的重复代码和复杂逻辑。
+
+**修改文件**:
+- `src/lib/schemaRegistry.ts`: **核心**，实现了新的服务方法。
+- `src/types/schema.ts`: **核心**，增强了 `FieldSchema` 和 `SectionSchema` 定义。
+- `src/ai/flows/autocomplete-input.ts`: 已重构。
+- `src/ai/flows/improve-resume-section.ts`: 已重构。
+- `src/components/resume/AutocompleteTextarea.tsx`: 已重构。
+- `src/components/resume/SectionEditor.tsx`: 已重构。
+- `src/app/page.tsx`: 已重构，使用 `schemaRegistry.stringifyResumeForReview`。
+
+---
+
 ## 修复的问题
 
 ### 1. ✅ Handlebars Helper 错误修复

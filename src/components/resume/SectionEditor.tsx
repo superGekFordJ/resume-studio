@@ -242,7 +242,7 @@ export default function SectionEditor({
         userJobTitle: resumeData.personalDetails?.jobTitle || ''
       };
 
-    if (isPersonal) {
+      if (isPersonal) {
         // For personal details, use a simple context
         context.currentItemContext = `Personal Details Field: ${fieldName}`;
         context.otherSectionsContext = schemaRegistry.stringifyResumeForReview(resumeData);
@@ -263,13 +263,8 @@ export default function SectionEditor({
       const input: ImproveResumeSectionInput = { 
         resumeSection: textToImprove, 
         prompt: aiPrompt,
-        userJobTitle: context.userJobTitle,
-        currentItemContext: context.currentItemContext,
-        otherSectionsContext: context.otherSectionsContext,
-        sectionType: isPersonal ? 'personalDetailsField' : (localData && 'schemaId' in localData ? localData.schemaId : sectionType),
-        fieldId: fieldName,
-        // Keep enhanced context for better performance
-        enhancedContext: `${context.currentItemContext}\n\n${context.otherSectionsContext}`
+        context: context, // Use the structured context directly
+        sectionType: isPersonal ? 'personalDetailsField' : (localData && 'schemaId' in localData ? localData.schemaId : sectionType), // Keep for backward compatibility
       };
       
       const result = await improveResumeSection(input);
@@ -703,12 +698,15 @@ const AIFieldTextarea: React.FC<AIFieldTextareaProps> = ({
   placeholder,
   isAutocompleteEnabled,
 }) => {
+  // Extract field name from id for AutocompleteTextarea
+  const fieldName = id.split('_').pop() || label.toLowerCase();
   
   return (
     <div className="space-y-1">
       <Label htmlFor={id} className="block mb-1">{label}</Label>
       <AutocompleteTextarea
         id={id} 
+        name={fieldName} // Add name prop for context building
         value={value} 
         onValueChange={onValueChange} 
         
