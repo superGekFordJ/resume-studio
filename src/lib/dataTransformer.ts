@@ -66,10 +66,15 @@ function transformLegacySection(section: ResumeSection): RenderableSection | nul
     return { id: item.id, fields };
   });
 
+  // Get default render type from schemaRegistry for legacy sections
+  const schemaRegistry = SchemaRegistry.getInstance();
+  const schema = schemaRegistry.getSectionSchema(section.type);
+  
   return {
     id: section.id,
     title: section.title,
     schemaId: section.type, // Use type as schemaId for legacy sections
+    defaultRenderType: schema?.uiConfig?.defaultRenderType,
     items
   };
 }
@@ -79,11 +84,18 @@ function transformDynamicSection(section: DynamicResumeSection, schemaRegistry: 
   if (!schema) return null;
 
   const items: RenderableItem[] = section.items.map(item => {
-    const fields: RenderableField[] = schema.fields.map(field => ({
-      key: field.id,
-      label: field.label,
-      value: item.data[field.id] || ''
-    }));
+    const fields: RenderableField[] = schema.fields
+      .filter(field => {
+        const value = item.data[field.id];
+        // Only include fields that have actual values
+        return value !== undefined && value !== '' && value !== null && 
+               (Array.isArray(value) ? value.length > 0 : true);
+      })
+      .map(field => ({
+        key: field.id,
+        label: field.label,
+        value: item.data[field.id]
+      }));
     return { id: item.id, fields };
   });
 
@@ -91,6 +103,7 @@ function transformDynamicSection(section: DynamicResumeSection, schemaRegistry: 
     id: section.id,
     title: section.title,
     schemaId: section.schemaId,
+    defaultRenderType: schema.uiConfig?.defaultRenderType,
     items
   };
 } 

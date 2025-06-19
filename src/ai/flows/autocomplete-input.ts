@@ -69,10 +69,10 @@ Guidelines by section type:
 - For dynamic sections: Use the field type and schema hints to provide contextually appropriate suggestions
 
 Respond only with the suggested additional text to complete the input. Make it short and to the point.`,
-  model: 'googleai/gemini-2.5-flash-lite-preview-06-17', // Explicitly using the lighter model for faster completions
+  model: 'googleai/gemini-2.0-flash-lite', // Explicitly using the lighter model for faster completions
   config: {
     temperature: 0.3,
-    maxOutputTokens: 6000,
+    maxOutputTokens: 50,
     topP: 0.95,
   }
 });

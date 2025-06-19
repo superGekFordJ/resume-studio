@@ -50,6 +50,7 @@ export interface SectionSchema {
   };
   uiConfig?: {
     icon: string;
+    defaultRenderType?: string; // 默认的渲染类型（可被模板覆写）
     addButtonText?: string;
     itemDisplayTemplate?: string; // 如何显示列表项标题
     sortable?: boolean; // 是否支持拖拽排序
@@ -186,11 +187,12 @@ export const ADVANCED_SKILLS_SCHEMA: SectionSchema = {
   },
   uiConfig: {
     icon: 'Wand2',
+    defaultRenderType: 'badge-list',
     addButtonText: 'Add Skill Category',
     itemDisplayTemplate: '{category}: {skills}',
     sortable: true,
     collapsible: true
-    }
+  }
 };
 
 // New shared types for AI context payloads and structured context
@@ -225,6 +227,7 @@ export interface RenderableSection {
   id: string;
   title: string;
   schemaId: string;
+  defaultRenderType?: string; // 从schema中的uiConfig继承的默认渲染类型
   items: RenderableItem[];
 }
 
@@ -316,6 +319,7 @@ export const PROJECTS_SCHEMA: SectionSchema = {
   },
   uiConfig: {
     icon: 'Code',
+    defaultRenderType: 'timeline',
     addButtonText: 'Add Project',
     itemDisplayTemplate: '{name} - {technologies}',
     sortable: true
