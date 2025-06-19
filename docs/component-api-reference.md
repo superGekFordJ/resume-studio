@@ -174,21 +174,30 @@ interface SidebarNavigatorProps {
 
 ### 6. AutocompleteTextarea
 
-支持 AI 自动补全的文本输入组件。
+支持 AI 自动补全的 Schema 驱动文本输入组件。
 
 #### Props
 ```typescript
 interface AutocompleteTextareaProps {
-  value: string;                                    // 当前值
-  onChange: (value: string) => void;                // 值变化回调
-  placeholder?: string;                             // 占位符文本
-  className?: string;                               // CSS类名
-  isAutocompleteEnabled?: boolean;                  // 是否启用自动补全
-  userJobTitle?: string;                            // 用户职位（用于AI上下文）
-  sectionType?: string;                             // 章节类型（用于AI上下文）
-  currentItemContext?: string;                      // 当前项目上下文
-  otherSectionsContext?: string;                    // 其他章节上下文
-  rows?: number;                                    // 文本区域行数
+  value: string;
+  onValueChange: (value: string) => void;
+  isAutocompleteEnabledGlobally?: boolean;
+  // Context-related props (now passed through for SchemaRegistry)
+  userJobTitle?: string;
+  sectionType?: string; // Schema ID for dynamic sections
+  currentItem?: any;
+  allResumeSections?: any[];
+  currentSectionId?: string;
+  itemId?: string;
+  name?: string; // Field ID
+  // Optional UI props
+  placeholder?: string;
+  className?: string;
+  rows?: number;
+  // AI suggestion handling
+  forcedSuggestion: string | null;
+  onForcedSuggestionAccepted: () => void;
+  onForcedSuggestionRejected: () => void;
 }
 ```
 
@@ -196,21 +205,22 @@ interface AutocompleteTextareaProps {
 ```tsx
 <AutocompleteTextarea
   value={description}
-  onChange={setDescription}
-  placeholder="描述你的工作经历..."
-  isAutocompleteEnabled={true}
-  userJobTitle="软件工程师"
-  sectionType="experience"
-  rows={4}
+  onValueChange={setDescription}
+  placeholder="Describe your work experience..."
+  isAutocompleteEnabledGlobally={true}
+  userJobTitle="Software Engineer"
+  sectionType="experience" // or schemaId for dynamic sections
+  name="description" // field.id
+  itemId={item.id}
+  // ...other context props
 />
 ```
 
 #### 特性
-- 2秒防抖触发自动补全
+- 由 `SchemaRegistry` 驱动的上下文感知自动补全
 - Tab键接受建议
 - Escape键取消建议
 - 加载状态指示
-- 错误处理
 
 ---
 
@@ -393,44 +403,48 @@ type SectionType = 'summary' | 'experience' | 'education' | 'skills' | 'customTe
 type SectionItem = ExperienceEntry | EducationEntry | SkillEntry | CustomTextEntry;
 ```
 
-### 2. AI 接口类型
+### 2. AI 接口类型 (Schema-Driven)
 
 ```typescript
-// 自动补全输入
+// Autocomplete Input
 interface AutocompleteInputInput {
   inputText: string;
-  userJobTitle?: string;
+  context: {
+    currentItemContext: string;
+    otherSectionsContext: string;
+    userJobTitle?: string;
+  };
   sectionType?: string;
-  currentItemContext?: string;
-  otherSectionsContext?: string;
 }
 
-// 自动补全输出
+// Autocomplete Output
 interface AutocompleteInputOutput {
   completion: string;
 }
 
-// 内容改进输入
+// Content Improvement Input
 interface ImproveResumeSectionInput {
   resumeSection: string;
   prompt: string;
-  userJobTitle?: string;
+  context: {
+    currentItemContext: string;
+    otherSectionsContext: string;
+    userJobTitle?: string;
+  };
   sectionType?: string;
-  currentItemContext?: string;
-  otherSectionsContext?: string;
 }
 
-// 内容改进输出
+// Content Improvement Output
 interface ImproveResumeSectionOutput {
   improvedResumeSection: string;
 }
 
-// 简历评审输入
+// Resume Review Input
 interface ReviewResumeInput {
   resumeText: string;
 }
 
-// 简历评审输出
+// Resume Review Output
 interface ReviewResumeOutput {
   overallQuality: string;
   suggestions: string;
@@ -629,4 +643,7 @@ const ComponentWithErrorHandling = () => {
   
   return <ActualComponent onError={setError} />;
 };
-``` 
+```
+
+*最后更新: 2025-06-19*
+*文档版本: v2.0.0* 

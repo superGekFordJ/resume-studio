@@ -40,6 +40,95 @@ export class SchemaRegistry implements ISchemaRegistry {
     // 注册新的高级Schema
     this.registerSectionSchema(ADVANCED_SKILLS_SCHEMA);
     this.registerSectionSchema(PROJECTS_SCHEMA);
+    
+    // TEST: Register a completely new schema to verify extensibility
+    this.registerSectionSchema({
+      id: 'certifications',
+      name: 'Certifications',
+      type: 'list',
+      fields: [
+        {
+          id: 'name',
+          type: 'text',
+          label: 'Certification Name',
+          required: true,
+          aiHints: {
+            contextBuilders: {
+              improve: 'certification-name',
+              autocomplete: 'certification-name'
+            },
+            autocompleteEnabled: true,
+            priority: 'high'
+          }
+        },
+        {
+          id: 'issuer',
+          type: 'text',
+          label: 'Issuing Organization',
+          required: true,
+          aiHints: {
+            contextBuilders: {
+              improve: 'certification-issuer',
+              autocomplete: 'certification-issuer'
+            },
+            autocompleteEnabled: true,
+            priority: 'medium'
+          }
+        },
+        {
+          id: 'date',
+          type: 'date',
+          label: 'Date Obtained',
+          required: true
+        },
+        {
+          id: 'expiryDate',
+          type: 'date',
+          label: 'Expiry Date (if applicable)',
+          required: false
+        },
+        {
+          id: 'credentialId',
+          type: 'text',
+          label: 'Credential ID',
+          required: false
+        },
+        {
+          id: 'description',
+          type: 'textarea',
+          label: 'Description',
+          uiProps: {
+            rows: 2,
+            placeholder: 'Brief description of the certification and its relevance...'
+          },
+          aiHints: {
+            contextBuilders: {
+              improve: 'certification-description',
+              autocomplete: 'certification-description'
+            },
+            improvementPrompts: [
+              'Highlight relevance to target role',
+              'Add key skills covered',
+              'Mention if it\'s industry-recognized',
+              'Include renewal status'
+            ],
+            autocompleteEnabled: true,
+            priority: 'medium'
+          }
+        }
+      ],
+      aiContext: {
+        sectionSummaryBuilder: 'certifications-summary',
+        itemSummaryBuilder: 'certifications-item',
+        batchImprovementSupported: true
+      },
+      uiConfig: {
+        icon: 'Award',
+        addButtonText: 'Add Certification',
+        itemDisplayTemplate: '{name} - {issuer}',
+        sortable: true
+      }
+    });
   }
 
   // 初始化上下文构建器
@@ -180,6 +269,31 @@ export class SchemaRegistry implements ISchemaRegistry {
     this.registerContextBuilder('projects-item', (data, allData) => {
       const tech = Array.isArray(data.technologies) ? data.technologies.join(', ') : data.technologies || '';
       return `Project: ${data.name}, Tech: ${tech}`;
+    });
+    
+    // Certifications context builders (for test schema)
+    this.registerContextBuilder('certification-name', (data, allData) => {
+      return `Certification: ${data.name || 'Unnamed Certification'}`;
+    });
+    
+    this.registerContextBuilder('certification-issuer', (data, allData) => {
+      return `Issuer: ${data.issuer || 'Unknown Issuer'}`;
+    });
+    
+    this.registerContextBuilder('certification-description', (data, allData) => {
+      return `Certification: ${data.name} from ${data.issuer}\nDescription: ${data.description || ''}`;
+    });
+    
+    this.registerContextBuilder('certifications-summary', (section, allData) => {
+      const certs = section.items?.map((item: any) => {
+        const itemData = item.data || item;
+        return `${itemData.name} (${itemData.issuer})`;
+      }).join(', ') || '';
+      return `## Certifications\n${certs}`;
+    });
+    
+    this.registerContextBuilder('certifications-item', (data, allData) => {
+      return `${data.name} from ${data.issuer}${data.date ? ` (${data.date})` : ''}`;
     });
   }
 
@@ -560,6 +674,150 @@ export class SchemaRegistry implements ISchemaRegistry {
       otherSectionsContext: otherSectionsContextParts.join('\n\n'),
       userJobTitle: resumeData.personalDetails?.jobTitle,
     };
+  }
+
+  // NEW: AI Service Methods - Unified interface for all AI operations
+  public async improveField(payload: {
+    resumeData: any;
+    sectionId: string;
+    itemId: string;
+    fieldId: string;
+    currentValue: string;
+    prompt: string;
+  }): Promise<string> {
+    // 1. Build context using buildAIContext
+    const context = this.buildAIContext({
+      resumeData: payload.resumeData,
+      task: 'improve',
+      sectionId: payload.sectionId,
+      fieldId: payload.fieldId,
+      itemId: payload.itemId
+    });
+    
+    // 2. Get field schema for additional hints
+    const section = payload.resumeData.sections.find((s: any) => s.id === payload.sectionId);
+    const schemaId = section?.schemaId || section?.type;
+    const schema = this.getSectionSchema(schemaId);
+    const field = schema?.fields.find(f => f.id === payload.fieldId);
+    
+    // 3. Import and call the AI Flow
+    const { improveResumeSection } = await import('@/ai/flows/improve-resume-section');
+    
+    const result = await improveResumeSection({
+      resumeSection: payload.currentValue,
+      prompt: payload.prompt,
+      context: context,
+      sectionType: schemaId
+    });
+    
+    if (!result.improvedResumeSection) {
+      throw new Error('Failed to get improvement from AI');
+    }
+    
+    return result.improvedResumeSection;
+  }
+
+  public async getAutocomplete(payload: {
+    resumeData: any;
+    sectionId: string;
+    itemId: string;
+    fieldId: string;
+    inputText: string;
+  }): Promise<string> {
+    // 1. Build context using buildAIContext
+    const context = this.buildAIContext({
+      resumeData: payload.resumeData,
+      task: 'autocomplete',
+      sectionId: payload.sectionId,
+      fieldId: payload.fieldId,
+      itemId: payload.itemId
+    });
+    
+    // 2. Get field schema for additional hints
+    const section = payload.resumeData.sections.find((s: any) => s.id === payload.sectionId);
+    const schemaId = section?.schemaId || section?.type;
+    const schema = this.getSectionSchema(schemaId);
+    const field = schema?.fields.find(f => f.id === payload.fieldId);
+    
+    // 3. Import and call the AI Flow
+    const { autocompleteInput } = await import('@/ai/flows/autocomplete-input');
+    
+    const result = await autocompleteInput({
+      inputText: payload.inputText,
+      context: context,
+      sectionType: schemaId
+    });
+    
+    return result.completion || '';
+  }
+
+  public async batchImproveSection(payload: {
+    resumeData: any;
+    sectionId: string;
+    prompt: string;
+  }): Promise<any[]> {
+    const section = payload.resumeData.sections.find((s: any) => s.id === payload.sectionId);
+    if (!section) throw new Error('Section not found');
+    
+    const schemaId = section.schemaId || section.type;
+    const schema = this.getSectionSchema(schemaId);
+    
+    if (!schema?.aiContext?.batchImprovementSupported) {
+      throw new Error('Batch improvement not supported for this section type');
+    }
+    
+    // Import and call the batch improvement flow
+    const { batchImproveSection } = await import('@/ai/flows/batch-improve-section');
+    
+    // Convert section data to the format expected by the AI flow
+    const sectionData: Record<string, any> = {};
+    if (section.items && Array.isArray(section.items)) {
+      section.items.forEach((item: any, index: number) => {
+        const itemData = item.data || item;
+        Object.keys(itemData).forEach(key => {
+          if (key !== 'id') {
+            sectionData[`item${index}_${key}`] = itemData[key];
+          }
+        });
+      });
+    }
+    
+    const result = await batchImproveSection({
+      sectionData: sectionData,
+      sectionType: schemaId,
+      improvementGoals: [payload.prompt],
+      userJobTitle: payload.resumeData.personalDetails?.jobTitle,
+      otherSectionsContext: this.stringifyResumeForReview(payload.resumeData)
+    });
+    
+    // Convert the improved data back to items array
+    const improvedItems: any[] = [];
+    const itemCount = section.items?.length || 0;
+    
+    for (let i = 0; i < itemCount; i++) {
+      const improvedItem: any = { id: section.items[i].id };
+      Object.keys(result.improvedSectionData).forEach(key => {
+        if (key.startsWith(`item${i}_`)) {
+          const fieldName = key.replace(`item${i}_`, '');
+          improvedItem[fieldName] = result.improvedSectionData[key];
+        }
+      });
+      improvedItems.push(improvedItem);
+    }
+    
+    return improvedItems;
+  }
+
+  public async reviewResume(resumeData: any): Promise<any> {
+    const { reviewResume } = await import('@/ai/flows/review-resume');
+    
+    const resumeText = this.stringifyResumeForReview(resumeData);
+    
+    const result = await reviewResume({
+      resumeText: resumeText
+    });
+    
+    return result;
   }
 
   // NEW: Resume Stringify Service for Review

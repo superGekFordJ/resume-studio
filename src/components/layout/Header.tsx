@@ -14,16 +14,6 @@ interface HeaderProps {
 }
 
 export default function Header({ onReviewResume, onExportPdf, onPrint }: HeaderProps) {
-  const handlePrint = async () => {
-    try {
-      const { printResume } = await import('@/lib/pdfExport');
-      printResume();
-    } catch (error) {
-      console.error('Print error:', error);
-      // Fallback to browser print
-      window.print();
-    }
-  };
 
   return (
     <header className="bg-card border-b sticky top-0 z-40 no-print">
@@ -53,7 +43,7 @@ export default function Header({ onReviewResume, onExportPdf, onPrint }: HeaderP
                 <Download className="mr-2 h-4 w-4" />
                 Download PDF
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={onPrint || handlePrint}>
+              <DropdownMenuItem onClick={onPrint}>
                 <Printer className="mr-2 h-4 w-4" />
                 Print Resume
               </DropdownMenuItem>

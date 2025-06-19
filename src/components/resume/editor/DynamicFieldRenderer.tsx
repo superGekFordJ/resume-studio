@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { FieldSchema } from '@/types/schema';
-import AutocompleteTextarea from './AutocompleteTextarea';
+import AutocompleteTextarea from '@/components/resume/ui/AutocompleteTextarea';
 import type { SectionItem, ResumeSection } from '@/types/resume';
 import type { DynamicResumeSection } from '@/types/schema';
 
@@ -31,6 +31,10 @@ interface DynamicFieldRendererProps {
   className?: string;
   // NEW: Item ID for SchemaRegistry context building
   itemId?: string;
+  // NEW: SchemaRegistry and IDs for AI operations
+  schemaRegistry?: any; // Using any to avoid circular dependency
+  sectionId?: string;
+  fieldId?: string;
 }
 
 export default function DynamicFieldRenderer({
@@ -46,8 +50,11 @@ export default function DynamicFieldRenderer({
   isImproving = false,
   className,
   itemId,
+  schemaRegistry,
+  sectionId,
+  fieldId,
 }: DynamicFieldRendererProps) {
-  const fieldId = field.id;
+  const localFieldId = field.id;
   const isRequired = field.required || false;
   const aiEnabled = field.aiHints?.autocompleteEnabled !== false && isAutocompleteEnabled;
 
@@ -59,7 +66,7 @@ export default function DynamicFieldRenderer({
       case 'url':
         return (
           <Input
-            id={fieldId}
+            id={localFieldId}
             type={field.type === 'text' ? 'text' : field.type}
             value={value || ''}
             onChange={(e) => onChange(e.target.value)}
@@ -73,7 +80,7 @@ export default function DynamicFieldRenderer({
       case 'date':
         return (
           <Input
-            id={fieldId}
+            id={localFieldId}
             type="date"
             value={value || ''}
             onChange={(e) => onChange(e.target.value)}
@@ -105,7 +112,7 @@ export default function DynamicFieldRenderer({
         } else {
           return (
             <textarea
-              id={fieldId}
+              id={localFieldId}
               value={value || ''}
               onChange={(e) => onChange(e.target.value)}
               placeholder={field.uiProps?.placeholder}
@@ -277,7 +284,7 @@ export default function DynamicFieldRenderer({
       default:
         return (
           <Input
-            id={fieldId}
+            id={localFieldId}
             value={value || ''}
             onChange={(e) => onChange(e.target.value)}
             placeholder={field.uiProps?.placeholder}
@@ -289,7 +296,7 @@ export default function DynamicFieldRenderer({
 
   return (
     <div className="space-y-2">
-      <Label htmlFor={fieldId} className="text-sm font-medium">
+      <Label htmlFor={localFieldId} className="text-sm font-medium">
         {field.label}
         {isRequired && <span className="text-destructive ml-1">*</span>}
       </Label>
