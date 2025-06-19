@@ -125,104 +125,6 @@ export default function AutocompleteTextarea({
     }
   }, [sectionType, currentSectionId, allResumeSections, userJobTitle, props.name, props.id, itemId, extractItemIdFromUniqueFieldId]);
 
-  // LEGACY: Keep existing context building methods for backward compatibility
-  const buildCurrentItemContext = useCallback((): string | undefined => {
-    if (!sectionType) return undefined;
-
-    if (sectionType === 'personalDetailsField' && currentItem && 'fieldName' in currentItem) {
-        return `Field: ${(currentItem as { fieldName: string }).fieldName}`;
-    }
-    if (!currentItem || !('id' in currentItem)) return undefined;
-    
-    const fieldName = props.name || 'content'; // Default to 'content' or use the field name from props if available
-
-    switch (sectionType) {
-      case 'experience':
-        const exp = currentItem as ExperienceEntry;
-        return `Job: ${exp.jobTitle || 'Untitled Job'} at ${exp.company || 'Unnamed Company'}. Current content of field being edited ('${fieldName}'): ${exp[fieldName as keyof ExperienceEntry]?.toString().substring(0,100) || ''}...`;
-      case 'education':
-        const edu = currentItem as EducationEntry;
-        return `Degree: ${edu.degree || 'Untitled Degree'} from ${edu.institution || 'Unnamed Institution'}. Current content of field being edited ('${fieldName}'): ${edu[fieldName as keyof EducationEntry]?.toString().substring(0,100) || ''}...`;
-      case 'skills':
-        const skill = currentItem as SkillEntry;
-        return `Skill: ${skill.name || 'Unnamed Skill'}. Current content of field being edited ('${fieldName}'): ${skill[fieldName as keyof SkillEntry]?.toString().substring(0,100) || ''}...`;
-      case 'summary':
-      case 'customText':
-        const custom = currentItem as CustomTextEntry;
-        return `Current content of field being edited ('${fieldName}'): ${custom[fieldName as keyof CustomTextEntry]?.toString().substring(0,150) || ''}...`;
-      default:
-        return undefined;
-    }
-  }, [sectionType, currentItem, props.name]);
-
-  const buildOtherSectionsContext = useCallback((): string | undefined => {
-    if (!allResumeSections || allResumeSections.length === 0) return undefined;
-    
-    let contextStr = "";
-    allResumeSections.forEach(sec => {
-      if (sec.id === currentSectionId) return; 
-      if (!sec.visible) return;
-
-      // Check if this is a dynamic section or legacy section
-      if ('schemaId' in sec) {
-        // Dynamic section
-        const dynamicSec = sec as DynamicResumeSection;
-        contextStr += `Other Section: ${dynamicSec.title} (Dynamic Schema: ${dynamicSec.schemaId})\n`;
-        if (dynamicSec.items && dynamicSec.items.length > 0) {
-          // Show all items for dynamic sections, not just the first one
-          dynamicSec.items.forEach((item: any, index: number) => {
-            if (item && item.data) {
-              switch (dynamicSec.schemaId) {
-                case 'advanced-skills':
-                  contextStr += `  Skills Category ${index + 1}: ${item.data.category || 'N/A'} - ${Array.isArray(item.data.skills) ? item.data.skills.join(', ') : item.data.skills || 'N/A'}\n`;
-                  break;
-                case 'projects':
-                  // Don't truncate description for better context
-                  contextStr += `  Project ${index + 1}: ${item.data.name || 'Unnamed'} - ${item.data.description || 'No description'}\n`;
-                  if (item.data.technologies && Array.isArray(item.data.technologies)) {
-                    contextStr += `    Technologies: ${item.data.technologies.join(', ')}\n`;
-                  }
-                  break;
-                default:
-                  // Generic dynamic section preview - show more fields
-                  const preview = Object.entries(item.data).slice(0, 3).map(([key, value]) => {
-                    if (typeof value === 'string' && value.length > 100) {
-                      return `${key}: ${value.substring(0, 100)}...`;
-                    }
-                    return `${key}: ${value}`;
-                  }).join(', ');
-                  contextStr += `  Item ${index + 1}: ${preview}\n`;
-                  break;
-              }
-            }
-          });
-        }
-      } else {
-        // Legacy section
-        const legacySec = sec as ResumeSection;
-        contextStr += `Other Section: ${legacySec.title} (Type: ${legacySec.type})\n`;
-        if (legacySec.type === 'summary' && legacySec.items.length > 0) {
-           const content = (legacySec.items[0] as CustomTextEntry).content;
-           if (content) contextStr += `  Content: ${content.substring(0, 200)}...\n`;
-        } else if (legacySec.type === 'experience' && legacySec.items.length > 0) {
-          const expPreview = legacySec.items.slice(0,2).map((e: any) => `${(e as ExperienceEntry).jobTitle} at ${(e as ExperienceEntry).company}: ${(e as ExperienceEntry).description.substring(0,150)}...`).join('; ');
-          if (expPreview) contextStr += `  Recent Experience: ${expPreview}\n`;
-        } else if (legacySec.type === 'education' && legacySec.items.length > 0) {
-          const eduPreview = legacySec.items.slice(0,2).map((e: any) => `${(e as EducationEntry).degree} at ${(e as EducationEntry).institution}`).join('; ');
-          if (eduPreview) contextStr += `  Recent Education: ${eduPreview}\n`;
-        } else if (legacySec.type === 'skills' && legacySec.items.length > 0) {
-          const skillNames = legacySec.items.slice(0, 8).map((s: any) => (s as SkillEntry).name).join(', ');
-          if (skillNames) contextStr += `  Skills: ${skillNames}\n`;
-        } else if (legacySec.type === 'customText' && legacySec.items.length > 0 && !legacySec.isList) {
-           const content = (legacySec.items[0] as CustomTextEntry).content;
-           if (content) contextStr += `  "${legacySec.title}" Content: ${content.substring(0, 200)}...\n`;
-        }
-      }
-    });
-    return contextStr.trim() ? contextStr : undefined;
-  }, [allResumeSections, currentSectionId]);
-
-
   const fetchAISuggestion = useCallback(async (text: string) => {
     if (forcedSuggestion) return; 
     if (!isAutocompleteEnabledGlobally || sectionType === 'personalDetailsField') {
@@ -230,33 +132,28 @@ export default function AutocompleteTextarea({
       return;
     }
     
-    if (text.trim().length < 0 && sectionType !== 'summary' && sectionType !== 'customText') { 
+    if (text.trim().length === 0 && sectionType !== 'summary' && sectionType !== 'customText') { 
       setAiSuggestion(null);
       return;
     }
 
     setIsLoading(true);
     try {
-      const currentItemContext = buildCurrentItemContext();
-      const otherSectionsSummary = buildOtherSectionsContext();
+      // Use the new centralized context building
+      const context = buildStructuredContext();
+      
+      if (!context) {
+        console.warn('Unable to build context for autocomplete');
+        setAiSuggestion(null);
+        return;
+      }
 
-      // Enhanced input for dynamic sections
       const input: AutocompleteInputInput = {
         inputText: text,
-        userJobTitle,
-        sectionType: sectionType,
-        currentItemContext,
-        otherSectionsContext: otherSectionsSummary,
-        // Add enhanced context for dynamic sections
-        fieldId: props.name, // Use the field name as fieldId if available
-        currentItemData: currentItem && typeof currentItem === 'object' && 'data' in currentItem 
-          ? (currentItem as any).data 
-          : currentItem,
-        allResumeData: allResumeSections ? {
-          sections: allResumeSections,
-          personalDetails: userJobTitle ? { jobTitle: userJobTitle } : {}, // Include available personal details
-        } : undefined,
+        context: context, // Use the structured context directly
+        sectionType: sectionType, // Keep for backward compatibility
       };
+
       const result = await autocompleteInput(input);
 
       if (result.completion && result.completion.trim().length > 0) {
@@ -277,8 +174,7 @@ export default function AutocompleteTextarea({
     } finally {
       setIsLoading(false);
     }
-  }, [userJobTitle, sectionType, buildCurrentItemContext, buildOtherSectionsContext, forcedSuggestion, isAutocompleteEnabledGlobally, currentItem, allResumeSections, props.name]);
-
+  }, [sectionType, buildStructuredContext, forcedSuggestion, isAutocompleteEnabledGlobally]);
 
   const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValueFromTyping = event.target.value;

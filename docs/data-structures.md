@@ -142,7 +142,11 @@ export interface FieldSchema {
   required?: boolean;                   // 是否必填
   validation?: ValidationRule[];        // 验证规则
   aiHints?: {
-    contextBuilder?: string;            // 如何为AI构建上下文的构建器ID
+    // New: Structured context builders for different AI tasks
+    contextBuilders?: {
+      improve?: string;      // Builder ID for the 'improve' task
+      autocomplete?: string; // Builder ID for the 'autocomplete' task
+    };
     improvementPrompts?: string[];      // 预设的改进提示
     autocompleteEnabled?: boolean;      // 是否启用自动补全
     priority?: 'high' | 'medium' | 'low'; // AI处理优先级
@@ -166,8 +170,10 @@ export interface SectionSchema {
   type: 'single' | 'list';              // 单项内容 vs 列表内容
   fields: FieldSchema[];                // 字段定义
   aiContext?: {
-    summaryBuilder: string;             // 如何为其他章节构建此章节的摘要的构建器ID
-    itemContextBuilder: string;         // 如何为AI构建单个条目的上下文的构建器ID
+    // New: Builder ID to summarize the entire section for review or other sections' context
+    sectionSummaryBuilder?: string; 
+    // New: Builder ID to summarize a single item in a list
+    itemSummaryBuilder?: string;    
     batchImprovementSupported?: boolean; // 是否支持批量改进
   };
   uiConfig?: {
@@ -190,10 +196,30 @@ export interface ISchemaRegistry {
   getAllSectionSchemas(): SectionSchema[];
   registerContextBuilder(id: string, builder: ContextBuilderFunction): void;
   buildContext(builderId: string, data: any, allData: any): string;
+  // New: Main method to build structured AI context
+  buildAIContext(payload: AIContextPayload): StructuredAIContext;
+  // New: Method to stringify the entire resume for review
+  stringifyResumeForReview(resumeData: any): string;
 }
 
 // ContextBuilderFunction 定义了用于构建 AI 上下文的函数签名
 export type ContextBuilderFunction = (data: any, allData: any) => string;
+
+// New: Payload for building AI context
+export interface AIContextPayload {
+  resumeData: any;
+  task: 'improve' | 'autocomplete';
+  sectionId: string;
+  fieldId: string;
+  itemId?: string;
+}
+
+// New: Structured context object returned by the registry
+export interface StructuredAIContext {
+  currentItemContext: string;
+  otherSectionsContext: string;
+  userJobTitle?: string;
+}
 ```
 
 ### 4. 预定义Schema示例
@@ -214,7 +240,10 @@ const ADVANCED_SKILLS_SCHEMA: SectionSchema = {
         options: ['Technical Skills', 'Soft Skills', 'Languages', 'Certifications', 'Tools & Platforms']
       },
       aiHints: {
-        contextBuilder: 'skill-category',
+        contextBuilders: {
+          improve: 'skill-category',
+          autocomplete: 'skill-category'
+        },
         autocompleteEnabled: false,
         priority: 'high'
       }
@@ -225,7 +254,10 @@ const ADVANCED_SKILLS_SCHEMA: SectionSchema = {
       label: 'Skills',
       required: true,
       aiHints: {
-        contextBuilder: 'skill-list',
+        contextBuilders: {
+          improve: 'skill-list',
+          autocomplete: 'skill-list'
+        },
         improvementPrompts: [
           'Add industry-relevant skills',
           'Include proficiency levels',
@@ -244,7 +276,10 @@ const ADVANCED_SKILLS_SCHEMA: SectionSchema = {
         options: ['Beginner', 'Intermediate', 'Advanced', 'Expert']
       },
       aiHints: {
-        contextBuilder: 'skill-proficiency',
+        contextBuilders: {
+          improve: 'skill-proficiency',
+          autocomplete: 'skill-proficiency'
+        },
         priority: 'medium'
       } // 新增 AI 提示
     },
@@ -256,14 +291,17 @@ const ADVANCED_SKILLS_SCHEMA: SectionSchema = {
         { type: 'pattern', value: '^[0-9]+$', message: 'Must be a number' }
       ],
       aiHints: {
-        contextBuilder: 'skill-experience',
+        contextBuilders: {
+          improve: 'skill-experience',
+          autocomplete: 'skill-experience'
+        },
         priority: 'low'
       } // 新增 AI 提示
     }
   ],
   aiContext: {
-    summaryBuilder: 'advanced-skills-summary',
-    itemContextBuilder: 'advanced-skills-item',
+    sectionSummaryBuilder: 'advanced-skills-summary',
+    itemSummaryBuilder: 'advanced-skills-item',
     batchImprovementSupported: true
   },
   uiConfig: {
@@ -289,7 +327,10 @@ const PROJECTS_SCHEMA: SectionSchema = {
       label: 'Project Name',
       required: true,
       aiHints: {
-        contextBuilder: 'project-name',
+        contextBuilders: {
+          improve: 'project-name',
+          autocomplete: 'project-name'
+        },
         autocompleteEnabled: true,
         priority: 'high'
       }
@@ -304,7 +345,10 @@ const PROJECTS_SCHEMA: SectionSchema = {
         placeholder: 'Describe the project, your role, and key achievements...'
       },
       aiHints: {
-        contextBuilder: 'project-description',
+        contextBuilders: {
+          improve: 'project-description',
+          autocomplete: 'project-description'
+        },
         improvementPrompts: [
           'Add quantifiable results',
           'Highlight technical challenges',
@@ -320,7 +364,10 @@ const PROJECTS_SCHEMA: SectionSchema = {
       type: 'multiselect',
       label: 'Technologies Used',
       aiHints: {
-        contextBuilder: 'project-technologies',
+        contextBuilders: {
+          improve: 'project-technologies',
+          autocomplete: 'project-technologies'
+        },
         autocompleteEnabled: true,
         priority: 'medium'
       } // 新增 AI 提示
@@ -338,7 +385,10 @@ const PROJECTS_SCHEMA: SectionSchema = {
       type: 'date',
       label: 'Start Date',
       aiHints: {
-        contextBuilder: 'project-start-date',
+        contextBuilders: {
+          improve: 'project-start-date',
+          autocomplete: 'project-start-date'
+        },
         priority: 'low'
       } // 新增 AI 提示
     },
@@ -350,14 +400,17 @@ const PROJECTS_SCHEMA: SectionSchema = {
         placeholder: 'Present'
       },
       aiHints: {
-        contextBuilder: 'project-end-date',
+        contextBuilders: {
+          improve: 'project-end-date',
+          autocomplete: 'project-end-date'
+        },
         priority: 'low'
       } // 新增 AI 提示
     }
   ],
   aiContext: {
-    summaryBuilder: 'projects-summary',
-    itemContextBuilder: 'projects-item',
+    sectionSummaryBuilder: 'projects-summary',
+    itemSummaryBuilder: 'projects-item',
     batchImprovementSupported: true
   },
   uiConfig: {
@@ -407,111 +460,34 @@ if (isLegacyResumeData(resumeData)) {
 
 ## AI 接口规范
 
-### 1. 增强的自动补全接口
+所有 AI Flow 的输入都已被重构，以接收一个结构化的 `context` 对象，而不是多个零散的字符串。
 
-#### 输入参数
+### 1. `autocomplete` 和 `improve` 接口
+
+#### 输入参数 (Zod Schema)
 ```typescript
-interface AutocompleteInputInput {
-  inputText: string;                    // 用户输入的文本
-  userJobTitle?: string;                // 用户目标职位
-  sectionType?: string;                 // 章节类型或动态schema ID
-  currentItemContext?: string;          // 当前项目上下文 (legacy support)
-  otherSectionsContext?: string;        // 其他章节上下文
-  // 增强的动态章节支持
-  fieldId?: string;                     // 特定字段ID
-  currentItemData?: Record<string, any>; // 当前项目完整数据
-  allResumeData?: Record<string, any>;  // 完整简历数据
-  enhancedContext?: string;             // 预构建的增强上下文，用于解决 Handlebars helper 问题
-}
+const InputSchema = z.object({
+  // ... other fields like inputText or prompt
+  
+  context: z.object({
+    currentItemContext: z.string(),
+    otherSectionsContext: z.string(),
+    userJobTitle: z.string().optional(),
+  }).describe('Structured context from SchemaRegistry'),
+
+  sectionType: z.string().optional(), 
+});
 ```
 
-### 2. 增强的内容改进接口
+### 2. `review` 接口
 
-#### 输入参数
+`review` 接口保持不变，但其输入字符串现在由 `schemaRegistry.stringifyResumeForReview(resumeData)` 生成。
+
+#### 输入参数 (Zod Schema)
 ```typescript
-interface ImproveResumeSectionInput {
-  resumeSection: string;                // 待改进的章节内容
-  prompt: string;                       // 改进指令
-  userJobTitle?: string;                // 用户目标职位
-  sectionType?: string;                 // 章节类型或动态schema ID
-  currentItemContext?: string;          // 当前项目上下文 (legacy support)
-  otherSectionsContext?: string;        // 其他章节上下文
-  // 增强的动态章节支持
-  fieldId?: string;                     // 特定字段ID
-  currentItemData?: Record<string, any>; // 当前项目完整数据
-  allResumeData?: Record<string, any>;  // 完整简历数据
-  enhancedContext?: string;             // 预构建的增强上下文，用于解决 Handlebars helper 问题
-}
-```
-
-### 3. 批量改进接口
-
-#### 输入参数
-```typescript
-interface BatchImproveSectionInput {
-  sectionData: Record<string, any>;     // 完整章节数据
-  sectionType: string;                  // 章节类型/schema ID
-  improvementGoals: string[];           // 改进目标列表
-  userJobTitle?: string;                // 用户目标职位
-  otherSectionsContext?: string;        // 其他章节上下文
-  allResumeData?: Record<string, any>;  // 完整的简历数据 (包含个人信息和所有章节)
-  priorityFields?: string[];            // 优先改进的字段
-}
-```
-
-#### 输出结果
-```typescript
-interface BatchImproveSectionOutput {
-  improvedSectionData: Record<string, any>; // 改进后的章节数据
-  improvementSummary: string;               // 改进摘要
-  fieldChanges: Array<{
-    fieldId: string;
-    originalValue: string;
-    improvedValue: string;
-    changeReason: string;
-  }>;
-}
-```
-
-### 4. 综合简历分析接口
-
-#### 输入参数
-```typescript
-interface ComprehensiveResumeAnalysisInput {
-  resumeData: Record<string, any>;      // 完整简历数据
-  analysisType: 'ats-optimization' | 'content-enhancement' | 'structure-improvement' | 'industry-alignment';
-  targetRole?: string;                  // 目标职位
-  industryContext?: string;             // 目标行业
-  experienceLevel?: 'entry' | 'mid' | 'senior' | 'executive';
-}
-```
-
-#### 输出结果
-```typescript
-interface ComprehensiveResumeAnalysisOutput {
-  overallScore: number;                 // 整体评分 (0-100)
-  sectionScores: Record<string, number>; // 各章节评分
-  priorityImprovements: Array<{
-    section: string;
-    field?: string;
-    issue: string;
-    suggestion: string;
-    impact: 'high' | 'medium' | 'low';
-    effort: 'low' | 'medium' | 'high';
-  }>;
-  atsCompatibility: {
-    score: number;
-    issues: string[];
-    recommendations: string[];
-  };
-  contentAnalysis: {
-    strengthsCount: number;
-    weaknessesCount: number;
-    keywordDensity: Record<string, number>;
-    readabilityScore: number;
-  };
-  nextSteps: string[];
-}
+const ReviewResumeInputSchema = z.object({
+  resumeText: z.string().describe('The complete text content of the resume to be reviewed.'),
+});
 ```
 
 ## 使用示例
