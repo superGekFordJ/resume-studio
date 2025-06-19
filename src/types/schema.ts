@@ -13,7 +13,12 @@ export interface FieldSchema {
   required?: boolean;
   validation?: ValidationRule[];
   aiHints?: {
-    contextBuilder?: string; // 如何为AI构建上下文
+    // REMOVE: contextBuilder?: string; // 如何为AI构建上下文
+    // ADD: Structured context builders for different AI tasks
+    contextBuilders?: {
+      improve?: string;      // Builder ID for the 'improve' task
+      autocomplete?: string; // Builder ID for the 'autocomplete' task
+    };
     improvementPrompts?: string[]; // 预设的改进提示
     autocompleteEnabled?: boolean;
     priority?: 'high' | 'medium' | 'low'; // AI处理优先级
@@ -33,8 +38,12 @@ export interface SectionSchema {
   type: 'single' | 'list'; // 单项内容 vs 列表内容
   fields: FieldSchema[];
   aiContext?: {
-    summaryBuilder: string; // 如何为其他章节构建此章节的摘要
-    itemContextBuilder: string; // 如何为AI构建单个条目的上下文
+    // RENAME summaryBuilder for clarity
+    sectionSummaryBuilder?: string; // Builder ID to summarize the entire section
+    // ADD:
+    itemSummaryBuilder?: string;    // Builder ID to summarize a single item in a list
+    // KEEP for backward compatibility
+    itemContextBuilder?: string; // 如何为AI构建单个条目的上下文 (deprecated, use itemSummaryBuilder)
     batchImprovementSupported?: boolean; // 是否支持批量改进
   };
   uiConfig?: {
@@ -109,7 +118,10 @@ export const ADVANCED_SKILLS_SCHEMA: SectionSchema = {
         options: ['Technical Skills', 'Soft Skills', 'Languages', 'Certifications', 'Tools & Platforms']
       },
       aiHints: {
-        contextBuilder: 'skill-category',
+        contextBuilders: {
+          improve: 'skill-category',
+          autocomplete: 'skill-category'
+        },
         autocompleteEnabled: false,
         priority: 'high'
       }
@@ -120,7 +132,10 @@ export const ADVANCED_SKILLS_SCHEMA: SectionSchema = {
       label: 'Skills',
       required: true,
       aiHints: {
-        contextBuilder: 'skill-list',
+        contextBuilders: {
+          improve: 'skill-list',
+          autocomplete: 'skill-list'
+        },
         improvementPrompts: [
           'Add industry-relevant skills',
           'Include proficiency levels',
@@ -139,7 +154,10 @@ export const ADVANCED_SKILLS_SCHEMA: SectionSchema = {
         options: ['Beginner', 'Intermediate', 'Advanced', 'Expert']
       },
       aiHints: {
-        contextBuilder: 'skill-proficiency',
+        contextBuilders: {
+          improve: 'skill-proficiency',
+          autocomplete: 'skill-proficiency'
+        },
         priority: 'medium'
       }
     },
@@ -151,14 +169,17 @@ export const ADVANCED_SKILLS_SCHEMA: SectionSchema = {
         { type: 'pattern', value: '^[0-9]+$', message: 'Must be a number' }
       ],
       aiHints: {
-        contextBuilder: 'skill-experience',
+        contextBuilders: {
+          improve: 'skill-experience',
+          autocomplete: 'skill-experience'
+        },
         priority: 'low'
       }
     }
   ],
   aiContext: {
-    summaryBuilder: 'advanced-skills-summary',
-    itemContextBuilder: 'advanced-skills-item',
+    sectionSummaryBuilder: 'advanced-skills-summary',
+    itemSummaryBuilder: 'advanced-skills-item',
     batchImprovementSupported: true
   },
   uiConfig: {
@@ -167,8 +188,24 @@ export const ADVANCED_SKILLS_SCHEMA: SectionSchema = {
     itemDisplayTemplate: '{category}: {skills}',
     sortable: true,
     collapsible: true
-  }
+    }
 };
+
+// New shared types for AI context payloads and structured context
+export interface AIContextPayload {
+  resumeData: any; // Use `any` for now to support legacy and dynamic data
+  task: 'improve' | 'autocomplete';
+  sectionId: string;
+  fieldId: string;
+  itemId?: string; // Optional, as some sections are not lists
+}
+
+export interface StructuredAIContext {
+  currentItemContext: string;
+  otherSectionsContext: string;
+  // Add other relevant top-level context if needed
+  userJobTitle?: string;
+}
 
 // 项目经历Schema示例
 export const PROJECTS_SCHEMA: SectionSchema = {
@@ -182,7 +219,10 @@ export const PROJECTS_SCHEMA: SectionSchema = {
       label: 'Project Name',
       required: true,
       aiHints: {
-        contextBuilder: 'project-name',
+        contextBuilders: {
+          improve: 'project-name',
+          autocomplete: 'project-name'
+        },
         autocompleteEnabled: true,
         priority: 'high'
       }
@@ -197,7 +237,10 @@ export const PROJECTS_SCHEMA: SectionSchema = {
         placeholder: 'Describe the project, your role, and key achievements...'
       },
       aiHints: {
-        contextBuilder: 'project-description',
+        contextBuilders: {
+          improve: 'project-description',
+          autocomplete: 'project-description'
+        },
         improvementPrompts: [
           'Add quantifiable results',
           'Highlight technical challenges solved',
@@ -213,7 +256,10 @@ export const PROJECTS_SCHEMA: SectionSchema = {
       type: 'multiselect',
       label: 'Technologies Used',
       aiHints: {
-        contextBuilder: 'project-technologies',
+        contextBuilders: {
+          improve: 'project-technologies',
+          autocomplete: 'project-technologies'
+        },
         autocompleteEnabled: true,
         priority: 'medium'
       }
@@ -238,8 +284,8 @@ export const PROJECTS_SCHEMA: SectionSchema = {
     }
   ],
   aiContext: {
-    summaryBuilder: 'projects-summary',
-    itemContextBuilder: 'projects-item',
+    sectionSummaryBuilder: 'projects-summary',
+    itemSummaryBuilder: 'projects-item',
     batchImprovementSupported: true
   },
   uiConfig: {

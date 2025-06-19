@@ -29,6 +29,8 @@ interface DynamicFieldRendererProps {
   onImproveField?: (fieldId: string, currentValue: string) => void;
   isImproving?: boolean;
   className?: string;
+  // NEW: Item ID for SchemaRegistry context building
+  itemId?: string;
 }
 
 export default function DynamicFieldRenderer({
@@ -43,6 +45,7 @@ export default function DynamicFieldRenderer({
   onImproveField,
   isImproving = false,
   className,
+  itemId,
 }: DynamicFieldRendererProps) {
   const fieldId = field.id;
   const isRequired = field.required || false;
@@ -96,6 +99,7 @@ export default function DynamicFieldRenderer({
               isAutocompleteEnabledGlobally={isAutocompleteEnabled}
               className={className}
               name={field.id} // Pass field ID as name for context building
+              itemId={itemId} // NEW: Pass itemId for SchemaRegistry context building
             />
           );
         } else {

@@ -7,7 +7,8 @@ import { cn } from "@/lib/utils";
 import { autocompleteInput, AutocompleteInputInput } from '@/ai/flows/autocomplete-input';
 import { Loader2 } from 'lucide-react';
 import { SectionType, SectionItem, ExperienceEntry, EducationEntry, SkillEntry, CustomTextEntry, ResumeSection } from '@/types/resume';
-import { DynamicResumeSection } from '@/types/schema';
+import { DynamicResumeSection, AIContextPayload, StructuredAIContext } from '@/types/schema';
+import { schemaRegistry } from '@/lib/schemaRegistry';
 
 // Union type to support both legacy and dynamic sections
 type AllSectionTypes = ResumeSection | DynamicResumeSection;
@@ -25,6 +26,7 @@ interface AutocompleteTextareaProps extends Omit<React.ComponentProps<'textarea'
   onForcedSuggestionAccepted?: () => void;
   onForcedSuggestionRejected?: () => void;
   isAutocompleteEnabledGlobally: boolean; 
+  itemId?: string; // The ID of the current item being edited
 }
 
 export default function AutocompleteTextarea({
@@ -42,6 +44,7 @@ export default function AutocompleteTextarea({
   onForcedSuggestionAccepted,
   onForcedSuggestionRejected,
   isAutocompleteEnabledGlobally,
+  itemId,
   ...props
 }: AutocompleteTextareaProps) {
   const [inputValue, setInputValue] = useState(value); 
@@ -62,7 +65,67 @@ export default function AutocompleteTextarea({
     }
   }, [value, forcedSuggestion]);
 
+  // Helper function to extract itemId from the component's id prop (if it's a uniqueFieldId)
+  const extractItemIdFromUniqueFieldId = useCallback((uniqueFieldId: string): string | undefined => {
+    if (!uniqueFieldId || uniqueFieldId.startsWith('personal_')) {
+      return undefined;
+    }
+    
+    const parts = uniqueFieldId.split('_');
+    if (parts.length < 3) {
+      return undefined;
+    }
+    
+    // Remove field name and section type, rejoin the rest as itemId
+    const fieldName = parts.pop();
+    const sectionType = parts.pop();
+    const itemId = parts.join('_').replace(/-/g, '_'); // Restore original itemId
+    
+    return itemId === 'no-item' ? undefined : itemId;
+  }, []);
 
+  // NEW: Centralized context building using SchemaRegistry
+  const buildStructuredContext = useCallback((): StructuredAIContext | null => {
+    if (!sectionType || !currentSectionId || !allResumeSections || sectionType === 'personalDetailsField') {
+      return null;
+    }
+
+    const fieldId = props.name;
+    if (!fieldId) {
+      return null;
+    }
+
+    // Try to get itemId from props, or extract from the component's id
+    let resolvedItemId = itemId;
+    if (!resolvedItemId && props.id) {
+      resolvedItemId = extractItemIdFromUniqueFieldId(props.id);
+    }
+
+    // Build resume data structure for SchemaRegistry
+    const resumeData = {
+      personalDetails: {
+        jobTitle: userJobTitle || '',
+      },
+      sections: allResumeSections,
+    };
+
+    const payload: AIContextPayload = {
+      resumeData,
+      task: 'autocomplete',
+      sectionId: currentSectionId,
+      fieldId,
+      itemId: resolvedItemId, // Optional - for list sections
+    };
+
+    try {
+      return schemaRegistry.buildAIContext(payload);
+    } catch (error) {
+      console.warn('Failed to build structured context:', error);
+      return null;
+    }
+  }, [sectionType, currentSectionId, allResumeSections, userJobTitle, props.name, props.id, itemId, extractItemIdFromUniqueFieldId]);
+
+  // LEGACY: Keep existing context building methods for backward compatibility
   const buildCurrentItemContext = useCallback((): string | undefined => {
     if (!sectionType) return undefined;
 

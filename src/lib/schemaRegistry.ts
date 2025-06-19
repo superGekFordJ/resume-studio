@@ -4,7 +4,9 @@ import {
   ISchemaRegistry, 
   ContextBuilderFunction,
   ADVANCED_SKILLS_SCHEMA,
-  PROJECTS_SCHEMA
+  PROJECTS_SCHEMA,
+  AIContextPayload,
+  StructuredAIContext
 } from '@/types/schema';
 import type { ResumeData, SectionType } from '@/types/resume';
 
@@ -42,17 +44,84 @@ export class SchemaRegistry implements ISchemaRegistry {
 
   // 初始化上下文构建器
   private initializeContextBuilders() {
-    // 基础上下文构建器
+    // 基础上下文构建器 - Updated for new system
+    
+    // Summary builders
+    this.registerContextBuilder('summary-content', (data, allData) => {
+      return data.content || data || '';
+    });
+    
+    this.registerContextBuilder('summary-section', (section, allData) => {
+      const content = section.items?.[0]?.data?.content || section.items?.[0]?.content || '';
+      return `## Summary\n${content}`;
+    });
+
+    // Experience builders
+    this.registerContextBuilder('job-title', (data, allData) => {
+      return `Job Title: ${data.jobTitle || 'Untitled Job'}`;
+    });
+
+    this.registerContextBuilder('company-name', (data, allData) => {
+      return `Company: ${data.company || 'Unnamed Company'}`;
+    });
+
+    this.registerContextBuilder('job-description', (data, allData) => {
+      return `Job: ${data.jobTitle || 'Untitled Job'} at ${data.company || 'Unnamed Company'}\nDescription: ${data.description || ''}`;
+    });
+
     this.registerContextBuilder('experience-item', (data, allData) => {
-      return `Job: ${data.jobTitle || 'Untitled Job'} at ${data.company || 'Unnamed Company'}`;
+      return `- ${data.jobTitle || 'Untitled Job'} at ${data.company || 'Unnamed Company'}: ${data.description?.substring(0, 70)}...`;
+    });
+
+    this.registerContextBuilder('experience-summary', (section, allData) => {
+      const itemsSummary = section.items?.map((item: any) => this.buildContext('experience-item', item.data || item, allData)).join('\n') || '';
+      return `## Experience\n${itemsSummary}`;
+    });
+
+    // Education builders
+    this.registerContextBuilder('degree-name', (data, allData) => {
+      return `Degree: ${data.degree || 'Untitled Degree'}`;
+    });
+
+    this.registerContextBuilder('institution-name', (data, allData) => {
+      return `Institution: ${data.institution || 'Unnamed Institution'}`;
+    });
+
+    this.registerContextBuilder('education-details', (data, allData) => {
+      return `Education: ${data.degree || 'Untitled Degree'} from ${data.institution || 'Unnamed Institution'}\nDetails: ${data.details || ''}`;
     });
 
     this.registerContextBuilder('education-item', (data, allData) => {
-      return `Degree: ${data.degree || 'Untitled Degree'} from ${data.institution || 'Unnamed Institution'}`;
+      return `- ${data.degree || 'Untitled Degree'} from ${data.institution || 'Unnamed Institution'}`;
+    });
+
+    this.registerContextBuilder('education-summary', (section, allData) => {
+      const itemsSummary = section.items?.map((item: any) => this.buildContext('education-item', item.data || item, allData)).join('\n') || '';
+      return `## Education\n${itemsSummary}`;
+    });
+
+    // Skills builders
+    this.registerContextBuilder('skill-name', (data, allData) => {
+      return `Skill: ${data.name || 'Unnamed Skill'}`;
     });
 
     this.registerContextBuilder('skill-item', (data, allData) => {
-      return `Skill: ${data.name || 'Unnamed Skill'}`;
+      return `${data.name || 'Unnamed Skill'}`;
+    });
+
+    this.registerContextBuilder('skills-summary', (section, allData) => {
+      const skills = section.items?.map((item: any) => item.data?.name || item.name || 'Unnamed Skill').join(', ') || '';
+      return `## Skills\n${skills}`;
+    });
+
+    // Custom content builders
+    this.registerContextBuilder('custom-content', (data, allData) => {
+      return data.content || data || '';
+    });
+
+    this.registerContextBuilder('custom-summary', (section, allData) => {
+      const content = section.items?.[0]?.data?.content || section.items?.[0]?.content || '';
+      return `## ${section.title || 'Custom Section'}\n${content}`;
     });
 
     // 高级技能上下文构建器
@@ -69,11 +138,15 @@ export class SchemaRegistry implements ISchemaRegistry {
       return `Proficiency: ${data.proficiency || 'Not specified'}`;
     });
 
+    this.registerContextBuilder('skill-experience', (data, allData) => {
+      return `Years of Experience: ${data.yearsOfExperience || 'Not specified'}`;
+    });
+
     this.registerContextBuilder('advanced-skills-summary', (section, allData) => {
       const categories = section.items?.map((item: any) => 
-        `${item.data.category}: ${Array.isArray(item.data.skills) ? item.data.skills.join(', ') : item.data.skills || ''}`
+        `${item.data?.category || item.category}: ${Array.isArray(item.data?.skills || item.skills) ? (item.data?.skills || item.skills).join(', ') : (item.data?.skills || item.skills) || ''}`
       ).join('; ') || '';
-      return `Advanced Skills: ${categories}`;
+      return `## Advanced Skills\n${categories}`;
     });
 
     this.registerContextBuilder('advanced-skills-item', (data, allData) => {
@@ -89,14 +162,19 @@ export class SchemaRegistry implements ISchemaRegistry {
 
     this.registerContextBuilder('project-description', (data, allData) => {
       const tech = Array.isArray(data.technologies) ? data.technologies.join(', ') : data.technologies || '';
-      return `Project: ${data.name}, Technologies: ${tech}`;
+      return `Project: ${data.name}, Technologies: ${tech}\nDescription: ${data.description || ''}`;
+    });
+
+    this.registerContextBuilder('project-technologies', (data, allData) => {
+      return Array.isArray(data.technologies) ? data.technologies.join(', ') : data.technologies || '';
     });
 
     this.registerContextBuilder('projects-summary', (section, allData) => {
-      const projects = section.items?.map((item: any) => 
-        `${item.data.name}: ${item.data.description?.substring(0, 50)}...`
-      ).join('; ') || '';
-      return `Projects: ${projects}`;
+      const projects = section.items?.map((item: any) => {
+        const itemData = item.data || item;
+        return `${itemData.name}: ${itemData.description?.substring(0, 50)}...`;
+      }).join('; ') || '';
+      return `## Projects\n${projects}`;
     });
 
     this.registerContextBuilder('projects-item', (data, allData) => {
@@ -122,7 +200,10 @@ export class SchemaRegistry implements ISchemaRegistry {
             placeholder: 'A brief summary about your professional background...'
           },
           aiHints: {
-            contextBuilder: 'summary-content',
+            contextBuilders: {
+              improve: 'summary-content',
+              autocomplete: 'summary-content'
+            },
             improvementPrompts: [
               'Make it more concise',
               'Add quantifiable achievements',
@@ -135,8 +216,8 @@ export class SchemaRegistry implements ISchemaRegistry {
         }
       ],
       aiContext: {
-        summaryBuilder: 'summary-section',
-        itemContextBuilder: 'summary-content'
+        sectionSummaryBuilder: 'summary-section',
+        itemSummaryBuilder: 'summary-content'
       },
       uiConfig: {
         icon: 'FileText',
@@ -157,7 +238,10 @@ export class SchemaRegistry implements ISchemaRegistry {
           label: 'Job Title',
           required: true,
           aiHints: {
-            contextBuilder: 'job-title',
+            contextBuilders: {
+              improve: 'job-title',
+              autocomplete: 'job-title'
+            },
             autocompleteEnabled: true,
             priority: 'high'
           }
@@ -168,7 +252,10 @@ export class SchemaRegistry implements ISchemaRegistry {
           label: 'Company',
           required: true,
           aiHints: {
-            contextBuilder: 'company-name',
+            contextBuilders: {
+              improve: 'company-name',
+              autocomplete: 'company-name'
+            },
             autocompleteEnabled: true,
             priority: 'high'
           }
@@ -195,7 +282,10 @@ export class SchemaRegistry implements ISchemaRegistry {
             placeholder: 'Describe your responsibilities and achievements...'
           },
           aiHints: {
-            contextBuilder: 'job-description',
+            contextBuilders: {
+              improve: 'job-description',
+              autocomplete: 'job-description'
+            },
             improvementPrompts: [
               'Add quantifiable results',
               'Use action verbs',
@@ -208,8 +298,8 @@ export class SchemaRegistry implements ISchemaRegistry {
         }
       ],
       aiContext: {
-        summaryBuilder: 'experience-summary',
-        itemContextBuilder: 'experience-item',
+        sectionSummaryBuilder: 'experience-summary',
+        itemSummaryBuilder: 'experience-item',
         batchImprovementSupported: true
       },
       uiConfig: {
@@ -233,7 +323,10 @@ export class SchemaRegistry implements ISchemaRegistry {
           label: 'Degree',
           required: true,
           aiHints: {
-            contextBuilder: 'degree-name',
+            contextBuilders: {
+              improve: 'degree-name',
+              autocomplete: 'degree-name'
+            },
             autocompleteEnabled: true,
             priority: 'high'
           }
@@ -244,7 +337,10 @@ export class SchemaRegistry implements ISchemaRegistry {
           label: 'Institution',
           required: true,
           aiHints: {
-            contextBuilder: 'institution-name',
+            contextBuilders: {
+              improve: 'institution-name',
+              autocomplete: 'institution-name'
+            },
             autocompleteEnabled: true,
             priority: 'high'
           }
@@ -264,7 +360,10 @@ export class SchemaRegistry implements ISchemaRegistry {
             placeholder: 'Relevant coursework, projects, achievements...'
           },
           aiHints: {
-            contextBuilder: 'education-details',
+            contextBuilders: {
+              improve: 'education-details',
+              autocomplete: 'education-details'
+            },
             improvementPrompts: [
               'Add relevant coursework',
               'Include academic achievements',
@@ -277,8 +376,8 @@ export class SchemaRegistry implements ISchemaRegistry {
         }
       ],
       aiContext: {
-        summaryBuilder: 'education-summary',
-        itemContextBuilder: 'education-item'
+        sectionSummaryBuilder: 'education-summary',
+        itemSummaryBuilder: 'education-item'
       },
       uiConfig: {
         icon: 'GraduationCap',
@@ -301,7 +400,10 @@ export class SchemaRegistry implements ISchemaRegistry {
           label: 'Skill',
           required: true,
           aiHints: {
-            contextBuilder: 'skill-name',
+            contextBuilders: {
+              improve: 'skill-name',
+              autocomplete: 'skill-name'
+            },
             improvementPrompts: [
               'Add specific technologies',
               'Include proficiency levels',
@@ -314,8 +416,8 @@ export class SchemaRegistry implements ISchemaRegistry {
         }
       ],
       aiContext: {
-        summaryBuilder: 'skills-summary',
-        itemContextBuilder: 'skill-item',
+        sectionSummaryBuilder: 'skills-summary',
+        itemSummaryBuilder: 'skill-item',
         batchImprovementSupported: true
       },
       uiConfig: {
@@ -343,7 +445,10 @@ export class SchemaRegistry implements ISchemaRegistry {
             placeholder: 'Enter your custom content...'
           },
           aiHints: {
-            contextBuilder: 'custom-content',
+            contextBuilders: {
+              improve: 'custom-content',
+              autocomplete: 'custom-content'
+            },
             improvementPrompts: [
               'Improve clarity',
               'Make it more professional',
@@ -356,8 +461,8 @@ export class SchemaRegistry implements ISchemaRegistry {
         }
       ],
       aiContext: {
-        summaryBuilder: 'custom-summary',
-        itemContextBuilder: 'custom-content'
+        sectionSummaryBuilder: 'custom-summary',
+        itemSummaryBuilder: 'custom-content'
       },
       uiConfig: {
         icon: 'FilePlus2',
@@ -416,6 +521,82 @@ export class SchemaRegistry implements ISchemaRegistry {
   public supportsBatchImprovement(sectionId: string): boolean {
     const schema = this.getSectionSchema(sectionId);
     return schema?.aiContext?.batchImprovementSupported || false;
+  }
+
+  // NEW: Main AI Context Service - The heart of the centralized logic
+  public buildAIContext(payload: AIContextPayload): StructuredAIContext {
+    const { resumeData, task, sectionId, itemId, fieldId } = payload;
+    
+    const section = resumeData.sections.find((s: any) => s.id === sectionId);
+    if (!section) return { currentItemContext: '', otherSectionsContext: '' };
+    
+    const schemaId = section.schemaId || section.type;
+    const sectionSchema = this.getSectionSchema(schemaId);
+    const fieldSchema = sectionSchema?.fields.find(f => f.id === fieldId);
+    
+    // 1. Build currentItemContext
+    let currentItemContext = '';
+    const builderId = fieldSchema?.aiHints?.contextBuilders?.[task];
+    if (builderId) {
+      const itemData = itemId ? section.items?.find((i: any) => i.id === itemId) : section.items?.[0];
+      const itemContent = itemData?.data || itemData;
+      currentItemContext = this.buildContext(builderId, itemContent, resumeData);
+    }
+
+    // 2. Build otherSectionsContext
+    const otherSectionsContextParts: string[] = [];
+    for (const otherSection of resumeData.sections) {
+      if (otherSection.id === sectionId) continue;
+      const otherSchemaId = otherSection.schemaId || otherSection.type;
+      const otherSchema = this.getSectionSchema(otherSchemaId);
+      if (otherSchema?.aiContext?.sectionSummaryBuilder) {
+        const summary = this.buildContext(otherSchema.aiContext.sectionSummaryBuilder, otherSection, resumeData);
+        otherSectionsContextParts.push(summary);
+      }
+    }
+
+    return {
+      currentItemContext,
+      otherSectionsContext: otherSectionsContextParts.join('\n\n'),
+      userJobTitle: resumeData.personalDetails?.jobTitle,
+    };
+  }
+
+  // NEW: Resume Stringify Service for Review
+  public stringifyResumeForReview(resumeData: any): string {
+    const sectionParts: string[] = [];
+    
+    // Add personal details first
+    if (resumeData.personalDetails) {
+      const personalInfo = [
+        resumeData.personalDetails.name,
+        resumeData.personalDetails.jobTitle,
+        resumeData.personalDetails.email,
+        resumeData.personalDetails.phone,
+        resumeData.personalDetails.location
+      ].filter(Boolean).join(' | ');
+      
+      if (personalInfo) {
+        sectionParts.push(`## Personal Information\n${personalInfo}`);
+      }
+    }
+    
+    // Process all sections using their summary builders
+    for (const section of resumeData.sections) {
+      if (!section.visible) continue;
+      
+      const schemaId = section.schemaId || section.type;
+      const sectionSchema = this.getSectionSchema(schemaId);
+      
+      if (sectionSchema?.aiContext?.sectionSummaryBuilder) {
+        const summary = this.buildContext(sectionSchema.aiContext.sectionSummaryBuilder, section, resumeData);
+        if (summary.trim()) {
+          sectionParts.push(summary);
+        }
+      }
+    }
+    
+    return sectionParts.join('\n\n');
   }
 }
 

@@ -36,6 +36,7 @@ interface SectionEditorProps {
   targetToEdit: string | null; 
   onUpdateResumeData: (updatedData: ResumeData) => void;
   onCloseEditor: () => void;
+  onBack?: () => void; // New optional prop for navigation
   isAutocompleteEnabled: boolean;
   onToggleAutocomplete: (enabled: boolean) => void;
 }
@@ -45,6 +46,7 @@ export default function SectionEditor({
   targetToEdit,
   onUpdateResumeData,
   onCloseEditor,
+  onBack,
   isAutocompleteEnabled,
   onToggleAutocomplete,
 }: SectionEditorProps) {
@@ -217,124 +219,8 @@ export default function SectionEditor({
     setImprovementAISuggestion(null);
   };
 
-  const buildCurrentItemContextForAI = useCallback((
-    isPersonal: boolean, 
-    fieldName?: string, 
-    currentItemData?: SectionItem, 
-    sectionType?: SectionType
-  ): string | undefined => {
-    if (isPersonal && fieldName) {
-        return `Field: ${fieldName.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}`;
-    }
-    if (!currentItemData || !sectionType || !('id' in currentItemData)) return undefined;
-
-    switch (sectionType) {
-      case 'experience':
-        const exp = currentItemData as ExperienceEntry;
-        return `Job: ${exp.jobTitle || 'Untitled Job'} at ${exp.company || 'Unnamed Company'}. Current content of field being edited ('${fieldName}'): ${exp[fieldName as keyof ExperienceEntry]?.toString().substring(0,100) || ''}...`;
-      case 'education':
-        const edu = currentItemData as EducationEntry;
-        return `Degree: ${edu.degree || 'Untitled Degree'} from ${edu.institution || 'Unnamed Institution'}. Current content of field being edited ('${fieldName}'): ${edu[fieldName as keyof EducationEntry]?.toString().substring(0,100) || ''}...`;
-      case 'skills':
-        const skill = currentItemData as SkillEntry;
-        return `Skill: ${skill.name || 'Unnamed Skill'}. Current content of field being edited ('${fieldName}'): ${skill[fieldName as keyof SkillEntry]?.toString().substring(0,100) || ''}...`;
-      case 'summary':
-      case 'customText':
-        const custom = currentItemData as CustomTextEntry;
-        return `Current content of field being edited ('${fieldName}'): ${custom[fieldName as keyof CustomTextEntry]?.toString().substring(0,150) || ''}...`;
-      default:
-        return undefined;
-    }
-  }, []);
-
-  const buildOtherSectionsContextForAI = useCallback((allResumeSections: any[], currentSectionIdToExclude: string | null): string | undefined => {
-    if (!allResumeSections || allResumeSections.length === 0) return undefined;
-    
-    let contextStr = "";
-    allResumeSections.forEach(sec => {
-      if (sec.id === currentSectionIdToExclude) return; 
-      if (!sec.visible) return;
-      
-      // Check if this is a dynamic section or legacy section
-      if ('schemaId' in sec) {
-        // Dynamic section
-        contextStr += `Section: ${sec.title} (Dynamic Schema: ${sec.schemaId})\n`;
-        if (sec.items && sec.items.length > 0) {
-          // Show all items for dynamic sections, not just the first one
-          sec.items.forEach((item: any, index: number) => {
-            if (item && item.data) {
-              switch (sec.schemaId) {
-                case 'advanced-skills':
-                  contextStr += `  Skills Category ${index + 1}: ${item.data.category || 'N/A'} - ${Array.isArray(item.data.skills) ? item.data.skills.join(', ') : item.data.skills || 'N/A'}\n`;
-                  if (item.data.proficiency) {
-                    contextStr += `    Proficiency: ${item.data.proficiency}\n`;
-                  }
-                  if (item.data.yearsOfExperience) {
-                    contextStr += `    Experience: ${item.data.yearsOfExperience} years\n`;
-                  }
-                  break;
-                case 'projects':
-                  // Don't truncate description for better context
-                  contextStr += `  Project ${index + 1}: ${item.data.name || 'Unnamed'}\n`;
-                  if (item.data.description) {
-                    contextStr += `    Description: ${item.data.description}\n`;
-                  }
-                  if (item.data.technologies && Array.isArray(item.data.technologies)) {
-                    contextStr += `    Technologies: ${item.data.technologies.join(', ')}\n`;
-                  }
-                  if (item.data.url) {
-                    contextStr += `    URL: ${item.data.url}\n`;
-                  }
-                  if (item.data.startDate || item.data.endDate) {
-                    contextStr += `    Duration: ${item.data.startDate || 'N/A'} - ${item.data.endDate || 'Present'}\n`;
-                  }
-                  break;
-                default:
-                  // Generic dynamic section preview - show more fields
-                  const preview = Object.entries(item.data).slice(0, 4).map(([key, value]) => {
-                    if (typeof value === 'string' && value.length > 200) {
-                      return `${key}: ${value.substring(0, 200)}...`;
-                    } else if (Array.isArray(value)) {
-                      return `${key}: ${value.join(', ')}`;
-                    }
-                    return `${key}: ${value}`;
-                  }).join('\n    ');
-                  contextStr += `  Item ${index + 1}:\n    ${preview}\n`;
-                  break;
-              }
-            }
-          });
-        }
-      } else {
-        // Legacy section
-        contextStr += `Section: ${sec.title} (Type: ${sec.type})\n`;
-        if (sec.type === 'summary' && sec.items.length > 0) {
-          const summaryItem = sec.items[0] as CustomTextEntry;
-          if (summaryItem.content) contextStr += `  Content: ${summaryItem.content.substring(0, 300)}...\n`;
-        } else if (sec.type === 'skills' && sec.items.length > 0) {
-          const skillNames = sec.items.slice(0, 10).map((s: any) => (s as SkillEntry).name).join(', ');
-          if (skillNames) contextStr += `  Skills: ${skillNames}\n`;
-        } else if (sec.type === 'experience' && sec.items.length > 0) {
-          // Show more experience items with full descriptions
-          const expPreview = sec.items.slice(0,3).map((e: any) => {
-            const exp = e as ExperienceEntry;
-            return `${exp.jobTitle} at ${exp.company} (${exp.startDate} - ${exp.endDate}): ${exp.description}`;
-          }).join('\n  ');
-          if (expPreview) contextStr += `  Experience:\n  ${expPreview}\n`;
-        } else if (sec.type === 'education' && sec.items.length > 0) {
-          const eduPreview = sec.items.slice(0,3).map((e: any) => {
-            const edu = e as EducationEntry;
-            return `${edu.degree} at ${edu.institution} (${edu.graduationYear})${edu.details ? ': ' + edu.details : ''}`;
-          }).join('\n  ');
-          if (eduPreview) contextStr += `  Education:\n  ${eduPreview}\n`;
-        } else if (sec.type === 'customText' && sec.items.length > 0) {
-           const content = (sec.items[0] as CustomTextEntry).content;
-           if (content) contextStr += `  "${sec.title}" Content: ${content.substring(0, 300)}...\n`;
-        }
-      }
-    });
-    return contextStr.trim() ? contextStr : undefined;
-  }, []);
+  // REMOVED: All hardcoded context building logic
+  // Now handled by SchemaRegistry.buildAIContext
 
 
   const handleImproveWithAI = async (textToImprove: string, uniqueFieldId: string) => {
@@ -348,93 +234,44 @@ export default function SectionEditor({
     setIsImproving(true);
 
     const { isPersonal, fieldName, itemId, sectionType } = deconstructUniqueFieldId(uniqueFieldId);
-    let currentItemContext: string | undefined = undefined;
-    let currentSectionIdForContext: string | null = null;
-    let actualSectionTypeForAI: SectionType | 'personalDetailsField' | string | undefined = sectionType;
-    let currentItemData: any = undefined;
-    let allResumeData: any = undefined;
-
-    if (isPersonal) {
-        actualSectionTypeForAI = 'personalDetailsField';
-        currentItemContext = buildCurrentItemContextForAI(isPersonal, fieldName, undefined, undefined);
-    } else if (itemId && localData && 'items' in localData) {
-        currentSectionIdForContext = localData.id;
-        
-        // Check if this is a dynamic section
-        if ('schemaId' in localData) {
-          // Dynamic section
-          const dynamicSection = localData as any; // DynamicResumeSection
-          actualSectionTypeForAI = dynamicSection.schemaId;
-          
-          const dynamicItem = dynamicSection.items.find((item: any) => item.id === itemId);
-          if (dynamicItem) {
-            currentItemData = dynamicItem.data;
-            allResumeData = {
-              sections: resumeData.sections,
-              personalDetails: resumeData.personalDetails
-            };
-            
-            // Build context for dynamic sections
-            switch (dynamicSection.schemaId) {
-              case 'advanced-skills':
-                currentItemContext = `Advanced Skills Category: ${currentItemData.category || 'N/A'}, Skills: ${Array.isArray(currentItemData.skills) ? currentItemData.skills.join(', ') : currentItemData.skills || 'N/A'}, Field being edited: ${fieldName}`;
-                if (currentItemData.proficiency) {
-                  currentItemContext += `, Proficiency: ${currentItemData.proficiency}`;
-                }
-                if (currentItemData.yearsOfExperience) {
-                  currentItemContext += `, Experience: ${currentItemData.yearsOfExperience} years`;
-                }
-                break;
-              case 'projects':
-                currentItemContext = `Project: ${currentItemData.name || 'Unnamed'}`;
-                if (currentItemData.description) {
-                  currentItemContext += `, Description: ${currentItemData.description}`;
-                }
-                if (currentItemData.technologies && Array.isArray(currentItemData.technologies)) {
-                  currentItemContext += `, Technologies: ${currentItemData.technologies.join(', ')}`;
-                }
-                currentItemContext += `, Field being edited: ${fieldName}`;
-                break;
-              default:
-                currentItemContext = `Dynamic section item (${dynamicSection.schemaId}), Field being edited: ${fieldName}`;
-                // Add more context from the item data
-                const contextFields = Object.entries(currentItemData).slice(0, 3).map(([key, value]) => {
-                  if (typeof value === 'string' && value.length > 100) {
-                    return `${key}: ${value.substring(0, 100)}...`;
-                  } else if (Array.isArray(value)) {
-                    return `${key}: ${value.join(', ')}`;
-                  }
-                  return `${key}: ${value}`;
-                }).join(', ');
-                if (contextFields) {
-                  currentItemContext += `, Context: ${contextFields}`;
-                }
-                break;
-            }
-          }
-        } else {
-          // Legacy section
-          const legacySection = localData as any; // ResumeSection
-          const currentItemForContext = legacySection.items.find((it: any) => it.id === itemId);
-          currentItemContext = buildCurrentItemContextForAI(isPersonal, fieldName, currentItemForContext, sectionType);
-        }
-    }
-    
-    const otherSectionsContext = buildOtherSectionsContextForAI(resumeData.sections, isPersonal ? null : currentSectionIdForContext);
 
     try {
+      let context: any = {
+        currentItemContext: '',
+        otherSectionsContext: '',
+        userJobTitle: resumeData.personalDetails?.jobTitle || ''
+      };
+
+    if (isPersonal) {
+        // For personal details, use a simple context
+        context.currentItemContext = `Personal Details Field: ${fieldName}`;
+        context.otherSectionsContext = schemaRegistry.stringifyResumeForReview(resumeData);
+      } else if (localData && 'id' in localData) {
+        // Use SchemaRegistry to build structured context
+        const sectionId = localData.id;
+        const payload = {
+          resumeData,
+          task: 'improve' as const,
+          sectionId,
+          fieldId: fieldName,
+          itemId: itemId
+        };
+        
+        context = schemaRegistry.buildAIContext(payload);
+      }
+
       const input: ImproveResumeSectionInput = { 
         resumeSection: textToImprove, 
         prompt: aiPrompt,
-        userJobTitle: resumeData.personalDetails.jobTitle,
-        sectionType: actualSectionTypeForAI,
-        currentItemContext: currentItemContext,
-        otherSectionsContext: otherSectionsContext,
-        // Enhanced context for dynamic sections
+        userJobTitle: context.userJobTitle,
+        currentItemContext: context.currentItemContext,
+        otherSectionsContext: context.otherSectionsContext,
+        sectionType: isPersonal ? 'personalDetailsField' : (localData && 'schemaId' in localData ? localData.schemaId : sectionType),
         fieldId: fieldName,
-        currentItemData: currentItemData,
-        allResumeData: allResumeData,
+        // Keep enhanced context for better performance
+        enhancedContext: `${context.currentItemContext}\n\n${context.otherSectionsContext}`
       };
+      
       const result = await improveResumeSection(input);
 
       if (result.improvedResumeSection) {
@@ -606,6 +443,7 @@ export default function SectionEditor({
                    allResumeSections={isLegacyResumeData(resumeData) ? resumeData.sections : resumeData.sections.filter(s => 'type' in s) as ResumeSection[]}
                    currentSectionId={section.id}
                    isAutocompleteEnabled={isAutocompleteEnabled}
+                   itemId={item.id} // NEW: Pass itemId for SchemaRegistry context building
                  />
               ))}
             </div>
@@ -625,6 +463,7 @@ export default function SectionEditor({
                  allResumeSections={isLegacyResumeData(resumeData) ? resumeData.sections : resumeData.sections.filter(s => 'type' in s) as ResumeSection[]}
                  currentSectionId={section.id}
                  isAutocompleteEnabled={isAutocompleteEnabled}
+                 itemId={section.items[0].id} // NEW: Pass itemId for SchemaRegistry context building
                />
             ))}
           </div>
@@ -751,36 +590,64 @@ export default function SectionEditor({
   const editorTitle = isCurrentlyEditingPersonalDetails ? "Personal Details" : (localData && 'title' in localData ? (localData as ResumeSection).title : "Edit Section");
 
   return (
-    <Card className="sticky top-[calc(theme(spacing.16)+1rem)] max-h-[calc(100vh-theme(spacing.16)-2rem)] flex flex-col no-print">
-      <CardHeader className="flex flex-row items-center justify-between py-3 border-b">
-        <CardTitle className="font-headline text-lg">{editorTitle}</CardTitle>
-        <div className="flex items-center gap-2">
-            {targetToEdit !== 'personalDetails' && (
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="autocomplete-toggle"
-                  className="autocomplete-toggle-switch"
-                  checked={isAutocompleteEnabled}
-                  onCheckedChange={onToggleAutocomplete}
-                  aria-label="Toggle Autocomplete"
-                />
-                <Label htmlFor="autocomplete-toggle" className="text-xs cursor-pointer">Autocomplete</Label>
-              </div>
-            )}
-            <Button variant="ghost" size="icon" onClick={onCloseEditor} aria-label="Close editor">
-                <XCircle size={20} />
-            </Button>
+    <div className="flex flex-col h-full no-print">
+      {/* Header with title and controls - only show when NOT in sidebar navigator mode */}
+      {!onBack && (
+        <div className="flex flex-row items-center justify-between py-3 px-4 border-b bg-background flex-shrink-0">
+          <h2 className="font-headline text-lg font-semibold">{editorTitle}</h2>
+          <div className="flex items-center gap-2">
+              {targetToEdit !== 'personalDetails' && (
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="autocomplete-toggle"
+                    className="autocomplete-toggle-switch"
+                    checked={isAutocompleteEnabled}
+                    onCheckedChange={onToggleAutocomplete}
+                    aria-label="Toggle Autocomplete"
+                  />
+                  <Label htmlFor="autocomplete-toggle" className="text-xs cursor-pointer">Autocomplete</Label>
+                </div>
+              )}
+              <Button variant="ghost" size="icon" onClick={onCloseEditor} aria-label="Close editor">
+                  <XCircle size={20} />
+              </Button>
+          </div>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-4 p-4 overflow-y-auto flex-grow">
-        {isCurrentlyEditingPersonalDetails ? renderPersonalDetailsForm() : renderSectionForm()}
-      </CardContent>
-      <CardFooter className="border-t p-3">
+      )}
+      
+      {/* Header for sidebar navigator mode */}
+      {onBack && (
+        <div className="flex flex-row items-center justify-between py-3 px-4 border-b bg-background flex-shrink-0">
+          <h2 className="font-headline text-lg font-semibold text-primary">{editorTitle}</h2>
+          {targetToEdit !== 'personalDetails' && (
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="autocomplete-toggle-nav"
+                className="autocomplete-toggle-switch"
+                checked={isAutocompleteEnabled}
+                onCheckedChange={onToggleAutocomplete}
+                aria-label="Toggle Autocomplete"
+              />
+              <Label htmlFor="autocomplete-toggle-nav" className="text-xs cursor-pointer">AI 自动补全</Label>
+            </div>
+          )}
+        </div>
+      )}
+      
+      {/* Scrollable Content Area - takes remaining space */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-4 pb-20 space-y-4">
+          {isCurrentlyEditingPersonalDetails ? renderPersonalDetailsForm() : renderSectionForm()}
+        </div>
+      </div>
+      
+      {/* Footer with save button - always visible and sticky */}
+      <div className="border-t p-4 bg-background flex-shrink-0 sticky bottom-0">
         <Button onClick={handleSaveChanges} size="sm" className="w-full">
           <Save size={16} className="mr-2" /> Save Changes
         </Button>
-      </CardFooter>
-    </Card>
+      </div>
+    </div>
   );
 }
 
