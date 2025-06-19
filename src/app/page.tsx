@@ -4,12 +4,12 @@ import { useState, useEffect } from 'react';
 import type { ResumeData } from '@/types/resume';
 import { initialResumeData } from '@/types/resume';
 import Header from '@/components/layout/Header';
-import TemplateSelector from '@/components/resume/TemplateSelector';
-import ResumeCanvas from '@/components/resume/ResumeCanvas';
-import SectionEditor from '@/components/resume/SectionEditor';
-import SectionManager from '@/components/resume/SectionManager';
+import TemplateSelector from '@/components/resume/ui/TemplateSelector';
+import ResumeCanvas from '@/components/resume/canvas/ResumeCanvas';
+import SectionEditor from '@/components/resume/editor/SectionEditor';
+import SectionManager from '@/components/resume/editor/SectionManager';
 import SidebarNavigator from '@/components/layout/SidebarNavigator';
-import AIReviewDialog from '@/components/resume/AIReviewDialog';
+import AIReviewDialog from '@/components/resume/ui/AIReviewDialog';
 import { reviewResume, ReviewResumeOutput } from '@/ai/flows/review-resume';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -93,9 +93,23 @@ export default function ResumeStudioPage() {
     }
   };
 
+  const handlePrint = async () => {
+    try {
+      const { printResume } = await import('@/lib/pdfExport');
+      await printResume(resumeData);
+    } catch (error) {
+      console.error('Print error:', error);
+      toast({ 
+        variant: "destructive", 
+        title: "Print Failed", 
+        description: "Failed to print resume. Please try again." 
+      });
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden">
-      <Header onReviewResume={handleReviewResume} onExportPdf={handleExportPdf} />
+      <Header onReviewResume={handleReviewResume} onExportPdf={handleExportPdf} onPrint={handlePrint} />
       <div className="flex flex-1 overflow-hidden">
         <aside className={cn(
           "bg-card border-r transition-all duration-300 ease-in-out no-print",

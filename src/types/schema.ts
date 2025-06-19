@@ -1,5 +1,7 @@
 // Schema system for extensible resume data structures
 
+import type { PersonalDetails } from './resume';
+
 export interface ValidationRule {
   type: 'required' | 'minLength' | 'maxLength' | 'pattern' | 'custom';
   value?: any;
@@ -205,6 +207,30 @@ export interface StructuredAIContext {
   otherSectionsContext: string;
   // Add other relevant top-level context if needed
   userJobTitle?: string;
+}
+
+// Renderable View Models for decoupled rendering
+export interface RenderableField {
+  key: string;  // e.g., 'jobTitle'
+  label: string; // e.g., 'Job Title'
+  value: string | string[];
+}
+
+export interface RenderableItem {
+  id: string;
+  fields: RenderableField[];
+}
+
+export interface RenderableSection {
+  id: string;
+  title: string;
+  schemaId: string;
+  items: RenderableItem[];
+}
+
+export interface RenderableResume {
+  personalDetails: PersonalDetails; // Assuming PersonalDetails is already flat
+  sections: RenderableSection[];
 }
 
 // 项目经历Schema示例

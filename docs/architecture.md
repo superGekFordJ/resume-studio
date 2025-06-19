@@ -34,22 +34,28 @@ src/
 │   ├── layout/           # 布局组件
 │   │   ├── Header.tsx           # 应用头部
 │   │   └── SidebarNavigator.tsx # 两阶段侧边栏导航器 (新增)
-│   └── resume/           # 简历相关组件
-│       ├── AIReviewDialog.tsx        # AI 评审对话框
-│       ├── AutocompleteTextarea.tsx  # 自动补全文本框
-│       ├── ResumeCanvas.tsx          # 简历画布
-│       ├── SectionEditor.tsx         # 章节编辑器
-│       ├── SectionManager.tsx        # 章节管理器
-│       ├── TemplateSelector.tsx      # 模板选择器
-│       ├── ModernTemplate.tsx        # 现代模板组件
-│       ├── AvatarUploader.tsx        # 头像上传组件 (新增)
-│       └── DynamicFieldRenderer.tsx  # 动态字段渲染器 (新增)
+│   └── resume/           # 简历相关组件 (重组后)
+│       ├── canvas/             # 画布相关组件
+│       │   ├── ResumeCanvas.tsx      # 简历画布
+│       │   └── PrintableResume.tsx   # 可打印简历组件 (新增)
+│       ├── editor/             # 编辑器相关组件
+│       │   ├── SectionEditor.tsx     # 章节编辑器
+│       │   ├── SectionManager.tsx    # 章节管理器
+│       │   └── DynamicFieldRenderer.tsx # 动态字段渲染器
+│       ├── templates/          # 模板组件
+│       │   └── ModernTemplate.tsx    # 现代模板组件
+│       └── ui/                # UI 相关组件
+│           ├── AIReviewDialog.tsx    # AI 评审对话框
+│           ├── AutocompleteTextarea.tsx # 自动补全文本框
+│           ├── AvatarUploader.tsx    # 头像上传组件
+│           └── TemplateSelector.tsx  # 模板选择器
 ├── hooks/                # 自定义 Hooks
 │   └── use-toast.ts      # Toast 通知
 ├── lib/                  # 工具函数
 │   ├── utils.ts          # 通用工具
 │   ├── schemaRegistry.ts # Schema 注册中心 (新增)
-│   └── pdfExport.ts      # PDF 导出工具 (新增)
+│   ├── dataTransformer.ts # 数据转换器 (新增)
+│   └── pdfExport.ts      # PDF 导出工具 (重构)
 └── types/                # TypeScript 类型定义
     ├── resume.ts         # 简历相关类型
     └── schema.ts         # Schema 定义 (新增)
@@ -96,6 +102,36 @@ src/
                  |                                                 |
                  +------------------------------------------------->
 ```
+
+### 3. 解耦渲染架构 (Decoupled Rendering Architecture)
+
+```
+       ResumeData                    SchemaRegistry
+            |                              |
+            +------------------------------+
+                           |
+                           v
+                   DataTransformer
+                (transformToRenderableView)
+                           |
+                           v
+                   RenderableResume
+                    (View Model)
+                           |
+            +--------------+--------------+
+            |                             |
+            v                             v
+      ResumeCanvas                   pdfExport
+    (Screen Rendering)              (PDF Rendering)
+            |                             |
+            v                             v
+      PrintableResume                PrintableResume
+       (via React)                (via ReactDOMServer)
+```
+
+- **统一视图模型**: `RenderableResume` 是屏幕和PDF渲染的统一数据格式
+- **独立渲染管线**: 屏幕渲染和PDF导出使用相同的组件但不同的渲染方式
+- **无DOM依赖**: PDF导出不再依赖实时DOM，而是通过服务端渲染生成HTML
 
 - **用户输入 → Schema 查询 → AI 处理 → UI 更新**
   1. 用户在 UI 组件中进行操作（例如，在 `AutocompleteTextarea` 中输入文本）。
@@ -174,4 +210,49 @@ src/
 - **API 密钥**: 服务端环境变量管理
 - **输入验证**: Zod schema 验证所有 AI Flow 的输入
 - **错误处理**: 不暴露敏感信息的错误处理
-- **CORS**: 适当的跨域资源共享配置 
+- **CORS**: 适当的跨域资源共享配置
+
+## AI Services
+- **Purpose**: Provide intelligent assistance for resume writing
+- **Key Features**: Auto-completion, section improvement, resume review
+- **Implementation**: Server-side AI flows using Genkit
+
+## Schema-Driven Architecture (Updated 2025-01-06)
+
+### Current State
+The application has successfully transitioned to a pure Schema-driven architecture where:
+
+1. **SchemaRegistry as Single Source of Truth**
+   - All section structures defined in schemas
+   - All AI context building centralized
+   - All business logic contained in the registry
+
+2. **Pure UI Components**
+   - `SectionEditor` no longer contains type-specific rendering logic
+   - All fields rendered through `DynamicFieldRenderer`
+   - UI components are "dumb" renderers driven by schemas
+
+3. **Unified AI Service Layer**
+   - All AI operations go through `SchemaRegistry` methods:
+     - `improveField()` - Field improvement
+     - `getAutocomplete()` - Auto-completion
+     - `batchImproveSection()` - Batch improvements
+     - `reviewResume()` - Full resume review
+   - No direct AI Flow calls from UI components
+
+4. **Proven Extensibility**
+   - New section types (e.g., "Certifications") can be added by only:
+     - Registering a schema in SchemaRegistry
+     - Adding context builders
+   - Zero UI code changes required
+
+### Architecture Flow
+```
+Schema Definition → SchemaRegistry → UI Components
+                          ↓
+                    AI Service Layer
+                          ↓
+                      AI Flows
+```
+
+This architecture ensures maximum flexibility and maintainability while keeping the codebase clean and organized. 

@@ -23,10 +23,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Label } from "@/components/ui/label";
 import { PlusCircle, Trash2, Sparkles, Save, XCircle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { improveResumeSection, ImproveResumeSectionInput } from '@/ai/flows/improve-resume-section';
 import { useToast } from '@/hooks/use-toast';
-import AutocompleteTextarea from './AutocompleteTextarea';
-import AvatarUploader from '@/components/resume/AvatarUploader';
+import AutocompleteTextarea from '@/components/resume/ui/AutocompleteTextarea';
+import AvatarUploader from '@/components/resume/ui/AvatarUploader';
 import DynamicFieldRenderer from './DynamicFieldRenderer';
 import { SchemaRegistry } from '@/lib/schemaRegistry';
 import { cn } from "@/lib/utils";
@@ -219,10 +218,6 @@ export default function SectionEditor({
     setImprovementAISuggestion(null);
   };
 
-  // REMOVED: All hardcoded context building logic
-  // Now handled by SchemaRegistry.buildAIContext
-
-
   const handleImproveWithAI = async (textToImprove: string, uniqueFieldId: string) => {
     if (!aiPrompt.trim()) {
       toast({ variant: "destructive", title: "AI Prompt Empty", description: "Please provide a prompt for the AI." });
@@ -236,41 +231,42 @@ export default function SectionEditor({
     const { isPersonal, fieldName, itemId, sectionType } = deconstructUniqueFieldId(uniqueFieldId);
 
     try {
-      let context: any = {
-        currentItemContext: '',
-        otherSectionsContext: '',
-        userJobTitle: resumeData.personalDetails?.jobTitle || ''
-      };
-
+      let improvedText: string;
+      
       if (isPersonal) {
-        // For personal details, use a simple context
-        context.currentItemContext = `Personal Details Field: ${fieldName}`;
-        context.otherSectionsContext = schemaRegistry.stringifyResumeForReview(resumeData);
-      } else if (localData && 'id' in localData) {
-        // Use SchemaRegistry to build structured context
-        const sectionId = localData.id;
-        const payload = {
-          resumeData,
-          task: 'improve' as const,
-          sectionId,
-          fieldId: fieldName,
-          itemId: itemId
+        // For personal details, use the legacy flow directly for now
+        // TODO: Add personal details support to SchemaRegistry
+        const { improveResumeSection } = await import('@/ai/flows/improve-resume-section');
+        const context = {
+          currentItemContext: `Personal Details Field: ${fieldName}`,
+          otherSectionsContext: schemaRegistry.stringifyResumeForReview(resumeData),
+          userJobTitle: resumeData.personalDetails?.jobTitle || ''
         };
         
-        context = schemaRegistry.buildAIContext(payload);
+        const result = await improveResumeSection({
+          resumeSection: textToImprove,
+          prompt: aiPrompt,
+          context: context,
+          sectionType: 'personalDetailsField'
+        });
+        
+        improvedText = result.improvedResumeSection;
+      } else if (localData && 'id' in localData && itemId && fieldName) {
+        // Use SchemaRegistry for all section fields
+        improvedText = await schemaRegistry.improveField({
+          resumeData,
+          sectionId: localData.id,
+          itemId: itemId,
+          fieldId: fieldName,
+          currentValue: textToImprove,
+          prompt: aiPrompt
+        });
+      } else {
+        throw new Error('Invalid field configuration for AI improvement');
       }
 
-      const input: ImproveResumeSectionInput = { 
-        resumeSection: textToImprove, 
-        prompt: aiPrompt,
-        context: context, // Use the structured context directly
-        sectionType: isPersonal ? 'personalDetailsField' : (localData && 'schemaId' in localData ? localData.schemaId : sectionType), // Keep for backward compatibility
-      };
-      
-      const result = await improveResumeSection(input);
-
-      if (result.improvedResumeSection) {
-        setImprovementAISuggestion(result.improvedResumeSection);
+      if (improvedText) {
+        setImprovementAISuggestion(improvedText);
       } else {
         toast({ variant: "destructive", title: "AI Improvement Failed", description: "Could not get suggestions from AI." });
         setFieldBeingImproved(null); 
@@ -438,7 +434,10 @@ export default function SectionEditor({
                    allResumeSections={isLegacyResumeData(resumeData) ? resumeData.sections : resumeData.sections.filter(s => 'type' in s) as ResumeSection[]}
                    currentSectionId={section.id}
                    isAutocompleteEnabled={isAutocompleteEnabled}
-                   itemId={item.id} // NEW: Pass itemId for SchemaRegistry context building
+                   itemId={item.id}
+                   schemaRegistry={schemaRegistry}
+                   sectionId={section.id}
+                   fieldId={field.id}
                  />
               ))}
             </div>
@@ -458,7 +457,10 @@ export default function SectionEditor({
                  allResumeSections={isLegacyResumeData(resumeData) ? resumeData.sections : resumeData.sections.filter(s => 'type' in s) as ResumeSection[]}
                  currentSectionId={section.id}
                  isAutocompleteEnabled={isAutocompleteEnabled}
-                 itemId={section.items[0].id} // NEW: Pass itemId for SchemaRegistry context building
+                 itemId={section.items[0].id}
+                 schemaRegistry={schemaRegistry}
+                 sectionId={section.id}
+                 fieldId={field.id}
                />
             ))}
           </div>
@@ -475,6 +477,82 @@ export default function SectionEditor({
 
   const renderLegacySectionForm = () => {
     const section = localData as ResumeSection;
+    
+    // NEW: Universal item renderer that replaces all render*ItemForm functions
+    const renderItemFields = (item: any, index: number) => {
+      const schemaId = section.type; // Use section type as schema ID for legacy sections
+      const schema = schemaRegistry.getSectionSchema(schemaId);
+      if (!schema) {
+        console.warn(`No schema found for section type: ${schemaId}`);
+        return null;
+      }
+
+      return (
+        <Card key={item.id} className="my-4 p-3 space-y-2 bg-muted/50">
+          <div className="flex justify-between items-center mb-2">
+            <h4 className="font-medium text-sm">Item {index + 1}</h4>
+            <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.id)} className="text-destructive hover:text-destructive/80">
+              <Trash2 size={16} />
+            </Button>
+          </div>
+          <div className="space-y-3">
+            {schema.fields.map(field => {
+              const uniqueFieldId = constructUniqueFieldId(false, field.id, item.id, section.type);
+              const currentValue = item[field.id] || '';
+              const isThisFieldBeingImproved = fieldBeingImproved?.uniqueFieldId === uniqueFieldId;
+              
+              // For AI-enabled fields, wrap in AIFieldTextarea
+              if (field.aiHints?.autocompleteEnabled && (field.type === 'text' || field.type === 'textarea')) {
+                return (
+                  <AIFieldTextarea
+                    key={field.id}
+                    id={uniqueFieldId}
+                    label={field.label}
+                    value={isThisFieldBeingImproved && improvementAISuggestion !== null ? fieldBeingImproved.originalText : currentValue}
+                    onValueChange={(value) => handleItemChange(item.id, field.id, value, section.type)}
+                    currentAiPrompt={aiPrompt}
+                    onAiPromptChange={setAiPrompt}
+                    onImproveRequest={() => handleImproveWithAI(currentValue, uniqueFieldId)}
+                    isImproving={isImproving && isThisFieldBeingImproved}
+                    forcedSuggestion={isThisFieldBeingImproved ? improvementAISuggestion : null}
+                    onAcceptForcedSuggestion={() => onAcceptAIImprovement(uniqueFieldId)}
+                    onRejectForcedSuggestion={onRejectAIImprovement}
+                    userJobTitle={resumeData.personalDetails.jobTitle}
+                    sectionType={section.type}
+                    currentItem={item}
+                    allResumeSections={resumeData.sections}
+                    currentSectionId={section.id}
+                    className={field.uiProps?.rows === 1 || field.type === 'text' ? "min-h-[40px]" : "min-h-[80px]"}
+                    isAutocompleteEnabled={isAutocompleteEnabled}
+                    placeholder={field.uiProps?.placeholder}
+                  />
+                );
+              }
+              
+              // For non-AI fields, use DynamicFieldRenderer
+              return (
+                <DynamicFieldRenderer
+                  key={field.id}
+                  field={field}
+                  value={currentValue}
+                  onChange={(value) => handleItemChange(item.id, field.id, value, section.type)}
+                  userJobTitle={resumeData.personalDetails.jobTitle}
+                  currentItem={item}
+                  allResumeSections={resumeData.sections}
+                  currentSectionId={section.id}
+                  isAutocompleteEnabled={isAutocompleteEnabled}
+                  itemId={item.id}
+                  schemaRegistry={schemaRegistry}
+                  sectionId={section.id}
+                  fieldId={field.id}
+                />
+              );
+            })}
+          </div>
+        </Card>
+      );
+    };
+
     return (
       <>
         <div>
@@ -482,23 +560,10 @@ export default function SectionEditor({
           <Input id="sectionTitle" value={section.title} onChange={handleSectionTitleChange} />
         </div>
 
-        {section.isList && section.items.map((item, index) => (
-          <Card key={item.id} className="my-4 p-3 space-y-2 bg-muted/50">
-            <div className="flex justify-between items-center mb-2">
-              <h4 className="font-medium text-sm">Item {index + 1}</h4>
-              <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.id)} className="text-destructive hover:text-destructive/80">
-                <Trash2 size={16} />
-              </Button>
-            </div>
-            {section.type === 'experience' && renderExperienceItemForm(item as ExperienceEntry, section.type, item, section.id)}
-            {section.type === 'education' && renderEducationItemForm(item as EducationEntry, section.type, item, section.id)}
-            {section.type === 'skills' && renderSkillItemForm(item as SkillEntry, section.type, item, section.id)}
-            {section.type === 'customText' && section.isList && renderCustomTextItemForm(item as CustomTextEntry, section.type, item, section.id)}
-          </Card>
-        ))}
+        {section.isList && section.items.map((item, index) => renderItemFields(item, index))}
 
         {!section.isList && section.items.length > 0 && (section.type === 'summary' || (section.type === 'customText' && !section.isList)) &&
-          renderCustomTextItemForm(section.items[0] as CustomTextEntry, section.type, section.items[0], section.id)
+          renderItemFields(section.items[0], 0)
         }
 
         {section.isList && (
@@ -510,78 +575,6 @@ export default function SectionEditor({
     );
   };
   
-  const getAIFieldProps = (uniqueFieldId: string, currentValue: string | undefined, sectionType: SectionType, currentItem: SectionItem | {fieldName: string}, currentSectionId: string | null) => {
-    const isThisFieldBeingImproved = fieldBeingImproved?.uniqueFieldId === uniqueFieldId;
-    return {
-      id: uniqueFieldId,
-      value: isThisFieldBeingImproved && improvementAISuggestion !== null ? fieldBeingImproved!.originalText : (currentValue || ''),
-      onValueChange: (newValue: string) => { 
-        const { isPersonal, fieldName, itemId: currentItemId, sectionType: currentItemSectionType } = deconstructUniqueFieldId(uniqueFieldId);
-        if (isPersonal && fieldName) {
-          handlePersonalDetailsFieldChange(fieldName as keyof PersonalDetails, newValue);
-        } else if (currentItemId && fieldName && currentItemSectionType) {
-          handleItemChange(currentItemId, fieldName, newValue, currentItemSectionType);
-        }
-      },
-      currentAiPrompt: aiPrompt,
-      onAiPromptChange: setAiPrompt,
-      onImproveRequest: () => handleImproveWithAI(currentValue || '', uniqueFieldId),
-      isImproving: isImproving && isThisFieldBeingImproved,
-      forcedSuggestion: isThisFieldBeingImproved ? improvementAISuggestion : null,
-      onAcceptForcedSuggestion: () => onAcceptAIImprovement(uniqueFieldId),
-      onRejectForcedSuggestion: onRejectAIImprovement,
-      userJobTitle: resumeData.personalDetails.jobTitle,
-      sectionType,
-      currentItem,
-      allResumeSections: resumeData.sections, 
-      currentSectionId, 
-      isAutocompleteEnabled: isAutocompleteEnabled,
-    };
-  };
-
-  const renderExperienceItemForm = (item: ExperienceEntry, sectionType: SectionType, currentItem: SectionItem, sectionId: string) => (
-    <>
-      <FieldInput label="Job Title" id={`jobTitle_${item.id}`} value={item.jobTitle} onChange={e => handleItemChange(item.id, 'jobTitle', e.target.value, sectionType)} />
-      <FieldInput label="Company" id={`company_${item.id}`} value={item.company} onChange={e => handleItemChange(item.id, 'company', e.target.value, sectionType)} />
-      <div className="grid grid-cols-2 gap-2">
-        <FieldInput label="Start Date" id={`startDate_${item.id}`} value={item.startDate} onChange={e => handleItemChange(item.id, 'startDate', e.target.value, sectionType)} />
-        <FieldInput label="End Date" id={`endDate_${item.id}`} value={item.endDate} onChange={e => handleItemChange(item.id, 'endDate', e.target.value, sectionType)} />
-      </div>
-      <AIFieldTextarea
-        label="Description"
-        {...getAIFieldProps(constructUniqueFieldId(false, 'description', item.id, sectionType), item.description, sectionType, currentItem, sectionId)}
-      />
-    </>
-  );
-
-  const renderEducationItemForm = (item: EducationEntry, sectionType: SectionType, currentItem: SectionItem, sectionId: string) => (
-    <>
-      <FieldInput label="Degree" id={`degree_${item.id}`} value={item.degree} onChange={e => handleItemChange(item.id, 'degree', e.target.value, sectionType)} />
-      <FieldInput label="Institution" id={`institution_${item.id}`} value={item.institution} onChange={e => handleItemChange(item.id, 'institution', e.target.value, sectionType)} />
-      <FieldInput label="Graduation Year" id={`graduationYear_${item.id}`} value={item.graduationYear} onChange={e => handleItemChange(item.id, 'graduationYear', e.target.value, sectionType)} />
-      <AIFieldTextarea
-        label="Details (Optional)"
-        {...getAIFieldProps(constructUniqueFieldId(false, 'details', item.id, sectionType), item.details, sectionType, currentItem, sectionId)}
-      />
-    </>
-  );
-
-  const renderSkillItemForm = (item: SkillEntry, sectionType: SectionType, currentItem: SectionItem, sectionId: string) => (
-     <AIFieldTextarea
-        label="Skill Name"
-        className="min-h-[40px]"
-        placeholder="Enter skill..."
-        {...getAIFieldProps(constructUniqueFieldId(false, 'name', item.id, sectionType), item.name, sectionType, currentItem, sectionId)}
-      />
-  );
-
-  const renderCustomTextItemForm = (item: CustomTextEntry, sectionType: SectionType, currentItem: SectionItem, sectionId: string) => (
-    <AIFieldTextarea
-        label="Content"
-        {...getAIFieldProps(constructUniqueFieldId(false, 'content', item.id, sectionType), item.content, sectionType, currentItem, sectionId)}
-      />
-  );
-
   const editorTitle = isCurrentlyEditingPersonalDetails ? "Personal Details" : (localData && 'title' in localData ? (localData as ResumeSection).title : "Edit Section");
 
   return (
@@ -646,13 +639,6 @@ export default function SectionEditor({
   );
 }
 
-const FieldInput = ({ label, id, value, onChange, type = "text" }: { label: string, id: string, value: string, onChange: (e: ChangeEvent<HTMLInputElement>) => void, type?: string }) => (
-  <div>
-    <Label htmlFor={id} className="block mb-1">{label}</Label>
-    <Input type={type} id={id} name={id} value={value || ''} onChange={onChange} className="text-sm" />
-  </div>
-);
-
 interface AIFieldTextareaProps {
   id: string; 
   label: string;
@@ -706,10 +692,9 @@ const AIFieldTextarea: React.FC<AIFieldTextareaProps> = ({
       <Label htmlFor={id} className="block mb-1">{label}</Label>
       <AutocompleteTextarea
         id={id} 
-        name={fieldName} // Add name prop for context building
+        name={fieldName}
         value={value} 
         onValueChange={onValueChange} 
-        
         className={cn("min-h-[80px]", className)} 
         placeholder={placeholder || `Enter ${label.toLowerCase()}...`}
         userJobTitle={userJobTitle}
@@ -717,12 +702,12 @@ const AIFieldTextarea: React.FC<AIFieldTextareaProps> = ({
         currentItem={currentItem}
         allResumeSections={allResumeSections}
         currentSectionId={currentSectionId}
-        
         forcedSuggestion={forcedSuggestion}
         onForcedSuggestionAccepted={onAcceptForcedSuggestion}
         onForcedSuggestionRejected={onRejectForcedSuggestion}
         isAutocompleteEnabledGlobally={isAutocompleteEnabled}
       />
+      {/* AI Improvement UI */}
       <div className="flex items-center gap-2 mt-1">
         <Input
           type="text"

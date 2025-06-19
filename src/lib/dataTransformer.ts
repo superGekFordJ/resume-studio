@@ -1,0 +1,96 @@
+import { ResumeData, isLegacyResumeData, ResumeSection, SectionType, PersonalDetails } from "@/types/resume";
+import { RenderableResume, RenderableSection, RenderableItem, RenderableField, DynamicResumeSection } from "@/types/schema";
+import { SchemaRegistry } from "./schemaRegistry";
+
+export function transformToRenderableView(resumeData: ResumeData, schemaRegistry: SchemaRegistry): RenderableResume {
+  const sections: RenderableSection[] = resumeData.sections
+    .filter(s => s.visible)
+    .map(section => {
+      // Handle legacy sections
+      if ('type' in section) {
+        const legacySection = section as ResumeSection;
+        return transformLegacySection(legacySection);
+      } else {
+        // Handle dynamic sections
+        const dynamicSection = section as DynamicResumeSection;
+        return transformDynamicSection(dynamicSection, schemaRegistry);
+      }
+    })
+    .filter((s): s is RenderableSection => s !== null);
+
+  return {
+    personalDetails: resumeData.personalDetails as PersonalDetails,
+    sections,
+  };
+}
+
+function transformLegacySection(section: ResumeSection): RenderableSection | null {
+  const items: RenderableItem[] = section.items.map(item => {
+    const fields: RenderableField[] = [];
+    
+    switch (section.type) {
+      case 'experience':
+        if ('jobTitle' in item) {
+          fields.push({ key: 'jobTitle', label: 'Job Title', value: item.jobTitle });
+          fields.push({ key: 'company', label: 'Company', value: item.company });
+          fields.push({ key: 'dateRange', label: 'Date Range', value: `${item.startDate} - ${item.endDate}` });
+          fields.push({ key: 'description', label: 'Description', value: item.description });
+        }
+        break;
+      
+      case 'education':
+        if ('degree' in item) {
+          fields.push({ key: 'degree', label: 'Degree', value: item.degree });
+          fields.push({ key: 'institution', label: 'Institution', value: item.institution });
+          fields.push({ key: 'graduationYear', label: 'Graduation Year', value: item.graduationYear });
+          if (item.details) {
+            fields.push({ key: 'details', label: 'Details', value: item.details });
+          }
+        }
+        break;
+      
+      case 'skills':
+        if ('name' in item) {
+          fields.push({ key: 'name', label: 'Skill', value: item.name });
+        }
+        break;
+      
+      case 'summary':
+      case 'customText':
+        if ('content' in item) {
+          fields.push({ key: 'content', label: 'Content', value: item.content });
+        }
+        break;
+    }
+    
+    return { id: item.id, fields };
+  });
+
+  return {
+    id: section.id,
+    title: section.title,
+    schemaId: section.type, // Use type as schemaId for legacy sections
+    items
+  };
+}
+
+function transformDynamicSection(section: DynamicResumeSection, schemaRegistry: SchemaRegistry): RenderableSection | null {
+  const schema = schemaRegistry.getSectionSchema(section.schemaId);
+  if (!schema) return null;
+
+  const items: RenderableItem[] = section.items.map(item => {
+    const fields: RenderableField[] = schema.fields.map(field => ({
+      key: field.id,
+      label: field.label,
+      value: item.data[field.id] || ''
+    }));
+    return { id: item.id, fields };
+  });
+
+  return {
+    id: section.id,
+    title: section.title,
+    schemaId: section.schemaId,
+    items
+  };
+} 

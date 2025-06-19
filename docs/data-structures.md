@@ -423,6 +423,63 @@ const PROJECTS_SCHEMA: SectionSchema = {
 };
 ```
 
+## 渲染视图模型 (Render View Models)
+
+### 1. RenderableField
+
+```typescript
+export interface RenderableField {
+  key: string;     // 字段标识符，如 'jobTitle'
+  label: string;   // 字段显示标签，如 'Job Title'
+  value: string | string[];  // 字段值，支持单值或数组
+}
+```
+
+### 2. RenderableItem
+
+```typescript
+export interface RenderableItem {
+  id: string;                    // 项目唯一标识符
+  fields: RenderableField[];     // 该项目的所有字段
+}
+```
+
+### 3. RenderableSection
+
+```typescript
+export interface RenderableSection {
+  id: string;                    // 章节唯一标识符
+  title: string;                 // 章节标题
+  schemaId: string;              // 关联的Schema ID
+  items: RenderableItem[];       // 该章节的所有项目
+}
+```
+
+### 4. RenderableResume
+
+```typescript
+export interface RenderableResume {
+  personalDetails: PersonalDetails;  // 个人信息（保持扁平结构）
+  sections: RenderableSection[];     // 所有渲染章节
+}
+```
+
+### 5. 数据转换函数
+
+```typescript
+// 将原始简历数据转换为可渲染视图
+export function transformToRenderableView(
+  resumeData: ResumeData, 
+  schemaRegistry: SchemaRegistry
+): RenderableResume;
+```
+
+这个转换函数负责：
+- 过滤不可见章节
+- 将传统章节数据转换为统一格式
+- 将动态章节数据根据Schema定义转换为统一格式
+- 确保所有数据都是纯粹的显示数据，不含业务逻辑
+
 ## 数据迁移
 
 ### 迁移工具函数
@@ -458,121 +515,97 @@ if (isLegacyResumeData(resumeData)) {
 }
 ```
 
-## AI 接口规范
+## AI 接口规范 (Schema-Driven)
 
-所有 AI Flow 的输入都已被重构，以接收一个结构化的 `context` 对象，而不是多个零散的字符串。
+所有 AI Flow 的输入都已被重构，以接收一个由 `SchemaRegistry` 统一构建的结构化 `context` 对象，而不是多个零散的字符串。这确保了AI上下文的一致性和可扩展性。
 
 ### 1. `autocomplete` 和 `improve` 接口
 
 #### 输入参数 (Zod Schema)
 ```typescript
-const InputSchema = z.object({
-  // ... other fields like inputText or prompt
-  
+// improve-resume-section.ts
+const ImproveResumeSectionInputSchema = z.object({
+  resumeSection: z.string(),
+  prompt: z.string(),
   context: z.object({
     currentItemContext: z.string(),
     otherSectionsContext: z.string(),
     userJobTitle: z.string().optional(),
-  }).describe('Structured context from SchemaRegistry'),
+  }),
+  sectionType: z.string().optional(),
+});
 
-  sectionType: z.string().optional(), 
+// autocomplete-input.ts
+const AutocompleteInputInputSchema = z.object({
+  inputText: z.string(),
+  context: z.object({
+    currentItemContext: z.string(),
+    otherSectionsContext: z.string(),
+    userJobTitle: z.string().optional(),
+  }),
+  sectionType: z.string().optional(),
 });
 ```
 
 ### 2. `review` 接口
 
-`review` 接口保持不变，但其输入字符串现在由 `schemaRegistry.stringifyResumeForReview(resumeData)` 生成。
+`review` 接口保持不变，但其输入字符串现在由 `schemaRegistry.stringifyResumeForReview(resumeData)` 统一生成，确保了对动态和传统章节的完全支持。
 
 #### 输入参数 (Zod Schema)
 ```typescript
+// review-resume.ts
 const ReviewResumeInputSchema = z.object({
   resumeText: z.string().describe('The complete text content of the resume to be reviewed.'),
 });
 ```
 
-## 使用示例
+### 3. `batchImprove` 接口
 
-### 创建动态章节
+`batchImprove` 接口用于对整个章节进行批量优化。
 
+#### 输入参数 (Zod Schema)
 ```typescript
-// 获取Schema注册中心
-const schemaRegistry = SchemaRegistry.getInstance();
-
-// 创建新的高级技能章节
-const newSection: DynamicResumeSection = {
-  id: 'advanced-skills_' + Date.now(),
-  schemaId: 'advanced-skills',
-  title: 'Advanced Skills',
-  visible: true,
-  items: [
-    {
-      id: 'skill_1',
-      schemaId: 'advanced-skills',
-      data: {
-        category: 'Technical Skills',
-        skills: ['React', 'TypeScript', 'Node.js'],
-        proficiency: 'Advanced'
-      },
-      metadata: {
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        aiGenerated: false
-      }
-    }
-  ],
-  metadata: {
-    customTitle: false,
-    aiOptimized: false
-  }
-};
-```
-
-### 使用AI上下文构建器
-
-```typescript
-// 构建项目上下文
-const projectContext = schemaRegistry.buildContext(
-  'projects-item',
-  {
-    name: 'E-commerce Platform',
-    technologies: ['React', 'Node.js', 'MongoDB']
-  },
-  allResumeData
-);
-// 结果: "Project: E-commerce Platform, Tech: React, Node.js, MongoDB"
-
-// 批量改进章节
-const improvedSection = await batchImproveSection({
-  sectionData: projectsSection.items[0].data,
-  sectionType: 'projects',
-  improvementGoals: [
-    'Add quantifiable results',
-    'Highlight technical challenges',
-    'Emphasize leadership skills'
-  ],
-  userJobTitle: 'Senior Full Stack Developer',
-  allResumeData: allResumeData // 确保传入完整的简历数据
+// batch-improve-section.ts
+const BatchImproveSectionInputSchema = z.object({
+  sectionData: z.record(z.any()),
+  sectionType: z.string(),
+  improvementGoals: z.array(z.string()),
+  userJobTitle: z.string().optional(),
+  otherSectionsContext: z.string().optional(),
 });
 ```
+
+---
+*最后更新: 2025-06-19*
+*文档版本: v2.0.0*
 
 ## 数据流转换
 
 ### 1. 简历数据 → 渲染数据
 
 ```typescript
-// 将 ResumeData 转换为模板渲染所需的格式
-function transformForRendering(resumeData: ResumeData): TemplateRenderData {
-  return {
-    personalInfo: resumeData.personalDetails,
-    visibleSections: resumeData.sections.filter(section => section.visible),
-    templateConfig: getTemplateConfig(resumeData.templateId)
-  };
-}
+// 将 ResumeData 转换为统一的渲染视图模型
+function transformToRenderableView(
+  resumeData: ResumeData, 
+  schemaRegistry: SchemaRegistry
+): RenderableResume {
+  const sections: RenderableSection[] = resumeData.sections
+    .filter(s => s.visible)
+    .map(section => {
+      if ('type' in section) {
+        // 传统章节转换
+        return transformLegacySection(section);
+      } else {
+        // 动态章节转换
+        return transformDynamicSection(section, schemaRegistry);
+      }
+    })
+    .filter((s): s is RenderableSection => s !== null);
 
-interface TemplateRenderData {
-  personalInfo: PersonalDetails;
-  visibleSections: (ResumeSection | DynamicResumeSection)[];
-  templateConfig: any; // 具体类型待定义
+  return {
+    personalDetails: resumeData.personalDetails,
+    sections,
+  };
 }
 ```
 
@@ -792,53 +825,6 @@ function validateResumeData(data: ResumeData): { success: boolean; errors?: z.Zo
   }
   return { success: true };
 }
-```
-
-### 2. AI 输入验证
-```typescript
-// 所有 AI 接口都使用 Zod schema 进行输入验证
-const AutocompleteInputSchema = z.object({
-  inputText: z.string().min(1, "输入文本不能为空"),
-  userJobTitle: z.string().optional(),
-  sectionType: z.string().optional(),
-  currentItemContext: z.string().optional(),
-  otherSectionsContext: z.string().optional(),
-  fieldId: z.string().optional(),
-  currentItemData: z.record(z.any()).optional(),
-  allResumeData: z.record(z.any()).optional(),
-  enhancedContext: z.string().optional(),
-});
-
-const ImproveResumeSectionInputSchema = z.object({
-  resumeSection: z.string().min(1, "待改进内容不能为空"),
-  prompt: z.string().min(1, "提示不能为空"),
-  userJobTitle: z.string().optional(),
-  sectionType: z.string().optional(),
-  currentItemContext: z.string().optional(),
-  otherSectionsContext: z.string().optional(),
-  fieldId: z.string().optional(),
-  currentItemData: z.record(z.any()).optional(),
-  allResumeData: z.record(z.any()).optional(),
-  enhancedContext: z.string().optional(),
-});
-
-const BatchImproveSectionInputSchema = z.object({
-  sectionData: z.record(z.any()),
-  sectionType: z.string().min(1),
-  improvementGoals: z.array(z.string().min(1)),
-  userJobTitle: z.string().optional(),
-  otherSectionsContext: z.string().optional(),
-  allResumeData: z.record(z.any()).optional(),
-  priorityFields: z.array(z.string()).optional(),
-});
-
-const ComprehensiveResumeAnalysisInputSchema = z.object({
-  resumeData: z.record(z.any()),
-  analysisType: z.enum(['ats-optimization', 'content-enhancement', 'structure-improvement', 'industry-alignment']),
-  targetRole: z.string().optional(),
-  industryContext: z.string().optional(),
-  experienceLevel: z.enum(['entry', 'mid', 'senior', 'executive']).optional(),
-});
 ```
 
 ## 存储格式

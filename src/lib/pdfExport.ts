@@ -1,6 +1,11 @@
 "use client";
 
+import React from 'react';
+import ReactDOMServer from 'react-dom/server';
 import type { ResumeData } from '@/types/resume';
+import PrintableResume from '@/components/resume/canvas/PrintableResume';
+import { transformToRenderableView } from './dataTransformer';
+import { SchemaRegistry } from './schemaRegistry';
 
 interface ExportOptions {
   filename?: string;
@@ -20,11 +25,17 @@ export async function exportResumeToPDF(
   } = options;
 
   try {
-    // Get the printable area element
-    const element = document.getElementById('resume-canvas-printable-area');
-    if (!element) {
-      throw new Error('Resume canvas not found');
-    }
+    // Transform data to renderable format
+    const schemaRegistry = SchemaRegistry.getInstance();
+    const renderableResume = transformToRenderableView(resumeData, schemaRegistry);
+
+    // Render component to HTML string
+    const elementHtml = ReactDOMServer.renderToString(
+      React.createElement(PrintableResume, {
+        resume: renderableResume,
+        templateId: resumeData.templateId
+      })
+    );
 
     // Create a new window for PDF generation
     const printWindow = window.open('', '_blank', 'width=794,height=1123');
@@ -414,7 +425,7 @@ export async function exportResumeToPDF(
           ${pdfCSS}
         </head>
         <body>
-          ${element.outerHTML}
+          <div id="resume-canvas-printable-area" class="a4-canvas printable-area">${elementHtml}</div>
         </body>
       </html>
     `;
@@ -447,119 +458,11 @@ export async function exportResumeToPDF(
 /**
  * Enhanced print function with consistent styling
  */
-export function printResume(): void {
+export function printResume(resumeData: ResumeData): void {
   try {
     // Use the same PDF export function for printing
     // This ensures consistency between print and PDF export
-    const resumeElement = document.getElementById('resume-canvas-printable-area');
-    if (!resumeElement) {
-      throw new Error('Resume canvas not found');
-    }
-
-    // Create enhanced print styles
-    const printCSS = `
-      <style type="text/css" media="print">
-        @page {
-          size: A4;
-          margin: 0;
-        }
-        
-        * {
-          -webkit-print-color-adjust: exact !important;
-          color-adjust: exact !important;
-          print-color-adjust: exact !important;
-        }
-        
-        body {
-          margin: 0 !important;
-          padding: 0 !important;
-          background: white !important;
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-        }
-        
-        body * {
-          visibility: hidden;
-        }
-        
-        #resume-canvas-printable-area,
-        #resume-canvas-printable-area * {
-          visibility: visible;
-        }
-        
-        #resume-canvas-printable-area {
-          position: absolute !important;
-          left: 0 !important;
-          top: 0 !important;
-          width: 210mm !important;
-          height: 297mm !important;
-          padding: 20mm 25mm !important;
-          margin: 0 !important;
-          box-shadow: none !important;
-          background: white !important;
-          font-size: 11px !important;
-          line-height: 1.4 !important;
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-          -webkit-font-smoothing: antialiased;
-          -moz-osx-font-smoothing: grayscale;
-          text-rendering: optimizeLegibility;
-          word-wrap: break-word;
-          hyphens: auto;
-          overflow: hidden;
-        }
-        
-        .no-print {
-          display: none !important;
-        }
-        
-        h1, h2, h3, h4, h5, h6 {
-          page-break-after: avoid;
-        }
-        
-        p {
-          orphans: 3;
-          widows: 3;
-        }
-        
-        img {
-          max-width: 100% !important;
-          height: auto !important;
-        }
-      </style>
-    `;
-
-    // Create a new window for printing
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      throw new Error('Could not open print window');
-    }
-
-    // Build the print document
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Resume - ${document.title}</title>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1">
-          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-          ${printCSS}
-        </head>
-        <body>
-          ${resumeElement.outerHTML}
-        </body>
-      </html>
-    `);
-
-    printWindow.document.close();
-
-    // Wait for content to load then print
-    printWindow.onload = () => {
-      setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
-      }, 250);
-    };
-
+    exportResumeToPDF(resumeData);
   } catch (error) {
     console.error('Error printing resume:', error);
     throw new Error(`Failed to print resume: ${error instanceof Error ? error.message : 'Unknown error'}`);
