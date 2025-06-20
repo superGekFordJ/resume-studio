@@ -75,14 +75,14 @@ const DefaultTemplate = ({ resume }: DefaultTemplateProps) => {
               alt={personalDetails.fullName}
               className="w-full h-full object-cover"
             />
-          </div>
+      </div>
         )}
         
         {/* Personal Info */}
         <div className="flex-grow text-center">
           <h1 className="font-headline text-2xl font-bold text-primary mb-1">{personalDetails.fullName}</h1>
           <p className="font-headline text-sm text-foreground mb-3">{personalDetails.jobTitle}</p>
-          
+
           {/* Contact Info with Icons */}
           <div className="flex flex-wrap justify-center items-center gap-3 text-[9px] text-gray-600">
             {personalDetails.email && (

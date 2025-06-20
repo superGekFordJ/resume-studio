@@ -150,12 +150,15 @@ export interface TemplateInfo {
   name: string;
   imageUrl: string;
   dataAiHint: string;
+  fullBleed?: boolean;    // true for templates that need to be printed on a full page without margins
 }
 
 export const templates: TemplateInfo[] = [
   { id: 'default', name: 'Classic Professional', imageUrl: 'https://placehold.co/200x283.png', dataAiHint: 'resume template' },
   { id: 'modern-minimalist', name: 'Modern Minimalist', imageUrl: 'https://placehold.co/200x283.png', dataAiHint: 'modern resume' },
   { id: 'creative', name: 'Creative Two-Column', imageUrl: 'https://placehold.co/200x283.png', dataAiHint: 'creative design' },
+  { id: 'continuous-narrative', name: 'Continuous Narrative', imageUrl: 'https://placehold.co/200x283.png', dataAiHint: 'continuous flow magazine-style', fullBleed: true },
+  { id: 'parallel-modular', name: 'Parallel Modular', imageUrl: 'https://placehold.co/200x283.png', dataAiHint: 'parallel functionally-distinct columns', fullBleed: true },
 ];
 
 // Using dynamic imports for Lucide icons to avoid making them server components by default if not necessary.

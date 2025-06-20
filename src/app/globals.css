@@ -1,3 +1,7 @@
+/* === Self-hosted Google Fonts via Fontsource === */
+@import "@fontsource/inter/latin.css";           /* 100-900 全权重 */
+@import "@fontsource/space-grotesk/latin.css";   /* 300-700 全权重 */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -88,10 +92,10 @@
     -moz-osx-font-smoothing: grayscale;
   }
   .font-headline {
-    font-family: var(--font-space-grotesk), sans-serif;
+    font-family: 'Space Grotesk', sans-serif;
   }
   .font-body {
-    font-family: var(--font-inter), sans-serif;
+    font-family: 'Inter', sans-serif;
   }
 }
 
@@ -102,7 +106,7 @@
 
 .a4-canvas {
   width: 210mm;
-  min-height: 297mm; /* Using min-height to allow content to grow if needed, but target single page */
+  height: 297mm; /* Changed from min-height to height for consistent footer positioning */
   padding: 20mm 25mm; /* Consistent margins: top/bottom 20mm, left/right 25mm */
   @apply bg-card shadow-lg transition-all duration-300 ease-in-out;
   transform-origin: top center;
@@ -123,6 +127,10 @@
   overflow: hidden;
   word-wrap: break-word;
   hyphens: auto;
+}
+
+.a4-canvas.full-bleed {
+  padding: 0 !important;
 }
 
 /* Responsive scaling for smaller screens */
@@ -185,6 +193,10 @@
     overflow: hidden;
   }
   
+  .printable-area.full-bleed {
+    padding: 0 !important;
+  }
+  
   .a4-canvas {
     box-shadow: none !important;
     margin: 0 !important;
@@ -196,6 +208,10 @@
     /* Ensure exact font rendering match */
     font-size: 11px !important;
     line-height: 1.4 !important;
+  }
+  
+  .a4-canvas.full-bleed {
+    padding: 0 !important;
   }
   
   /* Hide non-printable elements */

@@ -20,13 +20,13 @@ export default function TemplateSelector({
       <CardHeader>
         <CardTitle className="font-headline text-xl">Select Template</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-4">
         <ScrollArea className="w-full whitespace-nowrap">
           <div className="flex space-x-4 pb-4">
             {templates.map((template: TemplateInfo) => (
               <Card
                 key={template.id}
-                className={`w-[180px] h-[250px] cursor-pointer transition-all duration-200 hover:shadow-xl relative flex-shrink-0 ${
+                className={`w-[180px] h-[260px] cursor-pointer transition-all duration-200 hover:shadow-xl relative flex-shrink-0 ${
                   selectedTemplateId === template.id
                     ? "ring-2 ring-primary shadow-lg"
                     : "ring-1 ring-border"
