@@ -61,7 +61,7 @@ src/
 │   ├── utils.ts          # 通用工具
 │   ├── schemaRegistry.ts # Schema 注册中心 (新增)
 │   ├── dataTransformer.ts # 数据转换器 (新增)
-│   └── pdfExport.ts      # PDF 导出工具 (重构)
+│   └── pdfExport.ts      # PDF 导出工具 (已简化，仅保留工具函数)
 └── types/                # TypeScript 类型定义
     ├── resume.ts         # 简历相关类型
     └── schema.ts         # Schema 定义 (新增)
@@ -124,19 +124,19 @@ src/
                    RenderableResume
                  (View Model with defaultRenderType)
                            |
-            +--------------+--------------+
-            |                             |
-            v                             v
-      ResumeCanvas                   pdfExport
-    (Screen Rendering)              (PDF Rendering)
-            |                             |
-            v                             v
-      Template Components            Template Components
-       (Layout Dispatchers)           (Layout Dispatchers)
-            |                             |
-            v                             v
-      Atomic Rendering Components    Atomic Rendering Components
+                           v
+                   ResumeCanvas
+                 (Screen & PDF Rendering)
+                           |
+                           v
+                 Template Components
+                  (Layout Dispatchers)
+                           |
+                           v
+              Atomic Rendering Components
 ```
+
+**重要更新 (2025-06-20)**: PDF 导出现已通过 `react-to-print` 库直接使用 `ResumeCanvas` 组件，确保了真正的 WYSIWYG（所见即所得）体验。不再需要单独的 PDF 渲染路径。
 
 #### 混合渲染模型 ("Default + Override")
 
@@ -265,7 +265,7 @@ const renderSectionByRenderType = (section: RenderableSection) => {
 - **Key Features**: Auto-completion, section improvement, resume review
 - **Implementation**: Server-side AI flows using Genkit
 
-## Schema-Driven Architecture (Updated 2025-01-06)
+## Schema-Driven Architecture (Updated 2025-06-19)
 
 ### Current State
 The application has successfully transitioned to a pure Schema-driven architecture where:
@@ -303,7 +303,45 @@ Schema Definition → SchemaRegistry → UI Components
                       AI Flows
 ```
 
-## Hybrid Rendering Model (Updated 2025-01-07)
+## Schema-Driven Architecture (Updated 2025-06-19)
+
+### Current State
+The application has successfully transitioned to a pure Schema-driven architecture where:
+
+1. **SchemaRegistry19s Single Source of Truth**
+   - All section structures defined in schemas
+   - All AI context building centralized
+   - All business logic contained in the registry
+
+2. **Pure UI Components**
+   - `SectionEditor` no longer contains type-specific rendering logic
+   - All fields rendered through `DynamicFieldRenderer`
+   - UI components are "dumb" renderers driven by schemas
+
+3. **Unified AI Service Layer**
+   - All AI operations go through `SchemaRegistry` methods:
+     - `improveField()` - Field improvement
+     - `getAutocomplete()` - Auto-completion
+     - `batchImproveSection()` - Batch improvements
+     - `reviewResume()` - Full resume review
+   - No direct AI Flow calls from UI components
+
+4. **Proven Extensibility**
+   - New section types (e.g., "Certifications") can be added by only:
+     - Registering a schema in SchemaRegistry
+     - Adding context builders
+   - Zero UI code changes required
+
+### Architecture Flow
+```
+Schema Definition → SchemaRegistry → UI Components
+                          ↓
+                    AI Service Layer
+                          ↓
+                      AI Flows
+```
+
+## Hybrid Rendering Model (Updated 2025-06-20)
 
 ### Overview
 The hybrid rendering model provides a perfect balance between convention and flexibility:
@@ -325,7 +363,7 @@ The hybrid rendering model provides a perfect balance between convention and fle
 
 This architecture ensures maximum flexibility and maintainability while keeping the codebase clean and organized.
 
-## Template System (Updated 2025-01-07)
+## Template System (Updated 2025-06-19)
 
 ### Template Architecture
 The template system follows the hybrid rendering model, allowing each template to maintain its unique design while leveraging shared atomic components:
@@ -408,4 +446,15 @@ The PDF export system ensures pixel-perfect consistency between screen and print
 3. **Responsive Design**
    - Design templates to work well at A4 size (210mm × 297mm)
    - Consider print margins (20mm top/bottom, 25mm left/right)
-   - Test both screen and PDF output 
+   - Test both screen and PDF output Component`: Renders certifications with icons and validity
+   - `AdvancedSkillsComponent`: Groups skills by category with proficiency levels
+
+3. **Two-Column Layout Implementation**
+   The Creative template demonstrates how to implement complex layouts:
+   ```typescript
+   // Define which sections go into which column
+   const sidebarSections = ['skills', 'advanced-skills', 'languages', 'certifications'];
+   
+   const mainColumnSections = sections.filter(s => !sidebarSections.includes(s.schemaId));
+   const sideColumnSections = sections.filter(s => sidebarSections.includes(s.schemaId));
+   ```

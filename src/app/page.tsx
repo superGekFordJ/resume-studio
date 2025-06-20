@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useReactToPrint } from 'react-to-print';
 import type { ResumeData } from '@/types/resume';
 import { initialResumeData } from '@/types/resume';
 import Header from '@/components/layout/Header';
@@ -31,8 +32,37 @@ export default function ResumeStudioPage() {
   const [isLeftPanelOpen, setIsLeftPanelOpen] = useState(true);
   const [isAutocompleteEnabled, setIsAutocompleteEnabled] = useState(true);
 
+  // Create ref for ResumeCanvas
+  const resumeCanvasRef = useRef<HTMLDivElement>(null);
 
   const { toast } = useToast();
+
+  // Set up react-to-print
+  const handlePrint = useReactToPrint({
+    contentRef: resumeCanvasRef,
+    documentTitle: `${resumeData.personalDetails.fullName.replace(/\s+/g, '_')}_Resume`,
+    bodyClass: "font-body antialiased",
+    pageStyle: `
+      @page {
+        size: A4;
+        margin: 0;
+      }
+    `,
+    onAfterPrint: () => {
+      toast({ 
+        title: "PDF Export Complete", 
+        description: "Your resume has been prepared for printing or saving as PDF." 
+      });
+    },
+    onPrintError: (error, errorLocation) => {
+      console.error('Print error:', error, 'at', errorLocation);
+      toast({ 
+        variant: "destructive", 
+        title: "Print Failed", 
+        description: "Failed to print resume. Please try again." 
+      });
+    }
+  });
 
   useEffect(() => {
     setResumeData(prev => ({ ...prev, templateId: selectedTemplateId }));
@@ -75,37 +105,8 @@ export default function ResumeStudioPage() {
     }
   };
 
-  const handleExportPdf = async () => {
-    try {
-      const { exportResumeToPDF } = await import('@/lib/pdfExport');
-      await exportResumeToPDF(resumeData);
-      toast({ 
-        title: "PDF Export Ready", 
-        description: "Please use your browser's print dialog to save as PDF for best quality." 
-      });
-    } catch (error) {
-      console.error('PDF export error:', error);
-      toast({ 
-        variant: "destructive", 
-        title: "Export Failed", 
-        description: "Failed to export PDF. Please try again." 
-      });
-    }
-  };
-
-  const handlePrint = async () => {
-    try {
-      const { printResume } = await import('@/lib/pdfExport');
-      await printResume(resumeData);
-    } catch (error) {
-      console.error('Print error:', error);
-      toast({ 
-        variant: "destructive", 
-        title: "Print Failed", 
-        description: "Failed to print resume. Please try again." 
-      });
-    }
-  };
+  // Use the same function for both export and print
+  const handleExportPdf = handlePrint;
 
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden">
@@ -121,10 +122,12 @@ export default function ResumeStudioPage() {
               onBack={handleBackToStructure}
               childrenStructure={
                 <ScrollArea className="h-full p-4">
-                  <TemplateSelector
-                    selectedTemplateId={selectedTemplateId}
-                    onSelectTemplate={handleSelectTemplate}
-                  />
+                  <div className="grid grid-cols-[minmax(0,1fr)]">
+                    <TemplateSelector
+                      selectedTemplateId={selectedTemplateId}
+                      onSelectTemplate={handleSelectTemplate}
+                    />
+                  </div>
                   <div className="mt-6">
                     <SectionManager 
                       resumeData={resumeData} 
@@ -170,7 +173,7 @@ export default function ResumeStudioPage() {
                 <PanelRightOpen />
              </Button>
            )}
-           <ResumeCanvas resumeData={resumeData} />
+           <ResumeCanvas ref={resumeCanvasRef} resumeData={resumeData} />
         </main>
       </div>
 

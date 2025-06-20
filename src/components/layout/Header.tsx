@@ -39,14 +39,16 @@ export default function Header({ onReviewResume, onExportPdf, onPrint }: HeaderP
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={onExportPdf}>
+              <DropdownMenuItem onClick={() => onExportPdf()}>
                 <Download className="mr-2 h-4 w-4" />
                 Download PDF
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={onPrint}>
-                <Printer className="mr-2 h-4 w-4" />
-                Print Resume
-              </DropdownMenuItem>
+              {onPrint && (
+                <DropdownMenuItem onClick={() => onPrint()}>
+                  <Printer className="mr-2 h-4 w-4" />
+                  Print Resume
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
