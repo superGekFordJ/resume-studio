@@ -6,14 +6,39 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useResumeStore } from '@/stores/resumeStore';
+import { reviewResume } from '@/ai/flows/review-resume';
+import { schemaRegistry } from '@/lib/schemaRegistry';
+import { useToast } from '@/hooks/use-toast';
 
 interface HeaderProps {
-  onReviewResume: () => void;
   onExportPdf: () => void;
   onPrint?: () => void;
 }
 
-export default function Header({ onReviewResume, onExportPdf, onPrint }: HeaderProps) {
+export default function Header({ onExportPdf, onPrint }: HeaderProps) {
+  const { toast } = useToast();
+  const resumeData = useResumeStore(state => state.resumeData);
+  const setIsReviewDialogOpen = useResumeStore(state => state.setIsReviewDialogOpen);
+  const setReviewContent = useResumeStore(state => state.setReviewContent);
+  const setIsReviewLoading = useResumeStore(state => state.setIsReviewLoading);
+
+  const handleReviewResume = async () => {
+    setIsReviewLoading(true);
+    setReviewContent(null);
+    setIsReviewDialogOpen(true);
+    try {
+      const resumeText = schemaRegistry.stringifyResumeForReview(resumeData);
+      const result = await reviewResume({ resumeText });
+      setReviewContent(result);
+    } catch (error) {
+      console.error("AI Review error:", error);
+      toast({ variant: "destructive", title: "Error", description: "Failed to get AI review." });
+      setReviewContent({ overallQuality: "Error fetching review.", suggestions: "Please try again." });
+    } finally {
+      setIsReviewLoading(false);
+    }
+  };
 
   return (
     <header className="bg-card border-b sticky top-0 z-40 no-print">
@@ -25,7 +50,7 @@ export default function Header({ onReviewResume, onExportPdf, onPrint }: HeaderP
           </h1>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={onReviewResume}>
+          <Button variant="outline" size="sm" onClick={handleReviewResume}>
             <Sparkles className="mr-2 h-4 w-4" />
             AI Review
           </Button>

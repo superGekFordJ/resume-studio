@@ -25,6 +25,10 @@ export function transformToRenderableView(resumeData: ResumeData, schemaRegistry
 }
 
 function transformLegacySection(section: ResumeSection): RenderableSection | null {
+  // Get schema registry for legacy sections
+  const schemaRegistry = SchemaRegistry.getInstance();
+  const schema = schemaRegistry.getSectionSchema(section.type);
+  
   const items: RenderableItem[] = section.items.map(item => {
     const fields: RenderableField[] = [];
     
@@ -34,7 +38,14 @@ function transformLegacySection(section: ResumeSection): RenderableSection | nul
           fields.push({ key: 'jobTitle', label: 'Job Title', value: item.jobTitle });
           fields.push({ key: 'company', label: 'Company', value: item.company });
           fields.push({ key: 'dateRange', label: 'Date Range', value: `${item.startDate} - ${item.endDate}` });
-          fields.push({ key: 'description', label: 'Description', value: item.description });
+          // Check if description field has markdown enabled
+          const descriptionField = schema?.fields.find(f => f.id === 'description');
+          fields.push({ 
+            key: 'description', 
+            label: 'Description', 
+            value: item.description,
+            markdownEnabled: descriptionField?.uiProps?.markdownEnabled
+          });
         }
         break;
       
@@ -44,7 +55,14 @@ function transformLegacySection(section: ResumeSection): RenderableSection | nul
           fields.push({ key: 'institution', label: 'Institution', value: item.institution });
           fields.push({ key: 'graduationYear', label: 'Graduation Year', value: item.graduationYear });
           if (item.details) {
-            fields.push({ key: 'details', label: 'Details', value: item.details });
+            // Check if details field has markdown enabled
+            const detailsField = schema?.fields.find(f => f.id === 'details');
+            fields.push({ 
+              key: 'details', 
+              label: 'Details', 
+              value: item.details,
+              markdownEnabled: detailsField?.uiProps?.markdownEnabled
+            });
           }
         }
         break;
@@ -58,17 +76,20 @@ function transformLegacySection(section: ResumeSection): RenderableSection | nul
       case 'summary':
       case 'customText':
         if ('content' in item) {
-          fields.push({ key: 'content', label: 'Content', value: item.content });
+          // Check if content field has markdown enabled
+          const contentField = schema?.fields.find(f => f.id === 'content');
+          fields.push({ 
+            key: 'content', 
+            label: 'Content', 
+            value: item.content,
+            markdownEnabled: contentField?.uiProps?.markdownEnabled
+          });
         }
         break;
     }
     
     return { id: item.id, fields };
   });
-
-  // Get default render type from schemaRegistry for legacy sections
-  const schemaRegistry = SchemaRegistry.getInstance();
-  const schema = schemaRegistry.getSectionSchema(section.type);
   
   return {
     id: section.id,
@@ -94,7 +115,8 @@ function transformDynamicSection(section: DynamicResumeSection, schemaRegistry: 
       .map(field => ({
         key: field.id,
         label: field.label,
-        value: item.data[field.id]
+        value: item.data[field.id],
+        markdownEnabled: field.uiProps?.markdownEnabled
       }));
     return { id: item.id, fields };
   });

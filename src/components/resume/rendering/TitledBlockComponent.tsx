@@ -1,6 +1,7 @@
 "use client";
 
 import { RenderableItem } from "@/types/schema";
+import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
 
 interface TitledBlockComponentProps {
   item: RenderableItem;
@@ -21,6 +22,9 @@ export const TitledBlockComponent = ({ item }: TitledBlockComponentProps) => {
     f.key === 'description' || f.key === 'details' || f.key === 'content'
   );
 
+  const descriptionContent = descriptionField?.value ? 
+    (Array.isArray(descriptionField.value) ? descriptionField.value.join(', ') : descriptionField.value) : '';
+
   return (
     <div className="mb-3">
       {titleField?.value && subtitleField?.value && (
@@ -38,9 +42,17 @@ export const TitledBlockComponent = ({ item }: TitledBlockComponentProps) => {
         <p className="text-[10px] text-gray-500 mb-1">{dateField.value}</p>
       )}
       {descriptionField?.value && (
-        <p className="text-[11px] leading-[1.4] text-gray-700 whitespace-pre-line">
-          {Array.isArray(descriptionField.value) ? descriptionField.value.join(', ') : descriptionField.value}
-        </p>
+        <>
+          {descriptionField.markdownEnabled ? (
+            <MarkdownRenderer className="text-[11px] text-gray-700">
+              {descriptionContent}
+            </MarkdownRenderer>
+          ) : (
+            <p className="text-[11px] leading-[1.4] text-gray-700 whitespace-pre-line">
+              {descriptionContent}
+            </p>
+          )}
+        </>
       )}
     </div>
   );

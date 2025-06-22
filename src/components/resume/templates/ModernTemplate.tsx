@@ -7,6 +7,7 @@ import { BadgeListComponent } from '../rendering/BadgeListComponent';
 import { TitledBlockComponent } from '../rendering/TitledBlockComponent';
 import { SimpleListComponent } from '../rendering/SimpleListComponent';
 import { SingleTextComponent } from '../rendering/SingleTextComponent';
+import { AdvancedSkillsComponent } from '../rendering/AdvancedSkillsComponent';
 
 interface ModernTemplateProps {
   resume: RenderableResume;
@@ -14,10 +15,12 @@ interface ModernTemplateProps {
 
 // Modern template specific rendering dispatcher
 const renderSectionByRenderType = (section: RenderableSection) => {
-  // Modern template's layout preferences (can be empty to use all defaults)
+  // Modern template's layout preferences - override specific sections
   const templateLayoutMap: Record<string, string> = {
-    // Modern template likes to show skills as badges (same as default)
-    // So no override needed
+    // Modern template prefers timeline for projects and certifications
+    'projects': 'timeline',
+    'certifications': 'timeline',
+    'advanced-skills': 'advanced-skills-list', // Use specialized advanced skills rendering
   };
 
   // Use template override if exists, otherwise use schema default
@@ -43,29 +46,57 @@ const renderSectionByRenderType = (section: RenderableSection) => {
       return section.items.map(item => <TitledBlockComponent key={item.id} item={item} />);
     case 'single-text':
       return <SingleTextComponent items={section.items} />;
+    case 'advanced-skills-list':
+      return section.items.map(item => <AdvancedSkillsComponent key={item.id} item={item} />);
     default:
-      // Generic fallback rendering
-      return section.items.map(item => (
-        <div key={item.id} className="mb-2">
-          {item.fields.map(field => (
-            <div key={field.key}>
-              {Array.isArray(field.value) ? (
-                <div>
-                  <span className="font-medium text-xs">{field.label}: </span>
-                  {field.value.join(', ')}
-                </div>
-              ) : (
-                field.value && (
-                  <div>
-                    <span className="font-medium text-xs">{field.label}: </span>
-                    <span className="text-xs">{field.value}</span>
+      // Improved generic fallback rendering for unknown sections
+      return (
+        <div className="space-y-3">
+          {section.items.map(item => (
+            <div key={item.id} className="border-l-2 border-gray-200 pl-3">
+              {item.fields.map((field, index) => {
+                // Skip empty fields
+                if (!field.value || (Array.isArray(field.value) && field.value.length === 0)) {
+                  return null;
+                }
+                
+                // Determine field importance based on position
+                const isFirstField = index === 0;
+                
+                return (
+                  <div key={field.key} className={cn("text-[11px]", index > 0 && "mt-1")}>
+                    {Array.isArray(field.value) ? (
+                      <div>
+                        <span className="font-medium text-gray-600 text-[10px]">{field.label}:</span>
+                        <div className="mt-0.5 flex flex-wrap gap-1">
+                          {field.value.map((val, idx) => (
+                            <span key={idx} className="inline-block bg-gray-100 rounded px-1.5 py-0.5 text-[10px]">
+                              {val}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className={cn(isFirstField && "font-medium text-gray-800")}>
+                        {isFirstField ? (
+                          // First field is likely the title/name, display it prominently
+                          <span>{field.value}</span>
+                        ) : (
+                          // Other fields show with label
+                          <>
+                            <span className="text-gray-600">{field.label}:</span>
+                            <span className="text-gray-700 ml-1">{field.value}</span>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
-                )
-              )}
+                );
+              })}
             </div>
           ))}
         </div>
-      ));
+      );
   }
 };
 

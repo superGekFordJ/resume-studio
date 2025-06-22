@@ -11,18 +11,20 @@ import { GripVertical, Eye, EyeOff, PlusCircle, ArrowUp, ArrowDown, Edit3, Trash
 import * as LucideIcons from 'lucide-react'; 
 import { sectionIconMap } from '@/types/resume';
 import { SchemaRegistry } from '@/lib/schemaRegistry';
+import { useResumeStore } from '@/stores/resumeStore';
 
 interface SectionManagerProps {
-  resumeData: ResumeData;
-  onUpdateResumeData: (updatedData: ResumeData) => void;
-  onEditSection: (sectionId: string | 'personalDetails') => void;
+  // No props needed anymore
 }
 
 const getIconComponent = (iconName: string): React.ElementType => {
   return (LucideIcons as any)[iconName] || LucideIcons.FileText;
 };
 
-export default function SectionManager({ resumeData, onUpdateResumeData, onEditSection }: SectionManagerProps) {
+export default function SectionManager({}: SectionManagerProps) {
+  const resumeData = useResumeStore(state => state.resumeData);
+  const updateResumeData = useResumeStore(state => state.updateResumeData);
+  const setEditingTarget = useResumeStore(state => state.setEditingTarget);
   const schemaRegistry = SchemaRegistry.getInstance();
   
   const handleToggleVisibility = (sectionId: string) => {
@@ -30,13 +32,13 @@ export default function SectionManager({ resumeData, onUpdateResumeData, onEditS
       const updatedSections = resumeData.sections.map(s =>
         s.id === sectionId ? { ...s, visible: !s.visible } : s
       );
-      onUpdateResumeData({ ...resumeData, sections: updatedSections });
+      updateResumeData(prev => ({ ...prev, sections: updatedSections }));
     } else {
       // Handle ExtendedResumeData
       const updatedSections = resumeData.sections.map(s =>
         s.id === sectionId ? { ...s, visible: !s.visible } : s
       );
-      onUpdateResumeData({ ...resumeData, sections: updatedSections });
+      updateResumeData(prev => ({ ...prev, sections: updatedSections }));
     }
   };
 
@@ -50,7 +52,7 @@ export default function SectionManager({ resumeData, onUpdateResumeData, onEditS
 
     // Swap elements
     [sections[index], sections[newIndex]] = [sections[newIndex], sections[index]];
-    onUpdateResumeData({ ...resumeData, sections });
+    updateResumeData(prev => ({ ...prev, sections }));
   };
   
   const handleAddSection = (schemaId: string) => {
@@ -89,7 +91,7 @@ export default function SectionManager({ resumeData, onUpdateResumeData, onEditS
           return; 
       }
       const updatedSections = [...resumeData.sections, newSection];
-      onUpdateResumeData({ ...resumeData, sections: updatedSections });
+      updateResumeData(prev => ({ ...prev, sections: updatedSections }));
     } else {
       // Create new dynamic section
       const newDynamicSection: DynamicResumeSection = {
@@ -97,7 +99,16 @@ export default function SectionManager({ resumeData, onUpdateResumeData, onEditS
         schemaId: schemaId,
         title: sectionSchema.name,
         visible: true,
-        items: [],
+        items: sectionSchema.type === 'single' ? [{
+          id: `${schemaId}_item_${Date.now()}`,
+          schemaId: schemaId,
+          data: {},
+          metadata: {
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            aiGenerated: false
+          }
+        }] : [],
         metadata: {
           customTitle: false,
           aiOptimized: false
@@ -116,17 +127,17 @@ export default function SectionManager({ resumeData, onUpdateResumeData, onEditS
             aiOptimizationLevel: 'basic' as const
           }
         };
-        onUpdateResumeData(extendedData);
+        updateResumeData(() => extendedData);
       } else {
         const updatedSections = [...resumeData.sections, newDynamicSection];
-        onUpdateResumeData({ ...resumeData, sections: updatedSections });
+        updateResumeData(prev => ({ ...prev, sections: updatedSections }));
       }
     }
   };
 
   const handleRemoveSection = (sectionId: string) => {
     const updatedSections = resumeData.sections.filter(s => s.id !== sectionId);
-    onUpdateResumeData({ ...resumeData, sections: updatedSections });
+    updateResumeData(prev => ({ ...prev, sections: updatedSections }));
   };
 
   // Get available section types from schema registry
@@ -156,7 +167,7 @@ export default function SectionManager({ resumeData, onUpdateResumeData, onEditS
             {React.createElement(getIconComponent(sectionIconMap.personalDetails), { className: "h-5 w-5 text-primary" })}
             <span className="font-medium">Personal Details</span>
           </div>
-          <Button variant="ghost" size="icon" onClick={() => onEditSection('personalDetails')} aria-label="Edit Personal Details">
+          <Button variant="ghost" size="icon" onClick={() => setEditingTarget('personalDetails')} aria-label="Edit Personal Details">
             <Edit3 size={16} />
           </Button>
         </div>
@@ -187,7 +198,7 @@ export default function SectionManager({ resumeData, onUpdateResumeData, onEditS
                 <Button variant="ghost" size="icon" onClick={() => handleMoveSection(section.id, 'down')} disabled={index === resumeData.sections.length - 1} aria-label="Move section down">
                   <ArrowDown size={16} />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => onEditSection(section.id)} aria-label={`Edit ${sectionTitle}`}>
+                <Button variant="ghost" size="icon" onClick={() => setEditingTarget(section.id)} aria-label={`Edit ${sectionTitle}`}>
                   <Edit3 size={16} />
                 </Button>
                  <Button variant="ghost" size="icon" onClick={() => handleToggleVisibility(section.id)} aria-label={section.visible ? `Hide ${sectionTitle}` : `Show ${sectionTitle}`}>
