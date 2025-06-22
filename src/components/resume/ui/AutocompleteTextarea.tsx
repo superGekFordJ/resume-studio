@@ -9,6 +9,7 @@ import { Loader2 } from 'lucide-react';
 import { SectionType, SectionItem, ExperienceEntry, EducationEntry, SkillEntry, CustomTextEntry, ResumeSection } from '@/types/resume';
 import { DynamicResumeSection, AIContextPayload, StructuredAIContext } from '@/types/schema';
 import { schemaRegistry } from '@/lib/schemaRegistry';
+import { useResumeStore } from '@/stores/resumeStore';
 
 // Union type to support both legacy and dynamic sections
 type AllSectionTypes = ResumeSection | DynamicResumeSection;
@@ -22,7 +23,7 @@ interface AutocompleteTextareaProps extends Omit<React.ComponentProps<'textarea'
   currentItem?: SectionItem | { fieldName: string } | { data: Record<string, any> }; // Support dynamic items
   allResumeSections?: AllSectionTypes[];
   currentSectionId?: string | null;
-  forcedSuggestion: string | null; 
+  forcedSuggestion?: string | null; // Make this optional - component will check store itself
   onForcedSuggestionAccepted?: () => void;
   onForcedSuggestionRejected?: () => void;
   isAutocompleteEnabledGlobally: boolean; 
@@ -40,7 +41,7 @@ export default function AutocompleteTextarea({
   currentItem,
   allResumeSections,
   currentSectionId,
-  forcedSuggestion,
+  forcedSuggestion: propForcedSuggestion,
   onForcedSuggestionAccepted,
   onForcedSuggestionRejected,
   isAutocompleteEnabledGlobally,
@@ -52,6 +53,17 @@ export default function AutocompleteTextarea({
   const [isLoading, setIsLoading] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Get AI improvement state from store
+  const aiImprovement = useResumeStore(state => state.aiImprovement);
+  const acceptAIImprovement = useResumeStore(state => state.acceptAIImprovement);
+  const rejectAIImprovement = useResumeStore(state => state.rejectAIImprovement);
+  
+  // Check if this field has an active AI suggestion from the store
+  const storeHasSuggestion = props.id && aiImprovement?.uniqueFieldId === props.id;
+  const forcedSuggestion = propForcedSuggestion ?? (storeHasSuggestion ? aiImprovement.suggestion : null);
+  const handleAcceptSuggestion = onForcedSuggestionAccepted ?? (storeHasSuggestion ? acceptAIImprovement : undefined);
+  const handleRejectSuggestion = onForcedSuggestionRejected ?? (storeHasSuggestion ? rejectAIImprovement : undefined);
 
   const isDisplayingForcedSuggestion = !!forcedSuggestion;
   const isDisplayingInternalSuggestion = !!aiSuggestion && !forcedSuggestion;
@@ -186,8 +198,8 @@ export default function AutocompleteTextarea({
     if (forcedSuggestion) {
       setInputValue(newValueFromTyping); 
       onValueChange(newValueFromTyping); 
-      if (onForcedSuggestionRejected) {
-        onForcedSuggestionRejected(); 
+      if (handleRejectSuggestion) {
+        handleRejectSuggestion(); 
       }
       if (isAutocompleteEnabledGlobally && sectionType !== 'personalDetailsField' && newValueFromTyping.trim()) {
         debounceTimeoutRef.current = setTimeout(() => {
@@ -209,10 +221,10 @@ export default function AutocompleteTextarea({
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Tab') {
-      if (isDisplayingForcedSuggestion && forcedSuggestion && onForcedSuggestionAccepted) {
+      if (isDisplayingForcedSuggestion && forcedSuggestion && handleAcceptSuggestion) {
         event.preventDefault();
         onValueChange(forcedSuggestion); 
-        onForcedSuggestionAccepted(); 
+        handleAcceptSuggestion(); 
         setTimeout(() => {
             textareaRef.current?.focus();
             if (textareaRef.current) textareaRef.current.setSelectionRange(forcedSuggestion.length, forcedSuggestion.length);
@@ -230,8 +242,8 @@ export default function AutocompleteTextarea({
       }
     } else if (event.key === 'Escape') {
       event.preventDefault();
-      if (isDisplayingForcedSuggestion && onForcedSuggestionRejected) {
-        onForcedSuggestionRejected(); 
+      if (isDisplayingForcedSuggestion && handleRejectSuggestion) {
+        handleRejectSuggestion(); 
       } else {
         setAiSuggestion(null); 
       }
