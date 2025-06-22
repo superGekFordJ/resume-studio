@@ -36,6 +36,7 @@ const renderSectionByRenderType = (section: RenderableSection) => {
     case 'timeline':
       return section.items.map(item => <TitledBlockComponent key={item.id} item={item} />);
     case 'single-text':
+    case 'customText':
       return <SingleTextComponent items={section.items} />;
     case 'project-list':
       return section.items.map(item => <ProjectItemComponent key={item.id} item={item} />);
@@ -66,7 +67,7 @@ const ParallelModularTemplate = ({ resume }: ParallelModularTemplateProps) => {
 
   // Define which sections go into which column based on their function
   const timelineSections = ['work-experience', 'education', 'projects']; // The narrative
-  const capabilitySections = ['summary', 'skills', 'languages', 'awards', 'certifications', 'advanced-skills']; // The inventory
+  const capabilitySections = ['summary', 'customText', 'skills', 'languages', 'awards', 'certifications', 'advanced-skills']; // The inventory
   
   const mainColumnSections = sections.filter(s => timelineSections.includes(s.schemaId));
   const sideColumnSections = sections.filter(s => capabilitySections.includes(s.schemaId));
@@ -138,7 +139,7 @@ const ParallelModularTemplate = ({ resume }: ParallelModularTemplateProps) => {
       {/* Two-Column Body */}
       <div className="flex-1 flex gap-0">
         {/* Main Column - Timeline/Narrative (2/3 width) */}
-        <div className="w-2/3 px-[25mm] py-6 pr-3">
+        <div className="w-2/3 pl-[25mm] pr-3 py-6">
           {mainColumnSections.map((section) => (
             <div key={section.id} className="mb-6">
               <h2 className="font-bold text-sm uppercase tracking-wider text-gray-700 border-b-2 border-gray-300 pb-1 mb-3">
@@ -150,7 +151,7 @@ const ParallelModularTemplate = ({ resume }: ParallelModularTemplateProps) => {
         </div>
 
         {/* Side Column - Capability Hub (1/3 width) */}
-        <div className="w-1/3 bg-gray-50 px-[25mm] py-6 pl-3 border-l border-gray-200">
+        <div className="w-1/3 bg-gray-50 pr-[10mm] pl-3 py-6 border-l border-gray-200">
           {sideColumnSections.map((section) => (
             <div key={section.id} className="mb-6">
               <h3 className="font-bold text-xs uppercase tracking-wider text-gray-600 mb-3">
