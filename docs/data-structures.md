@@ -124,6 +124,159 @@ export interface DynamicSectionItem {
 }
 ```
 
+## Zustand 状态结构 (Updated 2025-06-25)
+
+### ResumeStore 状态
+
+```typescript
+// 状态接口
+export interface ResumeState {
+  // 基础状态
+  resumeData: ResumeData;                  // 简历数据
+  selectedTemplateId: string;              // 当前选择的模板ID
+  editingTarget: string | null;            // 当前编辑目标 (sectionId 或 'personalDetails')
+  isLeftPanelOpen: boolean;                // 左侧面板是否打开
+  isAutocompleteEnabled: boolean;          // 是否启用自动补全
+  
+  // 简历评审状态
+  isReviewDialogOpen: boolean;             // 评审对话框是否打开
+  reviewContent: ReviewResumeOutput | null; // 评审结果
+  isReviewLoading: boolean;                // 评审是否加载中
+  
+  // AI 改进状态 (新增)
+  aiImprovement: {                         // 当前AI改进建议
+    uniqueFieldId: string;                 // 唯一字段ID (用于标识目标字段)
+    suggestion: string;                    // AI建议内容
+    originalText: string;                  // 原始文本
+  } | null;
+  isImprovingFieldId: string | null;       // 当前正在改进的字段ID (用于加载状态)
+  aiPrompt: string;                        // 当前AI提示
+  
+  // 批量改进状态 (计划中)
+  batchImprovement?: {                     // 批量改进结果
+    sectionId: string;                     // 目标章节ID
+    improvedData: any;                     // 改进后的数据
+    summary: string;                       // 改进摘要
+    changes: Array<{                       // 详细变更
+      fieldId: string;
+      originalValue: string;
+      improvedValue: string;
+      changeReason: string;
+    }>;
+  } | null;
+  isBatchImproving: string | null;         // 当前正在批量改进的章节ID
+}
+```
+
+### ResumeStore 操作
+
+```typescript
+// 操作接口
+export interface ResumeActions {
+  // 基础操作
+  setResumeData: (data: ResumeData) => void;
+  updateResumeData: (updater: (prev: ResumeData) => ResumeData) => void;
+  setSelectedTemplateId: (templateId: string) => void;
+  setEditingTarget: (target: string | null) => void;
+  setIsLeftPanelOpen: (isOpen: boolean) => void;
+  toggleLeftPanel: () => void;
+  setIsAutocompleteEnabled: (isEnabled: boolean) => void;
+  toggleAutocomplete: () => void;
+  
+  // 评审操作
+  setIsReviewDialogOpen: (isOpen: boolean) => void;
+  toggleReviewDialog: (isOpen?: boolean) => void;
+  setReviewContent: (content: ReviewResumeOutput | null) => void;
+  setIsReviewLoading: (isLoading: boolean) => void;
+  
+  // 数据操作 (新增)
+  updateField: (payload: { 
+    sectionId: string; 
+    itemId?: string; 
+    fieldId: string; 
+    value: any; 
+    isPersonalDetails?: boolean 
+  }) => void;
+  updateSectionTitle: (payload: { 
+    sectionId: string; 
+    newTitle: string 
+  }) => void;
+  addSectionItem: (sectionId: string) => void;
+  removeSectionItem: (payload: { 
+    sectionId: string; 
+    itemId: string 
+  }) => void;
+  
+  // AI 改进操作 (新增)
+  setAIPrompt: (prompt: string) => void;
+  startAIImprovement: (payload: { 
+    sectionId: string; 
+    itemId?: string; 
+    fieldId: string; 
+    currentValue: string; 
+    uniqueFieldId: string; 
+    isPersonalDetails?: boolean 
+  }) => Promise<void>;
+  acceptAIImprovement: () => void;
+  rejectAIImprovement: () => void;
+  
+  // 批量改进操作 (计划中)
+  batchImproveSection: (payload: { 
+    sectionId: string; 
+    improvementGoals: string[] 
+  }) => Promise<void>;
+}
+```
+
+### 唯一字段ID结构
+
+为了在 AI 改进操作中唯一标识字段，我们使用了一个特殊的字符串格式：
+
+```typescript
+// 构造唯一字段ID
+function constructUniqueFieldId(
+  isPersonal: boolean,
+  fieldId: string,
+  itemId: string | null,
+  sectionType: string
+): string {
+  if (isPersonal) {
+    return `personal_${fieldId}`;
+  } else {
+    return `${sectionType}_${itemId || 'no-item'}_${fieldId}`;
+  }
+}
+
+// 解析唯一字段ID
+function deconstructUniqueFieldId(uniqueFieldId: string): {
+  isPersonal: boolean;
+  fieldName: string;
+  itemId: string | null;
+  sectionType: string;
+} {
+  if (uniqueFieldId.startsWith('personal_')) {
+    return {
+      isPersonal: true,
+      fieldName: uniqueFieldId.replace('personal_', ''),
+      itemId: null,
+      sectionType: 'personalDetails'
+    };
+  } else {
+    const parts = uniqueFieldId.split('_');
+    const fieldName = parts.pop() || '';
+    const itemId = parts.pop() || null;
+    const sectionType = parts.join('_');
+    
+    return {
+      isPersonal: false,
+      fieldName,
+      itemId: itemId === 'no-item' ? null : itemId,
+      sectionType
+    };
+  }
+}
+```
+
 ## 动态Schema系统
 
 ### 1. 字段Schema (FieldSchema)

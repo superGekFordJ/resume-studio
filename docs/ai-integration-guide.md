@@ -25,27 +25,41 @@ A4 Resume Studio 集成了四个核心 AI 功能，基于 Google Genkit 和 Gemi
 - UI 组件（如 `SectionEditor.tsx`, `AutocompleteTextarea.tsx`）被重构为"无知"的（Dumb）组件。
 - 它们只负责捕获用户意图（例如，用户点击了"Improve"按钮）并调用 `SchemaRegistry` 的方法，而**不包含任何 `if/switch` 或手动构建上下文的逻辑**。
 
-### 3. 标准化的数据流
+### 3. Zustand Store 作为 AI 交互的中介 (Updated 2025-06-23)
+
+- **重要更新**: 随着 `SectionEditor` 的重构，所有 AI 交互现在通过 `resumeStore` 进行协调。
+- UI 组件不再直接调用 AI 服务，而是派发 Store Actions（如 `startAIImprovement`）。
+- Store Actions 负责调用 `SchemaRegistry` 构建上下文，执行 AI 调用，并更新状态。
+- UI 组件只需订阅相关状态（如 `aiImprovement`）并进行渲染。
+
+### 4. 标准化的数据流
 
 ```
 1. UI Component
-   - Captures user action (e.g., text input, button click).
-   - Creates a simple `AIContextPayload`.
-   - Calls `schemaRegistry.buildAIContext(payload)`.
+   - 捕获用户操作（如点击"改进"按钮）
+   - 派发 Store Action（如 startAIImprovement）
+   - 传递必要的参数（sectionId, fieldId, uniqueFieldId 等）
 
-2. SchemaRegistry
-   - Receives the payload.
-   - Finds the correct `SectionSchema` and `FieldSchema`.
-   - Uses the `contextBuilders` defined in the schema to generate a `StructuredAIContext` object.
+2. Zustand Store Action
+   - 接收参数并设置加载状态
+   - 调用 schemaRegistry.buildAIContext(payload)
+   - 调用相应的 AI Flow
+   - 处理结果并更新状态
 
-3. AI Flow
-   - Receives the `StructuredAIContext` object.
-   - Uses the structured data in its prompt template.
-   - Executes the AI task.
+3. SchemaRegistry
+   - 接收 payload
+   - 找到正确的 SectionSchema 和 FieldSchema
+   - 使用 schema 中定义的 contextBuilders 生成 StructuredAIContext
 
-4. UI Component
-   - Receives the result from the AI Flow.
-   - Updates the UI.
+4. AI Flow
+   - 接收 StructuredAIContext
+   - 在 prompt 模板中使用结构化数据
+   - 执行 AI 任务
+   - 返回结果给 Store Action
+
+5. UI Component
+   - 订阅 Store 中的相关状态（如 aiImprovement）
+   - 根据状态更新 UI（如显示 AI 建议）
 ```
 
 ## AI 功能详解
@@ -59,8 +73,8 @@ A4 Resume Studio 集成了四个核心 AI 功能，基于 Google Genkit 和 Gemi
   - `src/ai/flows/autocomplete-input.ts`
   - `src/ai/flows/improve-resume-section.ts`
 - **UI 集成**:
-  - `src/components/resume/AutocompleteTextarea.tsx`
-  - `src/components/resume/SectionEditor.tsx`
+  - `src/components/resume/ui/AutocompleteTextarea.tsx`
+  - `src/stores/resumeStore.ts`（新增）
 
 #### 输入参数 (Zod Schema in Flow)
 
@@ -82,32 +96,82 @@ const InputSchema = z.object({
 });
 ```
 
-#### UI 调用示例
+#### Store Action 调用示例（新增）
 
 ```typescript
-// In SectionEditor.tsx (for Improve) or AutocompleteTextarea.tsx (for Autocomplete)
+// In resumeStore.ts
 
-// 1. Create the payload
-const payload: AIContextPayload = {
-  resumeData,
-  task: 'improve', // or 'autocomplete'
-  sectionId,
-  itemId,
-  fieldId,
-};
-
-// 2. Build the structured context
-const context = schemaRegistry.buildAIContext(payload);
-
-// 3. Call the AI Flow with the context
-const result = await improveResumeSection({
-  resumeSection: textToImprove,
-  prompt: aiPrompt,
-  context: context, // Pass the entire context object
-  sectionType: sectionType, // Optional: pass for UI logic if needed
-});
+startAIImprovement: async (payload) => {
+  const { sectionId, itemId, fieldId, currentValue, uniqueFieldId, isPersonalDetails } = payload;
+  
+  // 设置加载状态
+  set({ isImprovingFieldId: uniqueFieldId });
+  
+  try {
+    const state = get();
+    const schemaRegistry = SchemaRegistry.getInstance();
+    
+    // 构建 AI 上下文
+    const contextPayload: AIContextPayload = {
+      resumeData: state.resumeData,
+      task: 'improve',
+      sectionId,
+      fieldId,
+      itemId,
+    };
+    
+    const context = schemaRegistry.buildAIContext(contextPayload);
+    
+    // 调用 AI Flow
+    const { improveResumeSection } = await import('@/ai/flows/improve-resume-section');
+    const result = await improveResumeSection({
+      resumeSection: currentValue,
+      prompt: state.aiPrompt,
+      context: context,
+      sectionType: isPersonalDetails ? 'personalDetailsField' : undefined
+    });
+    
+    // 更新状态
+    set({
+      aiImprovement: {
+        uniqueFieldId,
+        suggestion: result.improvedResumeSection,
+        originalText: currentValue
+      },
+      isImprovingFieldId: null
+    });
+  } catch (error) {
+    console.error("AI improvement error:", error);
+    set({ isImprovingFieldId: null });
+  }
+}
 ```
-这种方法消除了在 UI 组件中手动构建字符串的需要，使代码更清洁、更易于维护。
+
+#### UI 组件调用示例（新增）
+
+```typescript
+// In a UI component (e.g., AIFieldWrapper.tsx)
+
+const handleImproveWithAI = () => {
+  if (!aiPrompt.trim()) {
+    toast({ variant: "destructive", title: "AI Prompt Empty", description: "Please provide a prompt for the AI." });
+    return;
+  }
+  
+  // 设置 AI 提示
+  setAIPrompt(aiPrompt);
+  
+  // 派发 Store Action
+  startAIImprovement({
+    sectionId: currentSectionId,
+    itemId: itemId,
+    fieldId: fieldId,
+    currentValue: value,
+    uniqueFieldId: id,
+    isPersonalDetails: sectionType === 'personalDetailsField'
+  });
+};
+```
 
 ### 2. 简历评审 (Resume Review)
 
@@ -144,6 +208,69 @@ const handleReviewResume = async () => {
 ```
 
 `schemaRegistry.stringifyResumeForReview` 方法会遍历所有可见的章节，使用每个章节 `SectionSchema` 中定义的 `sectionSummaryBuilder` 来创建该章节的文本表示，最终将它们拼接成一个完整的简历字符串。这确保了即使添加了新的动态章节，评审功能也无需任何代码更改即可正确工作。
+
+### 3. 批量改进 (Batch Improvement)（即将集成）
+
+批量改进功能允许用户一次性改进整个章节的内容，而不是逐个字段改进。
+
+#### 实现位置
+- **Flow**: `src/ai/flows/batch-improve-section.ts`（已实现）
+- **UI 集成**: 尚未集成，将在下一阶段开发
+
+#### 计划的 Store Action（预览）
+
+```typescript
+// 计划添加到 resumeStore.ts 中
+
+batchImproveSection: async (payload: { 
+  sectionId: string, 
+  improvementGoals: string[] 
+}) => {
+  const { sectionId, improvementGoals } = payload;
+  const state = get();
+  const section = state.resumeData.sections.find(s => s.id === sectionId);
+  
+  if (!section) return;
+  
+  set({ isBatchImproving: sectionId });
+  
+  try {
+    const schemaRegistry = SchemaRegistry.getInstance();
+    
+    // 获取章节数据
+    const sectionData = 'schemaId' in section 
+      ? { ...section }
+      : { ...section };
+      
+    // 构建上下文
+    const otherSectionsContext = schemaRegistry.stringifyResumeForReview(state.resumeData, [sectionId]);
+    
+    // 调用批量改进 Flow
+    const { batchImproveSection } = await import('@/ai/flows/batch-improve-section');
+    const result = await batchImproveSection({
+      sectionData: sectionData,
+      sectionType: 'schemaId' in section ? section.schemaId : section.type,
+      improvementGoals,
+      userJobTitle: state.resumeData.personalDetails.jobTitle,
+      otherSectionsContext
+    });
+    
+    // 更新状态
+    set({
+      batchImprovement: {
+        sectionId,
+        improvedData: result.improvedSectionData,
+        summary: result.improvementSummary,
+        changes: result.fieldChanges
+      },
+      isBatchImproving: null
+    });
+  } catch (error) {
+    console.error("Batch improvement error:", error);
+    set({ isBatchImproving: null });
+  }
+}
+```
 
 ## 扩展指南：如何添加新章节的 AI 支持
 

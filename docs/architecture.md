@@ -39,7 +39,10 @@ src/
 │       │   ├── ResumeCanvas.tsx      # 简历画布
 │       │   └── PrintableResume.tsx   # 可打印简历组件 (新增)
 │       ├── editor/             # 编辑器相关组件
-│       │   ├── SectionEditor.tsx     # 章节编辑器
+│       │   ├── SectionEditor.tsx     # 章节编辑器 (已重构)
+│       │   ├── PersonalDetailsEditor.tsx # 个人信息编辑器 (新增)
+│       │   ├── SectionItemEditor.tsx # 章节项目编辑器 (新增)
+│       │   ├── AIFieldWrapper.tsx    # AI字段包装器 (新增)
 │       │   ├── SectionManager.tsx    # 章节管理器
 │       │   └── DynamicFieldRenderer.tsx # 动态字段渲染器
 │       ├── rendering/          # 原子渲染组件 (新增)
@@ -86,7 +89,7 @@ src/
   - **"无知"的渲染层**: UI 组件（如 `SectionEditor`, `AutocompleteTextarea`）不包含任何业务逻辑。它们只负责根据从 `SchemaRegistry` 获取的 Schema 定义来渲染界面，并向上派发用户事件。
   - **禁止硬编码**: 组件中严禁出现任何基于 `section.type` 或 `field.id` 的硬编码逻辑判断。所有行为都由 Schema 驱动。
 
-### 2. 数据流架构 (Updated 2025-06-21)
+### 2. 数据流架构 (Updated 2025-06-23)
 
 ```
                                +---------------------+
@@ -100,6 +103,7 @@ src/
                                | (resumeStore.ts)    |
                                | - Centralized State |
                                | - Persistence       |
+                               | - AI Interactions   |
                                +----------+----------+
                                           |
                  +------------------------+------------------------+
@@ -109,16 +113,16 @@ src/
 | (e.g., SectionEditor)           |           | (e.g., improve, autocomplete)        |
 | - Subscribe to Store            |           | - Receive structured context         |
 | - Dispatch Store Actions        |           | - Perform AI tasks                   |
-| - Render based on Schema        |           | - Return results to Store            |
+| - Pure Presentation             |           | - Return results to Store            |
 +----------------+----------------+           +--------------------+-------------------+
                  |                                                 |
                  | 1. User action (e.g., type in textarea)         |
                  |                                                 | 5. AI returns result
-                 | 2. Component updates Store                      |
+                 | 2. Component dispatches Store Action            |
                  |                                                 |
-                 | 3. Component asks SchemaRegistry for context    |
+                 | 3. Store calls SchemaRegistry for context       |
                  |                                                 |
-                 | 4. Component calls AI Service with context      |
+                 | 4. Store calls AI Service with context          |
                  |                                                 |
                  +------------------------------------------------->
 ```
@@ -192,14 +196,26 @@ const renderSectionByRenderType = (section: RenderableSection) => {
 };
 ```
 
-- **用户输入 → Schema 查询 → AI 处理 → UI 更新**
-  1. 用户在 UI 组件中进行操作（例如，在 `AutocompleteTextarea` 中输入文本）。
-  2. UI 组件不自己构建上下文，而是调用 `schemaRegistry.buildAIContext(payload)`，并提供任务类型 (`improve` 或 `autocomplete`) 和相关 ID（`sectionId`, `fieldId`, `itemId`）。
-  3. `SchemaRegistry` 根据相关的 `SectionSchema` 和 `FieldSchema` 定义，调用对应的 `ContextBuilderFunction` 来构建一个结构化的 `StructuredAIContext` 对象。
-  4. UI 组件将此结构化上下文和用户输入一起传递给相应的 AI Flow。
-  5. AI Flow 返回结果，UI 组件更新状态以向用户显示结果。
+### 4. 数据流与AI交互 (Updated 2025-06-23)
 
-### 3. AI 集成架构
+**重要更新**: 随着 `SectionEditor` 的重构和 Zustand 状态管理的深度集成，数据流和 AI 交互流程已经显著简化：
+
+1. **用户输入 → Store Action → Schema查询 → AI处理 → Store更新 → UI更新**
+   - 用户在 UI 组件中进行操作（例如，点击"改进"按钮）
+   - UI 组件**不直接**调用 AI 服务，而是派发 Store Action（如 `startAIImprovement`）
+   - Store Action 调用 `schemaRegistry.buildAIContext(payload)` 构建上下文
+   - Store Action 调用 AI Flow 并处理结果
+   - Store 更新状态（如 `aiImprovement`）
+   - UI 组件自动响应状态变化并更新视图
+
+2. **组件分解与职责明确**
+   - `SectionEditor`: 纯展示组件，协调子组件的渲染
+   - `PersonalDetailsEditor`: 处理个人信息编辑
+   - `SectionItemEditor`: 处理章节项目编辑
+   - `AIFieldWrapper`: 封装所有 AI 改进 UI 交互
+   - `AutocompleteTextarea`: 处理自动补全交互，直接从 Store 读取 AI 建议
+
+### 5. AI 集成架构
 - **统一的上下文构建**: 所有 AI 功能的上下文都由 `schemaRegistry.buildAIContext` 方法统一构建，确保了数据的一致性和可预测性。
 - **结构化输入**: AI Flow 的输入（`inputSchema`）接收的是结构化的 `context` 对象，而不是非结构化的字符串 "context blob"，这使得 Prompt Engineering 更加稳定和可控。
 - **Flow-based**: 使用 Genkit 的 Flow 模式，将每个 AI 功能封装为独立、可复用的单元。
@@ -211,14 +227,15 @@ const renderSectionByRenderType = (section: RenderableSection) => {
 - **旧架构**: UI 组件**告诉** `SchemaRegistry` 要构建什么。
 - **新架构**: UI 组件**询问** `SchemaRegistry` 它应该如何处理数据和构建上下文。这种依赖倒置是本次重构的核心，它极大地降低了耦合度，提升了系统的可维护性和扩展性。
 
-### 2. 状态管理 (Updated 2025-06-21)
+### 2. 状态管理 (Updated 2025-06-23)
 
 #### Zustand Store Architecture
-- **Centralized State**: All UI state is managed in a single Zustand store (`resumeStore.ts`)
-- **Persistence**: Automatic saving to `localStorage` using Zustand's persist middleware
-- **Type Safety**: Full TypeScript support with strongly typed state and actions
-- **Performance**: Components subscribe only to the state slices they need
-- **Hydration Handling**: Custom `useHydratedStore` hook prevents SSR/client hydration mismatches
+- **Centralized State**: 所有 UI 状态都集中在单一 Zustand store (`resumeStore.ts`) 中管理
+- **Persistence**: 使用 Zustand 的 persist 中间件自动保存到 `localStorage`
+- **Type Safety**: 完整的 TypeScript 支持，强类型的状态和操作
+- **Performance**: 组件只订阅它们需要的状态切片，最小化不必要的重渲染
+- **Hydration Handling**: 自定义 `useHydratedStore` hook 防止 SSR/客户端水合不匹配
+- **AI Interaction**: 所有 AI 交互现在由 Store Actions 处理，而非组件
 
 #### Store Structure
 ```typescript
@@ -231,24 +248,62 @@ interface ResumeState {
   isReviewDialogOpen: boolean;
   reviewContent: ReviewResumeOutput | null;
   isReviewLoading: boolean;
+  
+  // 新增: AI 改进状态
+  aiImprovement: {
+    uniqueFieldId: string;
+    suggestion: string;
+    originalText: string;
+  } | null;
+  isImprovingFieldId: string | null;
+  aiPrompt: string;
 }
 
 interface ResumeActions {
+  // 现有操作
   setResumeData: (data: ResumeData) => void;
   updateResumeData: (updater: (prev: ResumeData) => ResumeData) => void;
   setSelectedTemplateId: (templateId: string) => void;
   setEditingTarget: (target: string | null) => void;
-  // ... other actions
+  
+  // 新增: 数据操作
+  updateField: (payload: { sectionId: string; itemId?: string; fieldId: string; value: any; isPersonalDetails?: boolean }) => void;
+  updateSectionTitle: (payload: { sectionId: string; newTitle: string }) => void;
+  addSectionItem: (sectionId: string) => void;
+  removeSectionItem: (payload: { sectionId: string; itemId: string }) => void;
+  
+  // 新增: AI 改进操作
+  setAIPrompt: (prompt: string) => void;
+  startAIImprovement: (payload: { sectionId: string; itemId?: string; fieldId: string; currentValue: string; uniqueFieldId: string; isPersonalDetails?: boolean }) => Promise<void>;
+  acceptAIImprovement: () => void;
+  rejectAIImprovement: () => void;
 }
 ```
 
 #### Benefits
-- **No Prop Drilling**: Components access state directly from the store
-- **Persistence**: User's work is automatically saved and restored
-- **Scalability**: Easy to add new state slices without refactoring
-- **DevTools**: Full support for Redux DevTools for debugging
+- **No Prop Drilling**: 组件直接从 Store 访问状态，不再需要层层传递 props
+- **Persistence**: 用户的工作自动保存和恢复
+- **Scalability**: 无需重构即可轻松添加新的状态切片
+- **DevTools**: 完全支持 Redux DevTools 进行调试
+- **Simplified Components**: UI 组件显著简化，专注于渲染而非状态管理
+- **Unified AI Flow**: AI 交互统一由 Store 处理，确保一致性
 
-### 3. 扩展性
+### 3. 组件分解与单一职责 (Updated 2025-06-23)
+
+**SectionEditor 重构**:
+- **重构前**: 800多行代码，混合了状态管理、UI 渲染和业务逻辑
+- **重构后**: ~180行清晰、专注的代码，零本地业务状态
+
+**新增组件**:
+- **PersonalDetailsEditor**: 处理个人信息编辑，直接连接到 Store Actions
+- **SectionItemEditor**: 管理单个章节项目的编辑，适用于传统和动态章节
+- **AIFieldWrapper**: 封装所有 AI 改进功能，管理 AI 提示输入和改进按钮
+
+**AutocompleteTextarea 增强**:
+- 现在可以直接从 Store 读取 AI 改进建议
+- 保持向后兼容性的同时，自动绑定到 Store Actions
+
+### 4. 扩展性
 - **添加新章节**: 只需在 `schemaRegistry.ts` 中定义一个新的 `SectionSchema` 并注册对应的 `ContextBuilderFunction`，UI 无需任何修改即可支持新章节的编辑和 AI 功能。
 - **添加新AI功能**: 只需创建一个新的 AI Flow，并在 `FieldSchema.aiHints.contextBuilders` 中为新功能添加一个 `contextBuilder` ID。
 - **添加新模板**: 创建新的模板组件，可以自由选择接受或覆写默认渲染建议。
@@ -349,7 +404,7 @@ Schema Definition → SchemaRegistry → UI Components
                       AI Flows
 ```
 
-## State Management with Zustand (Updated 2025-06-21)
+## State Management with Zustand (Updated 2025-06-23)
 
 ### Overview
 The application now uses Zustand for centralized state management, replacing the previous prop-drilling approach:
@@ -358,12 +413,14 @@ The application now uses Zustand for centralized state management, replacing the
 2. **Automatic Persistence**: State is automatically saved to localStorage
 3. **Direct Component Access**: Components subscribe directly to state slices
 4. **Hydration Safety**: Custom hook prevents SSR/client mismatches
+5. **Business Logic Centralization**: All data manipulation and AI interaction logic now resides in store actions
 
 ### Migration Benefits
 - **Eliminated Prop Drilling**: No more passing state through multiple layers
 - **Improved Performance**: Components only re-render when their subscribed state changes
 - **Better Developer Experience**: Clear separation between UI state and business logic
 - **User Experience**: Work is automatically saved and restored between sessions
+- **Simplified Components**: UI components are now pure presentation, focused only on rendering
 
 ## Hybrid Rendering Model (Updated 2025-06-20)
 
