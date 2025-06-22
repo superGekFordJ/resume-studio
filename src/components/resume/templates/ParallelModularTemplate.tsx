@@ -19,7 +19,7 @@ const renderSectionByRenderType = (section: RenderableSection) => {
   // Template-specific overrides for the "Capability Hub" feel
   const templateLayoutMap: Record<string, string> = {
     'skills': 'badge-list', // Override to badge-list for capability hub feel
-    'advanced-skills': 'badge-list', // Also use badges for advanced skills
+    'advanced-skills': 'advanced-skills-list', // Use specialized advanced skills rendering
     'languages': 'badge-list', // Languages as badges too
     'projects': 'project-list',
     'certifications': 'certification-list'

@@ -4,20 +4,20 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useResumeStore } from '@/stores/resumeStore';
 
 interface SidebarNavigatorProps {
   childrenStructure: React.ReactNode;
   childrenContent: React.ReactNode;
-  isEditing: boolean;
-  onBack: () => void;
 }
 
 export default function SidebarNavigator({
   childrenStructure,
   childrenContent,
-  isEditing,
-  onBack,
 }: SidebarNavigatorProps) {
+  const isEditing = useResumeStore(state => !!state.editingTarget);
+  const setEditingTarget = useResumeStore(state => state.setEditingTarget);
+
   return (
     <div className="relative w-full h-full overflow-hidden">
       {/* Structure View */}
@@ -43,7 +43,7 @@ export default function SidebarNavigator({
             <Button
               variant="ghost"
               size="sm"
-              onClick={onBack}
+              onClick={() => setEditingTarget(null)}
               className="flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" />

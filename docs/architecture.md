@@ -9,7 +9,7 @@ A4 Resume Studio 是一个基于 Next.js 的现代化简历构建应用，集成
 - **前端框架**: Next.js 15.3.3 (React 18.3.1)
 - **UI 组件库**: Radix UI + Tailwind CSS
 - **AI 集成**: Google Genkit + Gemini API
-- **状态管理**: React Hooks (useState, useEffect)
+- **状态管理**: Zustand (with persistence)
 - **类型系统**: TypeScript
 - **样式**: Tailwind CSS + CSS Variables
 
@@ -56,7 +56,10 @@ src/
 │           ├── AvatarUploader.tsx    # 头像上传组件
 │           └── TemplateSelector.tsx  # 模板选择器
 ├── hooks/                # 自定义 Hooks
-│   └── use-toast.ts      # Toast 通知
+│   ├── use-toast.ts      # Toast 通知
+│   └── useHydratedStore.ts # Zustand hydration hook (新增)
+├── stores/               # Zustand stores (新增)
+│   └── resumeStore.ts    # 中央状态存储
 ├── lib/                  # 工具函数
 │   ├── utils.ts          # 通用工具
 │   ├── schemaRegistry.ts # Schema 注册中心 (新增)
@@ -83,28 +86,39 @@ src/
   - **"无知"的渲染层**: UI 组件（如 `SectionEditor`, `AutocompleteTextarea`）不包含任何业务逻辑。它们只负责根据从 `SchemaRegistry` 获取的 Schema 定义来渲染界面，并向上派发用户事件。
   - **禁止硬编码**: 组件中严禁出现任何基于 `section.type` 或 `field.id` 的硬编码逻辑判断。所有行为都由 Schema 驱动。
 
-### 2. 数据流架构
+### 2. 数据流架构 (Updated 2025-06-21)
 
 ```
                                +---------------------+
-                               |   SchemaRegistry    |  <-- Single Source of Truth
+                               |   SchemaRegistry    |  <-- Business Logic & Schema
                                | (Defines Everything)|
+                               +----------+----------+
+                                          |
+                                          |
+                               +----------v----------+
+                               |   Zustand Store     |  <-- UI State Management
+                               | (resumeStore.ts)    |
+                               | - Centralized State |
+                               | - Persistence       |
                                +----------+----------+
                                           |
                  +------------------------+------------------------+
                  |                                                 |
 +----------------v----------------+           +--------------------v-------------------+
 |      UI Components              |           |        AI Services (Flows)           |
-| (e.g., SectionEditor)           |           | (e.g., improve, autocomplete)      |
-| - Render based on Schema        |           | - Receive structured context         |
-| - Dispatch user events          |           | - Perform AI tasks                   |
+| (e.g., SectionEditor)           |           | (e.g., improve, autocomplete)        |
+| - Subscribe to Store            |           | - Receive structured context         |
+| - Dispatch Store Actions        |           | - Perform AI tasks                   |
+| - Render based on Schema        |           | - Return results to Store            |
 +----------------+----------------+           +--------------------+-------------------+
                  |                                                 |
                  | 1. User action (e.g., type in textarea)         |
-                 |                                                 | 4. AI returns result
-                 | 2. Component asks SchemaRegistry to build context |
+                 |                                                 | 5. AI returns result
+                 | 2. Component updates Store                      |
                  |                                                 |
-                 | 3. Component calls AI Service with context      |
+                 | 3. Component asks SchemaRegistry for context    |
+                 |                                                 |
+                 | 4. Component calls AI Service with context      |
                  |                                                 |
                  +------------------------------------------------->
 ```
@@ -197,10 +211,42 @@ const renderSectionByRenderType = (section: RenderableSection) => {
 - **旧架构**: UI 组件**告诉** `SchemaRegistry` 要构建什么。
 - **新架构**: UI 组件**询问** `SchemaRegistry` 它应该如何处理数据和构建上下文。这种依赖倒置是本次重构的核心，它极大地降低了耦合度，提升了系统的可维护性和扩展性。
 
-### 2. 状态管理
-- 使用 React 内置的 `useState` 和 `useEffect` 进行状态管理。
-- `ResumeData` 对象作为包含所有简历信息的单一状态树。
-- 严格的自上而下的单向数据流。
+### 2. 状态管理 (Updated 2025-06-21)
+
+#### Zustand Store Architecture
+- **Centralized State**: All UI state is managed in a single Zustand store (`resumeStore.ts`)
+- **Persistence**: Automatic saving to `localStorage` using Zustand's persist middleware
+- **Type Safety**: Full TypeScript support with strongly typed state and actions
+- **Performance**: Components subscribe only to the state slices they need
+- **Hydration Handling**: Custom `useHydratedStore` hook prevents SSR/client hydration mismatches
+
+#### Store Structure
+```typescript
+interface ResumeState {
+  resumeData: ResumeData;
+  selectedTemplateId: string;
+  editingTarget: string | null;
+  isLeftPanelOpen: boolean;
+  isAutocompleteEnabled: boolean;
+  isReviewDialogOpen: boolean;
+  reviewContent: ReviewResumeOutput | null;
+  isReviewLoading: boolean;
+}
+
+interface ResumeActions {
+  setResumeData: (data: ResumeData) => void;
+  updateResumeData: (updater: (prev: ResumeData) => ResumeData) => void;
+  setSelectedTemplateId: (templateId: string) => void;
+  setEditingTarget: (target: string | null) => void;
+  // ... other actions
+}
+```
+
+#### Benefits
+- **No Prop Drilling**: Components access state directly from the store
+- **Persistence**: User's work is automatically saved and restored
+- **Scalability**: Easy to add new state slices without refactoring
+- **DevTools**: Full support for Redux DevTools for debugging
 
 ### 3. 扩展性
 - **添加新章节**: 只需在 `schemaRegistry.ts` 中定义一个新的 `SectionSchema` 并注册对应的 `ContextBuilderFunction`，UI 无需任何修改即可支持新章节的编辑和 AI 功能。
@@ -303,43 +349,21 @@ Schema Definition → SchemaRegistry → UI Components
                       AI Flows
 ```
 
-## Schema-Driven Architecture (Updated 2025-06-19)
+## State Management with Zustand (Updated 2025-06-21)
 
-### Current State
-The application has successfully transitioned to a pure Schema-driven architecture where:
+### Overview
+The application now uses Zustand for centralized state management, replacing the previous prop-drilling approach:
 
-1. **SchemaRegistry19s Single Source of Truth**
-   - All section structures defined in schemas
-   - All AI context building centralized
-   - All business logic contained in the registry
+1. **Single Source of Truth**: All UI state lives in `resumeStore.ts`
+2. **Automatic Persistence**: State is automatically saved to localStorage
+3. **Direct Component Access**: Components subscribe directly to state slices
+4. **Hydration Safety**: Custom hook prevents SSR/client mismatches
 
-2. **Pure UI Components**
-   - `SectionEditor` no longer contains type-specific rendering logic
-   - All fields rendered through `DynamicFieldRenderer`
-   - UI components are "dumb" renderers driven by schemas
-
-3. **Unified AI Service Layer**
-   - All AI operations go through `SchemaRegistry` methods:
-     - `improveField()` - Field improvement
-     - `getAutocomplete()` - Auto-completion
-     - `batchImproveSection()` - Batch improvements
-     - `reviewResume()` - Full resume review
-   - No direct AI Flow calls from UI components
-
-4. **Proven Extensibility**
-   - New section types (e.g., "Certifications") can be added by only:
-     - Registering a schema in SchemaRegistry
-     - Adding context builders
-   - Zero UI code changes required
-
-### Architecture Flow
-```
-Schema Definition → SchemaRegistry → UI Components
-                          ↓
-                    AI Service Layer
-                          ↓
-                      AI Flows
-```
+### Migration Benefits
+- **Eliminated Prop Drilling**: No more passing state through multiple layers
+- **Improved Performance**: Components only re-render when their subscribed state changes
+- **Better Developer Experience**: Clear separation between UI state and business logic
+- **User Experience**: Work is automatically saved and restored between sessions
 
 ## Hybrid Rendering Model (Updated 2025-06-20)
 
@@ -446,15 +470,4 @@ The PDF export system ensures pixel-perfect consistency between screen and print
 3. **Responsive Design**
    - Design templates to work well at A4 size (210mm × 297mm)
    - Consider print margins (20mm top/bottom, 25mm left/right)
-   - Test both screen and PDF output Component`: Renders certifications with icons and validity
-   - `AdvancedSkillsComponent`: Groups skills by category with proficiency levels
-
-3. **Two-Column Layout Implementation**
-   The Creative template demonstrates how to implement complex layouts:
-   ```typescript
-   // Define which sections go into which column
-   const sidebarSections = ['skills', 'advanced-skills', 'languages', 'certifications'];
-   
-   const mainColumnSections = sections.filter(s => !sidebarSections.includes(s.schemaId));
-   const sideColumnSections = sections.filter(s => sidebarSections.includes(s.schemaId));
-   ```
+   - Test both screen and PDF output

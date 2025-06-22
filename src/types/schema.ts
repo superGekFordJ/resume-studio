@@ -31,6 +31,7 @@ export interface FieldSchema {
     options?: string[]; // for select/multiselect
     rows?: number; // for textarea
     maxLength?: number;
+    markdownEnabled?: boolean; // Whether this field supports markdown rendering
   };
 }
 
@@ -216,6 +217,7 @@ export interface RenderableField {
   key: string;  // e.g., 'jobTitle'
   label: string; // e.g., 'Job Title'
   value: string | string[];
+  markdownEnabled?: boolean; // Whether this field should be rendered as markdown
 }
 
 export interface RenderableItem {
@@ -263,7 +265,8 @@ export const PROJECTS_SCHEMA: SectionSchema = {
       required: true,
       uiProps: {
         rows: 3,
-        placeholder: 'Describe the project, your role, and key achievements...'
+        placeholder: 'Describe the project, your role, and key achievements...',
+        markdownEnabled: true
       },
       aiHints: {
         contextBuilders: {

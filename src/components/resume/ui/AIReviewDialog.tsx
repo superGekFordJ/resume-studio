@@ -13,22 +13,20 @@ import { ThumbsUp, AlertTriangle, Lightbulb } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { useResumeStore } from '@/stores/resumeStore';
 
 interface AIReviewDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  reviewContent: { overallQuality: string; suggestions: string } | null;
-  isLoading: boolean;
+  // No props needed anymore
 }
 
-export default function AIReviewDialog({
-  isOpen,
-  onClose,
-  reviewContent,
-  isLoading,
-}: AIReviewDialogProps) {
+export default function AIReviewDialog({}: AIReviewDialogProps) {
+  const isOpen = useResumeStore(state => state.isReviewDialogOpen);
+  const reviewContent = useResumeStore(state => state.reviewContent);
+  const isLoading = useResumeStore(state => state.isReviewLoading);
+  const setIsReviewDialogOpen = useResumeStore(state => state.setIsReviewDialogOpen);
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={setIsReviewDialogOpen}>
       <DialogContent className="sm:max-w-lg md:max-w-2xl max-h-[80vh] flex flex-col p-0 overflow-hidden">
         <DialogHeader className="px-6 pt-6 flex-shrink-0">
           <DialogTitle className="font-headline text-2xl flex items-center">
@@ -90,7 +88,7 @@ export default function AIReviewDialog({
           </div>
         </div>
         <DialogFooter className="px-6 pb-6 pt-4 border-t flex-shrink-0">
-          <Button onClick={onClose}>Close</Button>
+          <Button onClick={() => setIsReviewDialogOpen(false)}>Close</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

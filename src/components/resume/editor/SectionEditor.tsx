@@ -29,28 +29,24 @@ import AvatarUploader from '@/components/resume/ui/AvatarUploader';
 import DynamicFieldRenderer from './DynamicFieldRenderer';
 import { SchemaRegistry } from '@/lib/schemaRegistry';
 import { cn } from "@/lib/utils";
+import { useResumeStore } from '@/stores/resumeStore';
 
 interface SectionEditorProps {
-  resumeData: ResumeData;
-  targetToEdit: string | null; 
-  onUpdateResumeData: (updatedData: ResumeData) => void;
-  onCloseEditor: () => void;
-  onBack?: () => void; // New optional prop for navigation
-  isAutocompleteEnabled: boolean;
-  onToggleAutocomplete: (enabled: boolean) => void;
+  // No props needed anymore
 }
 
-export default function SectionEditor({
-  resumeData,
-  targetToEdit,
-  onUpdateResumeData,
-  onCloseEditor,
-  onBack,
-  isAutocompleteEnabled,
-  onToggleAutocomplete,
-}: SectionEditorProps) {
+export default function SectionEditor({}: SectionEditorProps) {
   const { toast } = useToast();
   const schemaRegistry = SchemaRegistry.getInstance();
+  
+  // Get state and actions from store
+  const resumeData = useResumeStore(state => state.resumeData);
+  const editingTarget = useResumeStore(state => state.editingTarget);
+  const updateResumeData = useResumeStore(state => state.updateResumeData);
+  const setEditingTarget = useResumeStore(state => state.setEditingTarget);
+  const isAutocompleteEnabled = useResumeStore(state => state.isAutocompleteEnabled);
+  const toggleAutocomplete = useResumeStore(state => state.toggleAutocomplete);
+  
   const [localData, setLocalData] = useState<PersonalDetails | ResumeSection | DynamicResumeSection | null>(null);
   const [aiPrompt, setAiPrompt] = useState('');
   const [isImproving, setIsImproving] = useState(false);
@@ -59,8 +55,8 @@ export default function SectionEditor({
   const [improvementAISuggestion, setImprovementAISuggestion] = useState<string | null>(null);
 
   useEffect(() => {
-    const isEditingPersonalDetails = targetToEdit === 'personalDetails';
-    const currentEditingSectionId = (targetToEdit && targetToEdit !== 'personalDetails') ? targetToEdit : null;
+    const isEditingPersonalDetails = editingTarget === 'personalDetails';
+    const currentEditingSectionId = (editingTarget && editingTarget !== 'personalDetails') ? editingTarget : null;
 
     if (isEditingPersonalDetails) {
       setLocalData(JSON.parse(JSON.stringify(resumeData.personalDetails)));
@@ -77,7 +73,7 @@ export default function SectionEditor({
     setAiPrompt(''); 
     setFieldBeingImproved(null); 
     setImprovementAISuggestion(null); 
-  }, [targetToEdit, resumeData]);
+  }, [editingTarget, resumeData]);
 
   const handlePersonalDetailsFieldChange = (fieldName: keyof PersonalDetails, value: string) => {
     if (localData && 'fullName' in localData) { 
@@ -130,6 +126,11 @@ export default function SectionEditor({
         const sectionSchema = schemaRegistry.getSectionSchema(section.schemaId);
         if (!sectionSchema) return;
 
+        // For single type sections, only allow one item
+        if (sectionSchema.type === 'single' && section.items.length > 0) {
+          return; // Already has an item, don't add more
+        }
+
         const newItemId = `${section.schemaId}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
         const newDynamicItem: DynamicSectionItem = {
           id: newItemId,
@@ -179,6 +180,18 @@ export default function SectionEditor({
     }
   };
 
+  // Auto-create item for single type sections if they don't have one
+  useEffect(() => {
+    if (localData && 'schemaId' in localData) {
+      const section = localData as DynamicResumeSection;
+      const sectionSchema = schemaRegistry.getSectionSchema(section.schemaId);
+      if (sectionSchema?.type === 'single' && section.items.length === 0) {
+        // Auto-create an item for single type sections
+        handleAddItem();
+      }
+    }
+  }, [localData]);
+
   const handleRemoveItem = (itemId: string) => {
     if (localData && 'items' in localData) { 
       if ('schemaId' in localData) {
@@ -199,8 +212,8 @@ export default function SectionEditor({
     if (!localData) return;
 
     let updatedResumeData: ResumeData;
-    const isEditingPersonalDetails = targetToEdit === 'personalDetails';
-    const currentEditingSectionId = (targetToEdit && targetToEdit !== 'personalDetails') ? targetToEdit : null;
+    const isEditingPersonalDetails = editingTarget === 'personalDetails';
+    const currentEditingSectionId = (editingTarget && editingTarget !== 'personalDetails') ? editingTarget : null;
 
     if (isEditingPersonalDetails && 'fullName' in localData) {
       updatedResumeData = { ...resumeData, personalDetails: localData as PersonalDetails };
@@ -212,7 +225,7 @@ export default function SectionEditor({
     } else {
       return;
     }
-    onUpdateResumeData(updatedResumeData);
+    updateResumeData(() => updatedResumeData);
     toast({ title: "Changes Saved", description: "Your resume has been updated." });
     setFieldBeingImproved(null);
     setImprovementAISuggestion(null);
@@ -286,11 +299,22 @@ export default function SectionEditor({
 
       if (isPersonal && localData && 'fullName' in localData) { 
         setLocalData(prev => ({ ...(prev as PersonalDetails), [fieldName as keyof PersonalDetails]: improvementAISuggestion }));
-      } else if (!isPersonal && itemId && fieldName && sectionType && localData && 'items' in localData) { 
-        const updatedItems = (localData.items as SectionItem[]).map(item =>
-          item.id === itemId ? { ...item, [fieldName]: improvementAISuggestion } : item
-        );
-        setLocalData(prev => ({ ...(prev as ResumeSection), items: updatedItems }));
+      } else if (!isPersonal && itemId && fieldName && sectionType && localData && 'items' in localData) {
+        // Check if this is a dynamic section
+        if ('schemaId' in localData) {
+          // Handle dynamic section update
+          const dynamicSection = localData as DynamicResumeSection;
+          const updatedItems = dynamicSection.items.map(item =>
+            item.id === itemId ? { ...item, data: { ...item.data, [fieldName]: improvementAISuggestion } } : item
+          );
+          setLocalData(prev => ({ ...(prev as DynamicResumeSection), items: updatedItems }));
+        } else {
+          // Handle legacy section update
+          const updatedItems = (localData.items as SectionItem[]).map(item =>
+            item.id === itemId ? { ...item, [fieldName]: improvementAISuggestion } : item
+          );
+          setLocalData(prev => ({ ...(prev as ResumeSection), items: updatedItems }));
+        }
       }
       toast({ title: "AI Improvement Applied" });
     }
@@ -336,7 +360,7 @@ export default function SectionEditor({
     );
   }
 
-  const isCurrentlyEditingPersonalDetails = targetToEdit === 'personalDetails';
+  const isCurrentlyEditingPersonalDetails = editingTarget === 'personalDetails';
 
   const renderPersonalDetailsForm = () => {
     const pd = localData as PersonalDetails;
@@ -423,46 +447,121 @@ export default function SectionEditor({
               </Button>
             </div>
             <div className="space-y-3">
-              {sectionSchema.fields.map(field => (
-                                 <DynamicFieldRenderer
-                   key={field.id}
-                   field={field}
-                   value={item.data[field.id]}
-                   onChange={(value) => handleDynamicItemChange(item.id, field.id, value)}
-                   userJobTitle={resumeData.personalDetails.jobTitle}
-                   currentItem={item as any}
-                   allResumeSections={isLegacyResumeData(resumeData) ? resumeData.sections : resumeData.sections.filter(s => 'type' in s) as ResumeSection[]}
-                   currentSectionId={section.id}
-                   isAutocompleteEnabled={isAutocompleteEnabled}
-                   itemId={item.id}
-                   schemaRegistry={schemaRegistry}
-                   sectionId={section.id}
-                   fieldId={field.id}
-                 />
-              ))}
+              {sectionSchema.fields.map(field => {
+                // Construct unique field ID for AI improvement tracking
+                const uniqueFieldId = constructUniqueFieldId(false, field.id, item.id, section.schemaId as any);
+                const currentValue = item.data[field.id] || '';
+                const isThisFieldBeingImproved = fieldBeingImproved?.uniqueFieldId === uniqueFieldId;
+                
+                // For AI-enabled fields, wrap in AIFieldTextarea
+                if (field.aiHints?.autocompleteEnabled && (field.type === 'text' || field.type === 'textarea')) {
+                  return (
+                    <AIFieldTextarea
+                      key={field.id}
+                      id={uniqueFieldId}
+                      label={field.label}
+                      value={isThisFieldBeingImproved && improvementAISuggestion !== null ? fieldBeingImproved.originalText : currentValue}
+                      onValueChange={(value) => handleDynamicItemChange(item.id, field.id, value)}
+                      currentAiPrompt={aiPrompt}
+                      onAiPromptChange={setAiPrompt}
+                      onImproveRequest={() => handleImproveWithAI(currentValue, uniqueFieldId)}
+                      isImproving={isImproving && isThisFieldBeingImproved}
+                      forcedSuggestion={isThisFieldBeingImproved ? improvementAISuggestion : null}
+                      onAcceptForcedSuggestion={() => onAcceptAIImprovement(uniqueFieldId)}
+                      onRejectForcedSuggestion={onRejectAIImprovement}
+                      userJobTitle={resumeData.personalDetails.jobTitle}
+                      sectionType={section.schemaId as any}
+                      currentItem={item as any}
+                      allResumeSections={resumeData.sections}
+                      currentSectionId={section.id}
+                      className={field.uiProps?.rows === 1 || field.type === 'text' ? "min-h-[40px]" : "min-h-[80px]"}
+                      isAutocompleteEnabled={isAutocompleteEnabled}
+                      placeholder={field.uiProps?.placeholder}
+                    />
+                  );
+                }
+                
+                // For non-AI fields, use DynamicFieldRenderer
+                return (
+                  <DynamicFieldRenderer
+                    key={field.id}
+                    field={field}
+                    value={item.data[field.id]}
+                    onChange={(value) => handleDynamicItemChange(item.id, field.id, value)}
+                    userJobTitle={resumeData.personalDetails.jobTitle}
+                    currentItem={item as any}
+                    allResumeSections={isLegacyResumeData(resumeData) ? resumeData.sections : resumeData.sections.filter(s => 'type' in s) as ResumeSection[]}
+                    currentSectionId={section.id}
+                    isAutocompleteEnabled={isAutocompleteEnabled}
+                    itemId={item.id}
+                    schemaRegistry={schemaRegistry}
+                    sectionId={section.id}
+                    fieldId={field.id}
+                  />
+                );
+              })}
             </div>
           </Card>
         ))}
 
-        {sectionSchema.type === 'single' && section.items.length > 0 && (
+        {sectionSchema.type === 'single' && (
           <div className="space-y-3">
-            {sectionSchema.fields.map(field => (
-                             <DynamicFieldRenderer
-                 key={field.id}
-                 field={field}
-                 value={section.items[0].data[field.id]}
-                 onChange={(value) => handleDynamicItemChange(section.items[0].id, field.id, value)}
-                 userJobTitle={resumeData.personalDetails.jobTitle}
-                 currentItem={section.items[0] as any}
-                 allResumeSections={isLegacyResumeData(resumeData) ? resumeData.sections : resumeData.sections.filter(s => 'type' in s) as ResumeSection[]}
-                 currentSectionId={section.id}
-                 isAutocompleteEnabled={isAutocompleteEnabled}
-                 itemId={section.items[0].id}
-                 schemaRegistry={schemaRegistry}
-                 sectionId={section.id}
-                 fieldId={field.id}
-               />
-            ))}
+            {sectionSchema.fields.map(field => {
+              // Ensure we have at least one item for single type sections
+              const item = section.items[0];
+              if (!item) return null;
+              
+              const uniqueFieldId = constructUniqueFieldId(false, field.id, item.id, section.schemaId as any);
+              const currentValue = item.data[field.id] || '';
+              const isThisFieldBeingImproved = fieldBeingImproved?.uniqueFieldId === uniqueFieldId;
+              
+              // For AI-enabled fields, wrap in AIFieldTextarea
+              if (field.aiHints?.autocompleteEnabled && (field.type === 'text' || field.type === 'textarea')) {
+                return (
+                  <AIFieldTextarea
+                    key={field.id}
+                    id={uniqueFieldId}
+                    label={field.label}
+                    value={isThisFieldBeingImproved && improvementAISuggestion !== null ? fieldBeingImproved.originalText : currentValue}
+                    onValueChange={(value) => handleDynamicItemChange(item.id, field.id, value)}
+                    currentAiPrompt={aiPrompt}
+                    onAiPromptChange={setAiPrompt}
+                    onImproveRequest={() => handleImproveWithAI(currentValue, uniqueFieldId)}
+                    isImproving={isImproving && isThisFieldBeingImproved}
+                    forcedSuggestion={isThisFieldBeingImproved ? improvementAISuggestion : null}
+                    onAcceptForcedSuggestion={() => onAcceptAIImprovement(uniqueFieldId)}
+                    onRejectForcedSuggestion={onRejectAIImprovement}
+                    userJobTitle={resumeData.personalDetails.jobTitle}
+                    sectionType={section.schemaId as any}
+                    currentItem={item as any}
+                    allResumeSections={resumeData.sections}
+                    currentSectionId={section.id}
+                    className={field.uiProps?.rows === 1 || field.type === 'text' ? "min-h-[40px]" : "min-h-[80px]"}
+                    isAutocompleteEnabled={isAutocompleteEnabled}
+                    placeholder={field.uiProps?.placeholder}
+                  />
+                );
+              }
+              
+              // For non-AI fields, use DynamicFieldRenderer
+              return (
+                <DynamicFieldRenderer
+                  key={field.id}
+                  field={field}
+                  value={item.data[field.id]}
+                  onChange={(value) => handleDynamicItemChange(item.id, field.id, value)}
+                  userJobTitle={resumeData.personalDetails.jobTitle}
+                  currentItem={item as any}
+                  allResumeSections={isLegacyResumeData(resumeData) ? resumeData.sections : resumeData.sections.filter(s => 'type' in s) as ResumeSection[]}
+                  currentSectionId={section.id}
+                  isAutocompleteEnabled={isAutocompleteEnabled}
+                  itemId={item.id}
+                  schemaRegistry={schemaRegistry}
+                  sectionId={section.id}
+                  fieldId={field.id}
+                />
+              );
+            })}
           </div>
         )}
 
@@ -579,48 +678,22 @@ export default function SectionEditor({
 
   return (
     <div className="flex flex-col h-full no-print">
-      {/* Header with title and controls - only show when NOT in sidebar navigator mode */}
-      {!onBack && (
-        <div className="flex flex-row items-center justify-between py-3 px-4 border-b bg-background flex-shrink-0">
-          <h2 className="font-headline text-lg font-semibold">{editorTitle}</h2>
-          <div className="flex items-center gap-2">
-              {targetToEdit !== 'personalDetails' && (
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="autocomplete-toggle"
-                    className="autocomplete-toggle-switch"
-                    checked={isAutocompleteEnabled}
-                    onCheckedChange={onToggleAutocomplete}
-                    aria-label="Toggle Autocomplete"
-                  />
-                  <Label htmlFor="autocomplete-toggle" className="text-xs cursor-pointer">Autocomplete</Label>
-                </div>
-              )}
-              <Button variant="ghost" size="icon" onClick={onCloseEditor} aria-label="Close editor">
-                  <XCircle size={20} />
-              </Button>
+      {/* Header with title and controls */}
+      <div className="flex flex-row items-center justify-between py-3 px-4 border-b bg-background flex-shrink-0">
+        <h2 className="font-headline text-lg font-semibold text-primary">{editorTitle}</h2>
+        {editingTarget !== 'personalDetails' && (
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="autocomplete-toggle-nav"
+              className="autocomplete-toggle-switch"
+              checked={isAutocompleteEnabled}
+              onCheckedChange={toggleAutocomplete}
+              aria-label="Toggle Autocomplete"
+            />
+            <Label htmlFor="autocomplete-toggle-nav" className="text-xs cursor-pointer">AI 自动补全</Label>
           </div>
-        </div>
-      )}
-      
-      {/* Header for sidebar navigator mode */}
-      {onBack && (
-        <div className="flex flex-row items-center justify-between py-3 px-4 border-b bg-background flex-shrink-0">
-          <h2 className="font-headline text-lg font-semibold text-primary">{editorTitle}</h2>
-          {targetToEdit !== 'personalDetails' && (
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="autocomplete-toggle-nav"
-                className="autocomplete-toggle-switch"
-                checked={isAutocompleteEnabled}
-                onCheckedChange={onToggleAutocomplete}
-                aria-label="Toggle Autocomplete"
-              />
-              <Label htmlFor="autocomplete-toggle-nav" className="text-xs cursor-pointer">AI 自动补全</Label>
-            </div>
-          )}
-        </div>
-      )}
+        )}
+      </div>
       
       {/* Scrollable Content Area - takes remaining space */}
       <div className="flex-1 overflow-y-auto">

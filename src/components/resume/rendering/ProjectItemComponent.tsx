@@ -2,6 +2,7 @@
 
 import { RenderableItem } from "@/types/schema";
 import { ExternalLink } from "lucide-react";
+import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
 
 interface ProjectItemComponentProps {
   item: RenderableItem;
@@ -20,6 +21,9 @@ export const ProjectItemComponent = ({ item }: ProjectItemComponentProps) => {
   const dateRange = (startDateField?.value || endDateField?.value)
     ? `${startDateField?.value || ''} - ${endDateField?.value || 'Present'}`
     : null;
+
+  const descriptionContent = descriptionField?.value ? 
+    (Array.isArray(descriptionField.value) ? descriptionField.value.join(', ') : descriptionField.value) : '';
 
   return (
     <div className="mb-4">
@@ -47,9 +51,17 @@ export const ProjectItemComponent = ({ item }: ProjectItemComponentProps) => {
       </div>
       
       {descriptionField?.value && (
-        <p className="text-[11px] leading-[1.4] text-gray-700 mb-2 whitespace-pre-line">
-          {Array.isArray(descriptionField.value) ? descriptionField.value.join(', ') : descriptionField.value}
-        </p>
+        <>
+          {descriptionField.markdownEnabled ? (
+            <MarkdownRenderer className="text-[11px] text-gray-700 mb-2">
+              {descriptionContent}
+            </MarkdownRenderer>
+          ) : (
+            <p className="text-[11px] leading-[1.4] text-gray-700 mb-2 whitespace-pre-line">
+              {descriptionContent}
+            </p>
+          )}
+        </>
       )}
       
       {technologiesField?.value && (

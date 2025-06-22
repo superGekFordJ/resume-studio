@@ -1,20 +1,20 @@
 "use client";
 
 import React, { useMemo, forwardRef } from 'react';
-import type { ResumeData } from "@/types/resume";
 import { cn } from "@/lib/utils";
 import { SchemaRegistry } from "@/lib/schemaRegistry";
 import { transformToRenderableView } from "@/lib/dataTransformer";
 import PrintableResume from "./PrintableResume";
 import { templates } from '@/types/resume';
+import { useResumeStore } from '@/stores/resumeStore';
 
 interface ResumeCanvasProps {
-  resumeData: ResumeData;
   className?: string;
 }
 
 const ResumeCanvas = forwardRef<HTMLDivElement, ResumeCanvasProps>(
-  ({ resumeData, className }, ref) => {
+  ({ className }, ref) => {
+    const resumeData = useResumeStore(state => state.resumeData);
     const schemaRegistry = SchemaRegistry.getInstance();
     const renderableResume = useMemo(() => 
       transformToRenderableView(resumeData, schemaRegistry), 

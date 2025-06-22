@@ -2,6 +2,7 @@
 
 import { RenderableItem } from "@/types/schema";
 import { Award, Calendar, Shield } from "lucide-react";
+import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
 
 interface CertificationItemComponentProps {
   item: RenderableItem;
@@ -20,6 +21,9 @@ export const CertificationItemComponent = ({ item }: CertificationItemComponentP
   const validityPeriod = (dateField?.value || expiryDateField?.value)
     ? `${dateField?.value || 'Obtained'}${expiryDateField?.value ? ` - ${expiryDateField.value}` : ''}`
     : null;
+
+  const descriptionContent = descriptionField?.value ? 
+    (Array.isArray(descriptionField.value) ? descriptionField.value.join(', ') : descriptionField.value) : '';
 
   return (
     <div className="mb-4 border-l-2 border-primary/20 pl-3">
@@ -49,9 +53,17 @@ export const CertificationItemComponent = ({ item }: CertificationItemComponentP
             </p>
           )}
           {descriptionField?.value && (
-            <p className="text-[10px] leading-[1.4] text-gray-700 mt-2 whitespace-pre-line">
-              {Array.isArray(descriptionField.value) ? descriptionField.value.join(', ') : descriptionField.value}
-            </p>
+            <>
+              {descriptionField.markdownEnabled ? (
+                <MarkdownRenderer className="text-[10px] text-gray-700 mt-2">
+                  {descriptionContent}
+                </MarkdownRenderer>
+              ) : (
+                <p className="text-[10px] leading-[1.4] text-gray-700 mt-2 whitespace-pre-line">
+                  {descriptionContent}
+                </p>
+              )}
+            </>
           )}
         </div>
       </div>

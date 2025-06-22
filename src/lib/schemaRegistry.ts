@@ -99,7 +99,8 @@ export class SchemaRegistry implements ISchemaRegistry {
           label: 'Description',
           uiProps: {
             rows: 2,
-            placeholder: 'Brief description of the certification and its relevance...'
+            placeholder: 'Brief description of the certification and its relevance...',
+            markdownEnabled: true
           },
           aiHints: {
             contextBuilders: {
@@ -312,7 +313,8 @@ export class SchemaRegistry implements ISchemaRegistry {
           required: true,
           uiProps: {
             rows: 4,
-            placeholder: 'A brief summary about your professional background...'
+            placeholder: 'A brief summary about your professional background...',
+            markdownEnabled: true
           },
           aiHints: {
             contextBuilders: {
@@ -395,7 +397,8 @@ export class SchemaRegistry implements ISchemaRegistry {
           required: true,
           uiProps: {
             rows: 4,
-            placeholder: 'Describe your responsibilities and achievements...'
+            placeholder: 'Describe your responsibilities and achievements...',
+            markdownEnabled: true
           },
           aiHints: {
             contextBuilders: {
@@ -474,7 +477,8 @@ export class SchemaRegistry implements ISchemaRegistry {
           label: 'Details',
           uiProps: {
             rows: 2,
-            placeholder: 'Relevant coursework, projects, achievements...'
+            placeholder: 'Relevant coursework, projects, achievements...',
+            markdownEnabled: true
           },
           aiHints: {
             contextBuilders: {
@@ -561,7 +565,8 @@ export class SchemaRegistry implements ISchemaRegistry {
           required: true,
           uiProps: {
             rows: 3,
-            placeholder: 'Enter your custom content...'
+            placeholder: 'Enter your custom content...',
+            markdownEnabled: true
           },
           aiHints: {
             contextBuilders: {
