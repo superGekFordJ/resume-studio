@@ -76,6 +76,21 @@ A4 Resume Studio 集成了四个核心 AI 功能，基于 Google Genkit 和 Gemi
   - `src/components/resume/ui/AutocompleteTextarea.tsx`
   - `src/stores/resumeStore.ts`（新增）
 
+##### `AutocompleteTextarea.tsx` 实现说明
+
+`AutocompleteTextarea.tsx` 组件已被完全重构，以使用 `copilot-react-textarea` 库，提供了更优越的、光标感知的内联自动补全体验。
+
+关键实现细节：
+
+-   **适配器模式**: 该组件作为 `copilot-react-textarea` 的一个"智能包装器"或适配器。它保持了一个与旧组件几乎完全相同的 props 接口，确保了与调用方（如 `AIFieldWrapper.tsx`）的向后兼容性。
+-   **防抖机制**: 组件利用 `copilot-react-textarea` 原生的 `debounceTime` prop 来控制 AI 建议的请求频率，防止了不必要的 API 调用。
+-   **竞态条件处理**: 使用一个基于 `useRef` 的标志 (`suggestionJustAccepted`) 来解决一个关键的时序问题。当用户使用 `Tab` 键接受一个内联建议时，该标志会被立即设置。这可以防止组件因文本变化而触发冗余的、二次的 API 调用。
+-   **双重建议系统**: 组件无缝地处理两种类型的建议：
+    1.  **内联自动补全**: 由组件的 `createSuggestionFunction` 提供的标准"幽灵文本"。
+    2.  **强制建议**: 从 Zustand store 通过 `forcedSuggestion` prop 传递下来的 AI *改进*建议。组件会正确地优先显示强制建议，并通过一个专用的 `onKeyDown` 处理器来处理它们的接受 (`Tab`) 和拒绝 (`Escape`) 操作。
+
+关于此组件当前的局限性和未来的改进，请参阅 `docs/FIXES_SUMMARY.md` 文档。
+
 #### 输入参数 (Zod Schema in Flow)
 
 两个 Flow 的输入 Schema 都被重构为接收一个统一的 `context` 对象。
@@ -206,128 +221,3 @@ const handleReviewResume = async () => {
   }
 };
 ```
-
-`schemaRegistry.stringifyResumeForReview` 方法会遍历所有可见的章节，使用每个章节 `SectionSchema` 中定义的 `sectionSummaryBuilder` 来创建该章节的文本表示，最终将它们拼接成一个完整的简历字符串。这确保了即使添加了新的动态章节，评审功能也无需任何代码更改即可正确工作。
-
-### 3. 批量改进 (Batch Improvement)（即将集成）
-
-批量改进功能允许用户一次性改进整个章节的内容，而不是逐个字段改进。
-
-#### 实现位置
-- **Flow**: `src/ai/flows/batch-improve-section.ts`（已实现）
-- **UI 集成**: 尚未集成，将在下一阶段开发
-
-#### 计划的 Store Action（预览）
-
-```typescript
-// 计划添加到 resumeStore.ts 中
-
-batchImproveSection: async (payload: { 
-  sectionId: string, 
-  improvementGoals: string[] 
-}) => {
-  const { sectionId, improvementGoals } = payload;
-  const state = get();
-  const section = state.resumeData.sections.find(s => s.id === sectionId);
-  
-  if (!section) return;
-  
-  set({ isBatchImproving: sectionId });
-  
-  try {
-    const schemaRegistry = SchemaRegistry.getInstance();
-    
-    // 获取章节数据
-    const sectionData = 'schemaId' in section 
-      ? { ...section }
-      : { ...section };
-      
-    // 构建上下文
-    const otherSectionsContext = schemaRegistry.stringifyResumeForReview(state.resumeData, [sectionId]);
-    
-    // 调用批量改进 Flow
-    const { batchImproveSection } = await import('@/ai/flows/batch-improve-section');
-    const result = await batchImproveSection({
-      sectionData: sectionData,
-      sectionType: 'schemaId' in section ? section.schemaId : section.type,
-      improvementGoals,
-      userJobTitle: state.resumeData.personalDetails.jobTitle,
-      otherSectionsContext
-    });
-    
-    // 更新状态
-    set({
-      batchImprovement: {
-        sectionId,
-        improvedData: result.improvedSectionData,
-        summary: result.improvementSummary,
-        changes: result.fieldChanges
-      },
-      isBatchImproving: null
-    });
-  } catch (error) {
-    console.error("Batch improvement error:", error);
-    set({ isBatchImproving: null });
-  }
-}
-```
-
-## 扩展指南：如何添加新章节的 AI 支持
-
-得益于新架构，为新章节添加 AI 支持变得极其简单。假设我们要添加一个新的 "Certifications" 章节。
-
-**第 1 步: 定义 `SectionSchema`**
-
-在 `schemaRegistry.ts` 中，为 "Certifications" 创建一个新的 Schema。
-
-```typescript
-// In schemaRegistry.ts, inside initializeDefaultSchemas()
-const CERTIFICATIONS_SCHEMA: SectionSchema = {
-  id: 'certifications',
-  name: 'Certifications',
-  type: 'list',
-  fields: [
-    { id: 'name', type: 'text', label: 'Certification Name', aiHints: { contextBuilders: { improve: 'certification-name', autocomplete: 'certification-name' }}},
-    { id: 'issuer', type: 'text', label: 'Issuing Organization', aiHints: { contextBuilders: { improve: 'certification-issuer', autocomplete: 'certification-issuer' }}},
-    { id: 'date', type: 'date', label: 'Date Obtained' },
-  ],
-  aiContext: {
-    sectionSummaryBuilder: 'certifications-section-summary', // For review & other sections context
-    itemSummaryBuilder: 'certification-item-summary',     // For this item's context
-  },
-  // ... uiConfig
-};
-this.registerSectionSchema(CERTIFICATIONS_SCHEMA);
-```
-
-**第 2 步: 添加 `ContextBuilderFunction`s**
-
-在 `schemaRegistry.ts` 的 `initializeContextBuilders()` 方法中，为上面定义的 builder ID 添加实现。
-
-```typescript
-// In initializeContextBuilders()
-
-// For a single field (e.g., the name)
-this.registerContextBuilder('certification-name', (data, allData) => {
-  return `Certification: ${data.name} from ${data.issuer}`;
-});
-
-// For a single item summary
-this.registerContextBuilder('certification-item-summary', (itemData, allData) => {
-  return `- ${itemData.name} by ${itemData.issuer} (${itemData.date})`;
-});
-
-// For the whole section summary
-this.registerContextBuilder('certifications-section-summary', (sectionData, allData) => {
-  const itemsSummary = sectionData.items.map(item => this.buildContext('certification-item-summary', item.data, allData)).join('\n');
-  return `## Certifications\n${itemsSummary}`;
-});
-```
-
-**完成！**
-
-完成以上两步后，当用户在 UI 中添加 "Certifications" 章节后：
-- **Autocomplete** 和 **Improve** 功能将**自动**为 `name` 和 `issuer` 字段工作。
-- **Review** 功能将**自动**包含 "Certifications" 章节的摘要。
-
-无需对 `SectionEditor.tsx`, `AutocompleteTextarea.tsx`, 或任何 AI Flow 文件进行任何修改。这就是 Schema 驱动架构的强大之处。 

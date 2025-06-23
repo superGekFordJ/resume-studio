@@ -213,7 +213,7 @@ const renderSectionByRenderType = (section: RenderableSection) => {
    - `PersonalDetailsEditor`: 处理个人信息编辑
    - `SectionItemEditor`: 处理章节项目编辑
    - `AIFieldWrapper`: 封装所有 AI 改进 UI 交互
-   - `AutocompleteTextarea`: 处理自动补全交互，直接从 Store 读取 AI 建议
+   - `AutocompleteTextarea`: 处理自动补全交互。它直接调用 AI flow 来获取内联建议，并通过 props 接收来自 store 的"强制建议"（AI 改进建议）。
 
 ### 5. AI 集成架构
 - **统一的上下文构建**: 所有 AI 功能的上下文都由 `schemaRegistry.buildAIContext` 方法统一构建，确保了数据的一致性和可预测性。
