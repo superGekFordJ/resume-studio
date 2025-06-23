@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { autocompleteInput, AutocompleteInputInput } from '@/ai/flows/autocomplete-input';
 import { Loader2 } from 'lucide-react';
-import { SectionType, SectionItem, ExperienceEntry, EducationEntry, SkillEntry, CustomTextEntry, ResumeSection } from '@/types/resume';
+import { SectionType, SectionItem, ResumeSection } from '@/types/resume';
 import { DynamicResumeSection, AIContextPayload, StructuredAIContext } from '@/types/schema';
 import { schemaRegistry } from '@/lib/schemaRegistry';
 import { useResumeStore } from '@/stores/resumeStore';
