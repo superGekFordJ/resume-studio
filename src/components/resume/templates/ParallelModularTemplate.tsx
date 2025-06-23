@@ -151,7 +151,7 @@ const ParallelModularTemplate = ({ resume }: ParallelModularTemplateProps) => {
         </div>
 
         {/* Side Column - Capability Hub (1/3 width) */}
-        <div className="w-1/3 bg-gray-50 pr-[10mm] pl-3 py-6 border-l border-gray-200">
+        <div className="w-1/3 bg-gray-50 pr-[13mm] pl-3 py-6 border-l border-gray-200">
           {sideColumnSections.map((section) => (
             <div key={section.id} className="mb-6">
               <h3 className="font-bold text-xs uppercase tracking-wider text-gray-600 mb-3">
