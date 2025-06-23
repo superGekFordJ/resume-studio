@@ -12,10 +12,8 @@ interface TemplateSelectorProps {
 }
 
 export default function TemplateSelector({}: TemplateSelectorProps) {
-  const { selectedTemplateId, setSelectedTemplateId } = useResumeStore(state => ({ 
-    selectedTemplateId: state.selectedTemplateId, 
-    setSelectedTemplateId: state.setSelectedTemplateId 
-  }));
+  const selectedTemplateId = useResumeStore(state => state.selectedTemplateId);
+  const setSelectedTemplateId = useResumeStore(state => state.setSelectedTemplateId);
   return (
     <Card className="no-print">
       <CardHeader>

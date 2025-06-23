@@ -169,4 +169,36 @@ const improved = await schemaRegistry.improveField({
 
 ---
 
-*最后更新: 2025-01-06* 
+*最后更新: 2025-01-06*
+
+# Known Issues & Future Improvements Summary
+
+This document tracks known issues, limitations, and potential future improvements for the A4 Resume Studio application.
+
+*Last Updated: 2025-06-23*
+
+## AI & Autocomplete
+
+### `copilot-react-textarea` Integration
+
+While the integration of `copilot-react-textarea` has significantly improved the user experience, there are several known limitations and areas for future enhancement:
+
+1.  **Incomplete Context for AI:**
+    *   **Issue:** The `createSuggestion` function currently only passes `textBeforeCursor` to the AI context. The `textAfterCursor` value, which is available from the component, is not being utilized.
+    *   **Impact:** This limits the AI's ability to provide more contextually-aware suggestions, as it doesn't know what text follows the cursor.
+    *   **Next Step:** The `buildAIContext` method in `SchemaRegistry` and the `autocompleteInput` flow should be updated to optionally accept and use `textAfterCursor`.
+
+2.  **Missing UI Hint for Inline Suggestions:**
+    *   **Issue:** There is currently no visual cue (like the colored "Tab" hint for forced suggestions) to inform the user that they can press `Tab` to accept an inline (ghost text) suggestion.
+    *   **Impact:** This makes the feature less discoverable for new users.
+    *   **Next Step:** Implement a subtle but clear UI hint that appears when an inline suggestion is active.
+
+3.  **Ambiguous `Escape` Key Behavior:**
+    *   **Issue:** For inline suggestions, the `Escape` key does not have a defined action (e.g., dismissing the suggestion). While `Ctrl+Z` works for undoing an accepted suggestion, the `Escape` key's behavior is inconsistent.
+    *   **Impact:** The user interaction model is incomplete.
+    *   **Next Step:** Define and implement the `Escape` key's behavior for inline suggestions. A potential improvement is to make it a universal "undo" or "dismiss" action.
+
+4.  **Handling of `onForcedSuggestionRejected`:**
+    *   **Issue:** The `onForcedSuggestionRejected` prop, while passed down to the `AutocompleteTextarea`, is currently a no-op when the user starts typing over a forced suggestion. The rejection is handled within the component but the action itself doesn't trigger a specific callback from the store.
+    *   **Impact:** This is a minor issue, as the primary rejection mechanism (clearing the suggestion) works correctly. However, it represents a slight inconsistency in the data flow.
+    - **Next Step:** Ensure the store's `rejectAIImprovement` action is called consistently in all rejection scenarios within the component.

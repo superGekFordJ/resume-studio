@@ -653,7 +653,9 @@ export class SchemaRegistry implements ISchemaRegistry {
     const { resumeData, task, sectionId, itemId, fieldId } = payload;
     
     const section = resumeData.sections.find((s: any) => s.id === sectionId);
-    if (!section) return { currentItemContext: '', otherSectionsContext: '' };
+    if (!section) {
+      return { currentItemContext: '', otherSectionsContext: '' };
+    }
     
     const schemaId = section.schemaId || section.type;
     const sectionSchema = this.getSectionSchema(schemaId);
@@ -680,11 +682,13 @@ export class SchemaRegistry implements ISchemaRegistry {
       }
     }
 
-    return {
+    const result = {
       currentItemContext,
       otherSectionsContext: otherSectionsContextParts.join('\n\n'),
       userJobTitle: resumeData.personalDetails?.jobTitle,
     };
+    
+    return result;
   }
 
   // NEW: AI Service Methods - Unified interface for all AI operations
