@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { FileText, Download, Eye, Sparkles, Printer, ChevronDown } from "lucide-react";
+import { FileText, Download, Eye, Sparkles, Printer, ChevronDown, Settings } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +10,8 @@ import { useResumeStore } from '@/stores/resumeStore';
 import { reviewResume } from '@/ai/flows/review-resume';
 import { schemaRegistry } from '@/lib/schemaRegistry';
 import { useToast } from '@/hooks/use-toast';
+import { SettingsPanel } from './SettingsPanel';
+import { useState } from 'react';
 
 interface HeaderProps {
   onExportPdf: () => void;
@@ -18,6 +20,7 @@ interface HeaderProps {
 
 export default function Header({ onExportPdf, onPrint }: HeaderProps) {
   const { toast } = useToast();
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const resumeData = useResumeStore(state => state.resumeData);
   const setIsReviewDialogOpen = useResumeStore(state => state.setIsReviewDialogOpen);
   const setReviewContent = useResumeStore(state => state.setReviewContent);
@@ -50,6 +53,11 @@ export default function Header({ onExportPdf, onPrint }: HeaderProps) {
           </h1>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setIsSettingsOpen(true)}>
+            <Settings className="mr-2 h-4 w-4" />
+            Settings
+          </Button>
+          
           <Button variant="outline" size="sm" onClick={handleReviewResume}>
             <Sparkles className="mr-2 h-4 w-4" />
             AI Review
@@ -78,6 +86,11 @@ export default function Header({ onExportPdf, onPrint }: HeaderProps) {
           </DropdownMenu>
         </div>
       </div>
+      
+      <SettingsPanel 
+        open={isSettingsOpen}
+        onOpenChange={setIsSettingsOpen}
+      />
     </header>
   );
 }

@@ -29,6 +29,8 @@ const ImproveResumeSectionInputSchema = z.object({
     currentItemContext: z.string().describe('Context about the current item being improved'),
     otherSectionsContext: z.string().describe('Summary of other resume sections'),
     userJobTitle: z.string().optional().describe("The user's target job title"),
+    userJobInfo: z.string().optional().describe("The user's target job info"),
+    userBio: z.string().optional().describe("The user's professional bio"),
   }).describe('Structured context from SchemaRegistry'),
   // Keep sectionType for backward compatibility
   sectionType: z
@@ -68,6 +70,8 @@ const improveResumeSectionPrompt = ai.definePrompt({
 
 Context:
 {{#if context.userJobTitle}}Target role: {{context.userJobTitle}}{{/if}}
+{{#if context.userJobInfo}}Target job info: {{context.userJobInfo}}{{/if}}
+{{#if context.userBio}}User Bio: {{context.userBio}}{{/if}}
 {{#if sectionType}}Section type: {{sectionType}}{{/if}}
 
 Current item being improved:

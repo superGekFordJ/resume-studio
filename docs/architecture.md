@@ -8,7 +8,7 @@ A4 Resume Studio 是一个基于 Next.js 的现代化简历构建应用，集成
 
 - **前端框架**: Next.js 15.3.3 (React 18.3.1)
 - **UI 组件库**: Radix UI + Tailwind CSS
-- **AI 集成**: Google Genkit + Gemini API
+- **AI 集成**: Google Genkit, [`copilot-react-kit`](https://github.com/genkit-ai/copilot-react-kit) (a fork of `copilot-react-textarea` without cloud service hard-binding)
 - **状态管理**: Zustand (with persistence)
 - **类型系统**: TypeScript
 - **样式**: Tailwind CSS + CSS Variables
@@ -91,6 +91,14 @@ src/
 
 ### 2. 数据流架构 (Updated 2025-06-23)
 
+为了确保用户体验的流畅性，应用程序针对不同类型的 AI 交互采用了两种不同的数据流模式：
+
+1.  **冷路径 (Cold Path - 标准流程)**: 用于用户点击触发、对延迟不敏感的操作（如“AI改进”）。此路径遵循 `组件 -> Store -> AI -> Store -> 组件` 的完整单向数据流，保证了逻辑的集中和可维护性。
+
+2.  **热路径 (Hot Path - 优化流程)**: 专为 `autocomplete` 等需要即时响应的功能设计。此路径允许组件在从 `SchemaRegistry` 获取上下文后，直接调用 AI 服务（`组件 -> SchemaRegistry -> AI -> 组件`），绕过了 Store 的派发周期，从而将延迟降至最低。
+
+下面的图表和说明详细描述了这两种路径：
+
 ```
                                +---------------------+
                                |   SchemaRegistry    |  <-- Business Logic & Schema
@@ -116,14 +124,18 @@ src/
 | - Pure Presentation             |           | - Return results to Store            |
 +----------------+----------------+           +--------------------+-------------------+
                  |                                                 |
-                 | 1. User action (e.g., type in textarea)         |
-                 |                                                 | 5. AI returns result
-                 | 2. Component dispatches Store Action            |
-                 |                                                 |
-                 | 3. Store calls SchemaRegistry for context       |
-                 |                                                 |
-                 | 4. Store calls AI Service with context          |
-                 |                                                 |
+                 | **Cold Path (e.g., Improve Section):**
+                 | 1. User clicks "Improve" button.
+                 | 2. Component dispatches `improveSection` action to Store.
+                 | 3. Store calls `SchemaRegistry` to build context.
+                 | 4. Store calls AI Service with context.
+                 | 5. AI returns result to Store, which updates state.
+                 |
+                 | **Hot Path (e.g., Autocomplete):**
+                 | 1. User types in textarea.
+                 | 2. (`onDebounce`) Component asks `SchemaRegistry` to build context.
+                 | 3. Component *directly* calls AI Service with context.
+                 | 4. AI returns result directly to component for display.
                  +------------------------------------------------->
 ```
 
@@ -203,10 +215,16 @@ const renderSectionByRenderType = (section: RenderableSection) => {
 1. **用户输入 → Store Action → Schema查询 → AI处理 → Store更新 → UI更新**
    - 用户在 UI 组件中进行操作（例如，点击"改进"按钮）
    - UI 组件**不直接**调用 AI 服务，而是派发 Store Action（如 `startAIImprovement`）
-   - Store Action 调用 `schemaRegistry.buildAIContext(payload)` 构建上下文
+   - Store Action 调用 `schemaRegistry.buildAIContext(payload)` 构建上下文，**传递 aiConfig**
    - Store Action 调用 AI Flow 并处理结果
    - Store 更新状态（如 `aiImprovement`）
    - UI 组件自动响应状态变化并更新视图
+
+**Global Context Integration**: 
+- 所有 AI 操作现在都接收增强的上下文，包括：
+  - `targetJobInfo`: 用户的目标职位（从设置面板或个人详情）
+  - `userBio`: 用户的专业背景描述
+  - 这些全局上下文字段通过 `aiConfig` 传递到 `SchemaRegistry.buildAIContext()`
 
 2. **组件分解与职责明确**
    - `SectionEditor`: 纯展示组件，协调子组件的渲染
@@ -364,7 +382,31 @@ interface ResumeActions {
 ## AI Services
 - **Purpose**: Provide intelligent assistance for resume writing
 - **Key Features**: Auto-completion, section improvement, resume review
-- **Implementation**: Server-side AI flows using Genkit
+- **Implementation**: Server-side AI flows using Genkit with memoized AIManager
+
+### AI Provider Architecture (Updated 2025-06-23)
+The application now features a sophisticated AI provider system:
+
+1. **AIManager Singleton**
+   - Manages Genkit instance lifecycle with memoization
+   - Only recreates instances when AI configuration changes
+   - Significantly improves performance by preventing wasteful recreations
+   - Located at `src/ai/AIManager.ts`
+
+2. **Global AI Context**
+   - Users can now provide target job information and professional bio via Settings
+   - This context is automatically injected into all AI operations
+   - Enhances personalization and relevance of AI suggestions
+
+3. **API Key Priority System**
+   - UI-provided keys (highest priority)
+   - Environment variables in development (fallback)
+   - Default authentication (lowest priority)
+
+4. **Provider Support**
+   - Google AI (Gemini) - fully implemented
+   - Ollama (local) - prepared for integration
+   - Anthropic (Claude) - prepared for integration
 
 ## Schema-Driven Architecture (Updated 2025-06-19)
 

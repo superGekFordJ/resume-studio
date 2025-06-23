@@ -15,6 +15,8 @@ const BatchImproveSectionInputSchema = z.object({
   sectionType: z.string().describe('The type/schema ID of the section being improved'),
   improvementGoals: z.array(z.string()).describe('List of improvement goals (e.g., "add quantifiable results", "improve clarity")'),
   userJobTitle: z.string().optional().describe("The user's target job title"),
+  userJobInfo: z.string().optional().describe("The user's target job info"),
+  userBio: z.string().optional().describe("The user's professional bio"),
   otherSectionsContext: z.string().optional().describe('Context from other resume sections'),
   priorityFields: z.array(z.string()).optional().describe('Fields that should be prioritized for improvement'),
 });
@@ -46,6 +48,8 @@ const batchImproveSectionPrompt = ai.definePrompt({
 
 **Section Type:** {{sectionType}}
 {{#if userJobTitle}}**Target Role:** {{userJobTitle}}{{/if}}
+{{#if userJobInfo}}**Target Job Info:** {{userJobInfo}}{{/if}}
+{{#if userBio}}**User Bio:** {{userBio}}{{/if}}
 
 **Current Section Data:**
 {{#each sectionData}}
@@ -180,7 +184,11 @@ const comprehensiveResumeAnalysisPrompt = ai.definePrompt({
    - Assess readability and flow
 
 **Provide specific, actionable recommendations with clear priorities and expected impact.**`,
-  model: 'googleai/gemini-2.5-flash-preview-05-20', // Use more powerful model for complex analysis
+  model: 'googleai/gemini-2.5-flash', // Use more powerful model for complex analysis
+  config: {
+    temperature: 0.6,
+    topP: 0.9,
+  }
 });
 
 const comprehensiveResumeAnalysisFlow = ai.defineFlow(
