@@ -124,7 +124,7 @@ export interface DynamicSectionItem {
 }
 ```
 
-## Zustand 状态结构 (Updated 2025-06-25)
+## Zustand 状态结构 (Updated 2025-06-23)
 
 ### ResumeStore 状态
 
