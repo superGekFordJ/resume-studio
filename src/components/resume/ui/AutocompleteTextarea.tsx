@@ -47,6 +47,7 @@ export default function AutocompleteTextarea({
   ...props
 }: AutocompleteTextareaProps) {
   const resumeData = useResumeStore((state: any) => state.resumeData);
+  const aiConfig = useResumeStore((state: any) => state.aiConfig);
 
   // useRef to solve the timing issue: When a suggestion is accepted via Tab key,
   // the component's text updates, triggering another suggestion call.
@@ -57,6 +58,7 @@ export default function AutocompleteTextarea({
 
   const createSuggestion = useCallback(async (data: { textBeforeCursor: string; textAfterCursor: string }): Promise<string> => {
     // If a suggestion was just accepted, block this subsequent call.
+    console.log("textBeforeCursor", data.textBeforeCursor, "textAfterCursor", data.textAfterCursor)
     if (suggestionJustAccepted.current) {
       suggestionJustAccepted.current = false; // Reset for the next user action.
       return "";
@@ -80,12 +82,16 @@ export default function AutocompleteTextarea({
         sectionId: currentSectionId || '',
         fieldId: props.name || '',
         itemId: itemId,
+        aiConfig: aiConfig,
+        inputText: data.textBeforeCursor,
+        textAfterCursor: data.textAfterCursor,
       });
     
 
       // 2. Call our existing Genkit flow
       const result = await autocompleteInput({
         inputText: data.textBeforeCursor,
+        textAfterCursor: data.textAfterCursor,
         context: context,
         sectionType: sectionType,
       });
@@ -147,6 +153,7 @@ export default function AutocompleteTextarea({
     // and cannot prevent the immediate re-trigger of `createSuggestion`.
     if (!forcedSuggestion && event.key === 'Tab') {
       suggestionJustAccepted.current = true;
+      console.log(`[${new Date().toISOString()}] --- AutocompleteTextarea: Tab pressed for INLINE suggestion. Setting block flag.`);
     }
   };
 
@@ -162,7 +169,7 @@ export default function AutocompleteTextarea({
         onKeyDown={handleKeyDown}
         debounceTime={500}
         disableWhenEmpty={false}
-        placeholder="wait one more second for ai autocompletion, and then type TAB to accept"
+        placeholder={isDisplayingForcedSuggestion ? '' : props.placeholder}
         textareaPurpose="resume-field"
         // Pass through our standard shadcn/ui textarea styles
         className={cn(
@@ -172,9 +179,9 @@ export default function AutocompleteTextarea({
         )}
         // The core of the integration: hook up our AI logic
         createSuggestionFunction={createSuggestion}
-        // The insertion/editing feature is powerful, but not required for this task.
-        // We provide a no-op function for now.
-        insertionOrEditingFunction={async () => new ReadableStream()}
+        // This is a required prop. We return a rejected promise to effectively
+        // disable it and prevent any further action or network requests.
+        insertionOrEditingFunction={async () => { throw new Error("Insertion/Editing is not enabled."); }}
         id={props.id}
         name={props.name}
         disabled={props.disabled}

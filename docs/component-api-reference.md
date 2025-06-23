@@ -1,23 +1,31 @@
-# A4 Resume Studio - 组件 API 参考
+# A4 Resume Studio - 组件 API 参考 (Zustand 集成版)
+
+本参考文档描述了在深度集成 Zustand 状态管理之后，核心组件的API和使用模式。
+
+## 核心架构原则
+
+-   **Store驱动**: 大多数核心组件不再通过 props 接收和更新 `resumeData`。它们直接从 `resumeStore` 中订阅所需的状态切片，并调用 store 的 actions 来派发更新。
+-   **职责分离**: 组件专注于UI渲染和用户事件的捕获。所有业务逻辑、状态管理和AI交互都由 `resumeStore` 和 `SchemaRegistry` 处理。
+
+---
 
 ## 核心组件
 
 ### 1. ResumeCanvas
 
-主要的简历渲染容器，负责选择和渲染适当的模板。
+主要的简历渲染容器，负责根据 `resumeStore` 中的 `selectedTemplateId` 来渲染相应的模板。
 
 #### Props
 ```typescript
 interface ResumeCanvasProps {
-  resumeData: ResumeData;           // 简历数据
-  className?: string;               // 额外的CSS类名
+  className?: string; // 额外的CSS类名
 }
 ```
+*注意: `resumeData` 不再通过 props 传递，组件会直接从 `resumeStore` 中获取。*
 
 #### 使用示例
 ```tsx
 <ResumeCanvas 
-  resumeData={resumeData} 
   className="custom-canvas-style"
 />
 ```
@@ -35,19 +43,11 @@ interface ResumeCanvasProps {
 模板选择器组件，提供可视化的模板选择界面。
 
 #### Props
-```typescript
-interface TemplateSelectorProps {
-  selectedTemplateId: string;                    // 当前选中的模板ID
-  onSelectTemplate: (templateId: string) => void; // 模板选择回调
-}
-```
+该组件没有外部 props。它直接与 `resumeStore` 交互，读取 `selectedTemplateId` 并调用 `setSelectedTemplateId` action。
 
 #### 使用示例
 ```tsx
-<TemplateSelector
-  selectedTemplateId={selectedTemplateId}
-  onSelectTemplate={handleSelectTemplate}
-/>
+<TemplateSelector />
 ```
 
 #### 特性
@@ -60,24 +60,14 @@ interface TemplateSelectorProps {
 
 ### 3. SectionManager
 
-章节管理器，用于管理简历的各个章节。
+章节管理器，用于显示、排序和管理简历的各个章节。
 
 #### Props
-```typescript
-interface SectionManagerProps {
-  resumeData: ResumeData;                                    // 简历数据
-  onUpdateResumeData: (updatedData: ResumeData) => void;     // 数据更新回调
-  onEditSection: (targetId: string | 'personalDetails') => void; // 编辑章节回调
-}
-```
+该组件没有外部 props。它直接从 `resumeStore` 读取 `resumeData.sections`，并调用如 `updateSectionVisibility`、`reorderSections` 等 actions。
 
 #### 使用示例
 ```tsx
-<SectionManager 
-  resumeData={resumeData} 
-  onUpdateResumeData={handleUpdateResumeData}
-  onEditSection={handleEditSection}
-/>
+<SectionManager />
 ```
 
 #### 特性
@@ -96,27 +86,16 @@ interface SectionManagerProps {
 #### Props
 ```typescript
 interface SectionEditorProps {
-  resumeData: ResumeData;                                    // 简历数据
-  targetToEdit: string | 'personalDetails';                 // 编辑目标ID
-  onUpdateResumeData: (updatedData: ResumeData) => void;     // 数据更新回调
-  onCloseEditor: () => void;                                 // 关闭编辑器回调
-  onBack?: () => void;                                       // 返回导航回调 (新增)
-  isAutocompleteEnabled: boolean;                            // 是否启用自动补全
-  onToggleAutocomplete: (enabled: boolean) => void;         // 切换自动补全回调
+  // targetToEdit 不再是 prop，而是由组件内部从 store 的 `editingTarget` 状态获取
+  onCloseEditor: () => void; // 关闭编辑器的回调，通常会调用 store 的 setEditingTarget(null)
+  onBack?: () => void;      // 返回结构视图的回调
 }
 ```
+*注意: 所有数据读取和更新都通过 `resumeStore` 完成。*
 
 #### 使用示例
 ```tsx
-<SectionEditor
-  resumeData={resumeData}
-  targetToEdit={editingTarget}
-  onUpdateResumeData={handleUpdateResumeData}
-  onCloseEditor={handleCloseEditor}
-  onBack={handleBackToStructure}
-  isAutocompleteEnabled={isAutocompleteEnabled}
-  onToggleAutocomplete={setIsAutocompleteEnabled}
-/>
+<SectionEditor />
 ```
 
 #### 特性
@@ -132,15 +111,15 @@ interface SectionEditorProps {
 
 ### 5. SidebarNavigator
 
-两阶段侧边栏导航器，管理结构视图和内容视图之间的切换。
+两阶段侧边栏导航器，管理结构视图和内容视图之间的切换。其API保持不变，因为它是一个纯布局组件。
 
 #### Props
 ```typescript
 interface SidebarNavigatorProps {
-  childrenStructure: React.ReactNode;                       // 结构视图内容
-  childrenContent: React.ReactNode;                         // 内容视图内容
-  isEditing: boolean;                                        // 是否处于编辑状态
-  onBack: () => void;                                        // 返回结构视图回调
+  childrenStructure: React.ReactNode;
+  childrenContent: React.ReactNode;
+  isEditing: boolean; // 通常由 `editingTarget !== null` 决定
+  onBack: () => void;
 }
 ```
 
@@ -174,67 +153,60 @@ interface SidebarNavigatorProps {
 
 ### 6. AutocompleteTextarea
 
-支持 AI 自动补全的 Schema 驱动文本输入组件。
+集成了 `copilot-react-kit` 的、支持 AI 自动补全的 Schema 驱动文本输入组件。
 
 #### Props
 ```typescript
-interface AutocompleteTextareaProps {
+interface AutocompleteTextareaProps extends Omit<React.ComponentProps<'textarea'>, 'onChange' | 'value'> {
+  // --- Core Functionality ---
   value: string;
   onValueChange: (value: string) => void;
-  isAutocompleteEnabledGlobally?: boolean;
-  // Context-related props (now passed through for SchemaRegistry)
-  userJobTitle?: string;
-  sectionType?: string; // Schema ID for dynamic sections
-  currentItem?: any;
-  allResumeSections?: any[];
-  currentSectionId?: string;
-  itemId?: string;
-  name?: string; // Field ID
-  // Optional UI props
-  placeholder?: string;
-  className?: string;
-  rows?: number;
-  // AI suggestion handling
-  forcedSuggestion: string | null;
-  onForcedSuggestionAccepted: () => void;
-  onForcedSuggestionRejected: () => void;
+  
+  // --- AI Context (from parent) ---
+  isAutocompleteEnabledGlobally: boolean;
+  uniqueFieldId: string; // 用于唯一标识textarea实例
+  
+  // --- AI Suggestions (from store) ---
+  forcedSuggestion?: string | null;
+  onForcedSuggestionAccepted?: () => void;
+  onForcedSuggestionRejected?: () => void;
 }
 ```
+*注意：其他用于构建AI上下文的内部props（如`sectionType`, `itemId`, `name`）被视为 `AIFieldWrapper` 的实现细节，在此处省略以简化API文档。*
 
 #### 使用示例
 ```tsx
+// 在 AIFieldWrapper.tsx 内部使用
 <AutocompleteTextarea
-  value={description}
-  onValueChange={setDescription}
-  placeholder="Describe your work experience..."
-  isAutocompleteEnabledGlobally={true}
-  userJobTitle="Software Engineer"
-  sectionType="experience" // or schemaId for dynamic sections
-  name="description" // field.id
-  itemId={item.id}
-  // ...other context props
+  id={uniqueFieldId}
+  value={value}
+  onValueChange={handleValueChange}
+  placeholder={field.uiProps?.placeholder}
+  isAutocompleteEnabledGlobally={isAutocompleteEnabled}
 />
 ```
 
 #### 特性
-- 由 `SchemaRegistry` 驱动的上下文感知自动补全
-- Tab键接受建议
-- Escape键取消建议
-- 加载状态指示
+- 由 `SchemaRegistry` 驱动的上下文感知自动补全。
+- 使用 `copilot-react-kit` 提供高性能的内联建议 ("幽灵文本")。
+- "热路径"优化：为降低延迟，直接调用AI服务，不通过Store Action。
+- 无缝集成来自Store的"强制建议"（AI改进建议）。
+- Tab键接受建议。
+- Escape键拒绝强制建议。
 
 ---
 
 ### 7. AIReviewDialog
 
-AI 简历评审对话框组件。
+AI 简历评审对话框组件。其API保持不变。
 
 #### Props
 ```typescript
 interface AIReviewDialogProps {
-  isOpen: boolean;                                          // 是否打开
-  onClose: () => void;                                      // 关闭回调
-  reviewContent: { overallQuality: string; suggestions: string } | null; // 评审内容
-  isLoading: boolean;                                       // 是否加载中
+  isOpen: boolean;
+  onClose: () => void;
+  reviewContent: ReviewResumeOutput | null;
+  isLoading: boolean;
 }
 ```
 
@@ -330,7 +302,7 @@ interface HeaderProps {
 
 ### 1. useToast
 
-Toast 通知 Hook。
+Toast 通知 Hook，API保持不变。
 
 #### 返回值
 ```typescript
@@ -362,171 +334,77 @@ toast({
 
 ---
 
-## 类型定义
+## 核心类型参考
 
-### 1. 核心数据类型
+本节仅包含与组件API最相关的核心类型。完整的类型定义请参阅 `docs/data-structures.md`。
+
+### 1. 核心数据结构
+
+应用的数据核心是 `resumeData`，它由 `resumeStore` 管理。组件通过选择器 (selectors) 从 store 中订阅所需的数据片段。
 
 ```typescript
-// 简历数据主结构
-interface ResumeData {
-  personalDetails: PersonalDetails;
-  sections: ResumeSection[];
-  templateId: string;
-}
-
-// 个人信息
-interface PersonalDetails {
-  fullName: string;
-  jobTitle: string;
-  email: string;
-  phone: string;
-  address: string;
-  linkedin?: string;
-  github?: string;
-  portfolio?: string;
-}
-
-// 简历章节
-interface ResumeSection {
-  id: string;
-  title: string;
-  type: SectionType;
-  visible: boolean;
-  items: SectionItem[];
-  isList: boolean;
-}
-
-// 章节类型
-type SectionType = 'summary' | 'experience' | 'education' | 'skills' | 'customText';
-
-// 章节项目联合类型
-type SectionItem = ExperienceEntry | EducationEntry | SkillEntry | CustomTextEntry;
+// 示例：在组件中获取数据
+const personalDetails = useResumeStore(state => state.resumeData.personalDetails);
+const sections = useResumeStore(state => state.resumeData.sections);
 ```
 
-### 2. AI 接口类型 (Schema-Driven)
+### 2. 关键AI接口类型
 
 ```typescript
-// Autocomplete Input
-interface AutocompleteInputInput {
-  inputText: string;
-  context: {
-    currentItemContext: string;
-    otherSectionsContext: string;
-    userJobTitle?: string;
-  };
-  sectionType?: string;
+// AIContextPayload (传递给 SchemaRegistry 的数据)
+export interface AIContextPayload {
+  resumeData: any;
+  task: 'improve' | 'autocomplete';
+  sectionId: string;
+  fieldId: string;
+  itemId?: string;
+  aiConfig?: any;
+  inputText?: string;      // 光标前文本
+  textAfterCursor?: string; // 光标后文本
 }
 
-// Autocomplete Output
-interface AutocompleteInputOutput {
-  completion: string;
-}
-
-// Content Improvement Input
-interface ImproveResumeSectionInput {
-  resumeSection: string;
-  prompt: string;
-  context: {
-    currentItemContext: string;
-    otherSectionsContext: string;
-    userJobTitle?: string;
-  };
-  sectionType?: string;
-}
-
-// Content Improvement Output
-interface ImproveResumeSectionOutput {
-  improvedResumeSection: string;
-}
-
-// Resume Review Input
-interface ReviewResumeInput {
-  resumeText: string;
-}
-
-// Resume Review Output
-interface ReviewResumeOutput {
-  overallQuality: string;
-  suggestions: string;
-}
-```
-
-### 3. 模板类型
-
-```typescript
-// 模板信息
-interface TemplateInfo {
-  id: string;
-  name: string;
-  imageUrl: string;
-  dataAiHint: string;
-}
-
-// 模板样式配置
-interface TemplateStyleConfig {
-  fontFamily: string;
-  headingColor: string;
-  accentColor: string;
-  spacing: string;
+// StructuredAIContext (由 SchemaRegistry 构建并传递给 AI Flow)
+export interface StructuredAIContext {
+  currentItemContext: string;
+  otherSectionsContext: string;
+  userJobTitle?: string;
+  userJobInfo?: string;
+  userBio?: string;
 }
 ```
 
 ---
 
-## 事件处理
+## 事件处理 (Zustand Action 驱动)
 
-### 1. 数据更新事件
+组件的事件处理现在通过调用 `resumeStore` 中定义的 actions 来完成，而不是通过 props 传递回调函数。
+
+### 数据更新示例
 
 ```typescript
-// 更新个人信息
-const handleUpdatePersonalDetails = (updates: Partial<PersonalDetails>) => {
-  setResumeData(prev => ({
-    ...prev,
-    personalDetails: { ...prev.personalDetails, ...updates }
-  }));
-};
+// 在组件中获取 action
+const updateField = useResumeStore(state => state.updateField);
 
-// 更新章节
-const handleUpdateSection = (sectionId: string, updates: Partial<ResumeSection>) => {
-  setResumeData(prev => ({
-    ...prev,
-    sections: prev.sections.map(section =>
-      section.id === sectionId ? { ...section, ...updates } : section
-    )
-  }));
-};
-
-// 添加章节项目
-const handleAddSectionItem = (sectionId: string, newItem: SectionItem) => {
-  setResumeData(prev => ({
-    ...prev,
-    sections: prev.sections.map(section =>
-      section.id === sectionId 
-        ? { ...section, items: [...section.items, newItem] }
-        : section
-    )
-  }));
+// 在事件处理器中调用 action
+const handleValueChange = (newValue: string) => {
+  updateField({
+    sectionId: 'some_section_id',
+    itemId: 'some_item_id',
+    fieldId: 'description',
+    value: newValue,
+  });
 };
 ```
 
-### 2. UI 交互事件
+### UI交互事件示例
 
 ```typescript
-// 模板选择
-const handleSelectTemplate = (templateId: string) => {
-  setSelectedTemplateId(templateId);
-  setResumeData(prev => ({ ...prev, templateId }));
-};
+// 在组件中获取 action
+const setEditingTarget = useResumeStore(state => state.setEditingTarget);
 
-// 章节编辑
-const handleEditSection = (targetId: string | 'personalDetails') => {
-  setEditingTarget(targetId);
-  if (!isRightPanelOpen) setIsRightPanelOpen(true);
-};
-
-// 关闭编辑器
-const handleCloseEditor = () => {
-  setEditingTarget(null);
+// 在事件处理器中调用 action
+const handleEditClick = () => {
+  setEditingTarget('some_section_id');
 };
 ```
 
@@ -645,5 +523,5 @@ const ComponentWithErrorHandling = () => {
 };
 ```
 
-*最后更新: 2025-06-19*
-*文档版本: v2.0.0* 
+*最后更新: 2025-06-24*
+*文档版本: v2.1.0* 

@@ -9,6 +9,63 @@ A4 Resume Studio 集成了四个核心 AI 功能，基于 Google Genkit 和 Gemi
 3. **批量改进 (Batch Improvement)** - 针对特定章节的批量内容优化
 4. **简历评审 (Resume Review)** - 全面的简历质量分析
 
+## 全局 AI 配置与上下文 (Updated 2025-06-23)
+
+### AIManager - 智能 AI 提供商管理
+
+应用现在使用 `AIManager` 单例来管理 AI 提供商实例：
+
+```typescript
+// src/ai/AIManager.ts
+class AIManager {
+  // 缓存的 Genkit 实例，只在配置改变时重新创建
+  private activeInstance: ReturnType<typeof genkit> | null = null;
+  private activeConfig: AIConfig | null = null;
+  
+  public getGenkit(config: AIConfig): ReturnType<typeof genkit> {
+    // 深度比较配置，如果相同则返回缓存的实例
+    if (this.activeInstance && _.isEqual(this.activeConfig, config)) {
+      return this.activeInstance;
+    }
+    // 否则创建新实例
+  }
+}
+```
+
+### 全局上下文增强
+
+用户现在可以通过设置面板提供全局上下文信息：
+
+- **targetJobInfo**: 目标职位信息
+- **userBio**: 专业背景描述
+
+这些信息会自动注入到所有 AI 操作中，提供更个性化的建议。
+
+### API Key 管理优先级
+
+系统使用智能的 API Key 管理策略：
+
+1. **用户界面提供的 Key**（最高优先级）
+   - 通过设置面板输入
+   - 仅存储在内存中，刷新页面后需要重新输入
+   
+2. **开发环境变量**（仅在开发模式下）
+   - `GOOGLE_API_KEY` 或 `GOOGLE_GENAI_API_KEY`
+   - 从 `.env.local` 文件读取
+   
+3. **默认认证**（最低优先级）
+   - 使用 Genkit 的默认认证机制
+
+```typescript
+// 在 AIManager 中的实现
+let apiKeyToUse = config.apiKey;
+if (!apiKeyToUse && process.env.NODE_ENV === 'development') {
+  if (config.provider === 'google') {
+    apiKeyToUse = process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENAI_API_KEY;
+  }
+}
+```
+
 ## 核心架构：Schema 驱动的 AI 交互
 
 所有 AI 功能都遵循一个统一的、由 `SchemaRegistry` 驱动的架构。
@@ -32,7 +89,7 @@ A4 Resume Studio 集成了四个核心 AI 功能，基于 Google Genkit 和 Gemi
 - Store Actions 负责调用 `SchemaRegistry` 构建上下文，执行 AI 调用，并更新状态。
 - UI 组件只需订阅相关状态（如 `aiImprovement`）并进行渲染。
 
-### 4. 标准化的数据流
+### 4. 标准化的数据流 (Enhanced with Global Context)
 
 ```
 1. UI Component
@@ -42,18 +99,20 @@ A4 Resume Studio 集成了四个核心 AI 功能，基于 Google Genkit 和 Gemi
 
 2. Zustand Store Action
    - 接收参数并设置加载状态
-   - 调用 schemaRegistry.buildAIContext(payload)
+   - 从 state 获取 aiConfig（包含 targetJobInfo 和 userBio）
+   - 调用 schemaRegistry.buildAIContext(payload + aiConfig)
    - 调用相应的 AI Flow
    - 处理结果并更新状态
 
 3. SchemaRegistry
-   - 接收 payload
+   - 接收 payload 和 aiConfig
    - 找到正确的 SectionSchema 和 FieldSchema
    - 使用 schema 中定义的 contextBuilders 生成 StructuredAIContext
+   - 注入全局上下文字段（targetJobInfo, userBio）
 
 4. AI Flow
-   - 接收 StructuredAIContext
-   - 在 prompt 模板中使用结构化数据
+   - 接收增强的 StructuredAIContext（包含全局上下文）
+   - 在 prompt 模板中使用结构化数据和全局上下文
    - 执行 AI 任务
    - 返回结果给 Store Action
 
@@ -64,26 +123,26 @@ A4 Resume Studio 集成了四个核心 AI 功能，基于 Google Genkit 和 Gemi
 
 ## AI 功能详解
 
-### 1. 自动补全 (Autocomplete) & 内容改进 (Improvement)
+### 1. 自动补全 (Autocomplete) - 热路径优化
 
-这两个功能遵循完全相同的数据流。
+自动补全功能是性能最敏感的AI交互，因此它采用了一种特殊的、优化的**"热路径"**数据流。
 
 #### 实现位置
-- **Flows**:
-  - `src/ai/flows/autocomplete-input.ts`
-  - `src/ai/flows/improve-resume-section.ts`
-- **UI 集成**:
-  - `src/components/resume/ui/AutocompleteTextarea.tsx`
-  - `src/stores/resumeStore.ts`（新增）
+- **Flow**: `src/ai/flows/autocomplete-input.ts`
+- **UI 集成**: `src/components/resume/ui/AutocompleteTextarea.tsx`
 
-##### `AutocompleteTextarea.tsx` 实现说明
+#### `AutocompleteTextarea.tsx` 实现说明
 
-`AutocompleteTextarea.tsx` 组件已被完全重构，以使用 `copilot-react-textarea` 库，提供了更优越的、光标感知的内联自动补全体验。
+`AutocompleteTextarea.tsx` 组件已被完全重构，以使用 `copilot-react-kit` 库，提供了更优越的、光标感知的内联自动补全体验。
 
 关键实现细节：
 
--   **适配器模式**: 该组件作为 `copilot-react-textarea` 的一个"智能包装器"或适配器。它保持了一个与旧组件几乎完全相同的 props 接口，确保了与调用方（如 `AIFieldWrapper.tsx`）的向后兼容性。
--   **防抖机制**: 组件利用 `copilot-react-textarea` 原生的 `debounceTime` prop 来控制 AI 建议的请求频率，防止了不必要的 API 调用。
+-   **适配器模式**: 该组件作为 `copilot-react-kit` 的一个"智能包装器"或适配器。它保持了一个与旧组件几乎完全相同的 props 接口，确保了与调用方（如 `AIFieldWrapper.tsx`）的向后兼容性。
+-   **"热路径"调用**: 为了将延迟降至最低，该组件**不通过Zustand Store**来发起AI调用。相反，它的 `createSuggestion` 函数会：
+    1.  同步地从 `SchemaRegistry` 请求构建AI上下文。
+    2.  直接 `await` 调用 `autocompleteInput` 这个Genkit Flow。
+    3.  将返回的建议直接用于UI渲染。
+-   **防抖机制**: 组件利用 `copilot-react-kit` 原生的 `debounceTime` prop 来控制 AI 建议的请求频率，防止了不必要的 API 调用。
 -   **竞态条件处理**: 使用一个基于 `useRef` 的标志 (`suggestionJustAccepted`) 来解决一个关键的时序问题。当用户使用 `Tab` 键接受一个内联建议时，该标志会被立即设置。这可以防止组件因文本变化而触发冗余的、二次的 API 调用。
 -   **双重建议系统**: 组件无缝地处理两种类型的建议：
     1.  **内联自动补全**: 由组件的 `createSuggestionFunction` 提供的标准"幽灵文本"。
@@ -91,14 +150,23 @@ A4 Resume Studio 集成了四个核心 AI 功能，基于 Google Genkit 和 Gemi
 
 关于此组件当前的局限性和未来的改进，请参阅 `docs/FIXES_SUMMARY.md` 文档。
 
+### 2. 内容改进 (Content Improvement) - 冷路径标准流程
+
+内容改进功能遵循标准的**"冷路径"**数据流，所有交互都由 Zustand store 协调。
+
+#### 实现位置
+- **Flow**: `src/ai/flows/improve-resume-section.ts`
+- **Store**: `src/stores/resumeStore.ts` (在 `startAIImprovement` action 中)
+- **UI**: `src/components/resume/editor/AIFieldWrapper.tsx`
+
 #### 输入参数 (Zod Schema in Flow)
 
-两个 Flow 的输入 Schema 都被重构为接收一个统一的 `context` 对象。
+`improve-resume-section` Flow 的输入 Schema 接收一个统一的 `context` 对象。
 
 ```typescript
-// in autocomplete-input.ts / improve-resume-section.ts
+// in improve-resume-section.ts
 const InputSchema = z.object({
-  // ... other fields like inputText or prompt
+  // ... other fields like prompt
   
   context: z.object({
     currentItemContext: z.string(), // The specific context for the item being edited.
@@ -111,7 +179,7 @@ const InputSchema = z.object({
 });
 ```
 
-#### Store Action 调用示例（新增）
+#### Store Action 调用示例
 
 ```typescript
 // In resumeStore.ts
@@ -162,33 +230,7 @@ startAIImprovement: async (payload) => {
 }
 ```
 
-#### UI 组件调用示例（新增）
-
-```typescript
-// In a UI component (e.g., AIFieldWrapper.tsx)
-
-const handleImproveWithAI = () => {
-  if (!aiPrompt.trim()) {
-    toast({ variant: "destructive", title: "AI Prompt Empty", description: "Please provide a prompt for the AI." });
-    return;
-  }
-  
-  // 设置 AI 提示
-  setAIPrompt(aiPrompt);
-  
-  // 派发 Store Action
-  startAIImprovement({
-    sectionId: currentSectionId,
-    itemId: itemId,
-    fieldId: fieldId,
-    currentValue: value,
-    uniqueFieldId: id,
-    isPersonalDetails: sectionType === 'personalDetailsField'
-  });
-};
-```
-
-### 2. 简历评审 (Resume Review)
+### 3. 简历评审 (Resume Review)
 
 #### 实现位置
 - **Flow**: `src/ai/flows/review-resume.ts`

@@ -6,6 +6,16 @@ import type { ReviewResumeOutput } from '@/ai/flows/review-resume';
 import type { DynamicResumeSection, DynamicSectionItem } from '@/types/schema';
 import { SchemaRegistry } from '@/lib/schemaRegistry';
 
+// AI Config interface
+export interface AIConfig {
+  provider: 'google' | 'ollama' | 'anthropic';
+  model: string;
+  apiKey?: string; // Stored in memory, not persisted
+  targetJobInfo?: string;
+  userBio?: string;
+  ollamaServerAddress?: string; // For Ollama users
+}
+
 // State interface
 export interface ResumeState {
   resumeData: ResumeData;
@@ -23,6 +33,7 @@ export interface ResumeState {
   } | null;
   isImprovingFieldId: string | null;
   aiPrompt: string;
+  aiConfig: AIConfig;
 }
 
 // Actions interface
@@ -60,6 +71,7 @@ export interface ResumeActions {
   }) => Promise<void>;
   acceptAIImprovement: () => void;
   rejectAIImprovement: () => void;
+  updateAIConfig: (config: Partial<AIConfig>) => void;
 }
 
 // Create the store with persist middleware
@@ -78,6 +90,13 @@ export const useResumeStore = create<ResumeState & ResumeActions>()(
       aiImprovement: null,
       isImprovingFieldId: null,
       aiPrompt: '',
+      aiConfig: {
+        provider: 'google',
+        model: 'gemini-2.0-flash',
+        targetJobInfo: '',
+        userBio: '',
+        ollamaServerAddress: 'http://127.0.0.1:11434',
+      },
 
       // Actions
       setResumeData: (data) => set({ resumeData: data }),
@@ -265,7 +284,9 @@ export const useResumeStore = create<ResumeState & ResumeActions>()(
             const context = {
               currentItemContext: `Personal Details Field: ${payload.fieldId}`,
               otherSectionsContext: schemaRegistry.stringifyResumeForReview(state.resumeData),
-              userJobTitle: state.resumeData.personalDetails?.jobTitle || ''
+              userJobTitle: state.resumeData.personalDetails?.jobTitle || '',
+              userJobInfo: state.aiConfig.targetJobInfo,
+              userBio: state.aiConfig.userBio
             };
             
             const result = await improveResumeSection({
@@ -284,7 +305,8 @@ export const useResumeStore = create<ResumeState & ResumeActions>()(
               itemId: payload.itemId || '',
               fieldId: payload.fieldId,
               currentValue: payload.currentValue,
-              prompt: state.aiPrompt
+              prompt: state.aiPrompt,
+              aiConfig: state.aiConfig
             });
           }
           
@@ -354,9 +376,22 @@ export const useResumeStore = create<ResumeState & ResumeActions>()(
         aiImprovement: null,
         isImprovingFieldId: null
       }),
+      
+      updateAIConfig: (config) => set((state) => ({
+        aiConfig: { ...state.aiConfig, ...config }
+      })),
     }),
     {
       name: 'resume-studio-storage', // name of the storage key
+      partialize: (state) => {
+        // Exclude apiKey from persistence
+        const { aiConfig, ...rest } = state;
+        const { apiKey, ...aiConfigWithoutKey } = aiConfig;
+        return {
+          ...rest,
+          aiConfig: aiConfigWithoutKey
+        };
+      },
       merge: (persistedState, currentState) => {
         // Custom merge function to handle nested objects gracefully
         return {

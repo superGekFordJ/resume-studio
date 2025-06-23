@@ -202,7 +202,10 @@ export interface AIContextPayload {
   task: 'improve' | 'autocomplete';
   sectionId: string;
   fieldId: string;
-  itemId?: string; // Optional, as some sections are not lists
+  itemId?: string;
+  inputText?: string; // This is textBeforeCursor
+  textAfterCursor?: string; // Add textAfterCursor
+  aiConfig?: any;
 }
 
 export interface StructuredAIContext {
@@ -210,6 +213,8 @@ export interface StructuredAIContext {
   otherSectionsContext: string;
   // Add other relevant top-level context if needed
   userJobTitle?: string;
+  userJobInfo?: string;
+  userBio?: string;
 }
 
 // Renderable View Models for decoupled rendering

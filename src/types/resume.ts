@@ -1,4 +1,3 @@
-import type { LucideIcon } from 'lucide-react';
 // Import the new schema types for extended functionality
 import type { ExtendedResumeData } from './schema';
 

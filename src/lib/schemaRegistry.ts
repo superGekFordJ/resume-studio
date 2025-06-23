@@ -8,6 +8,8 @@ import {
   AIContextPayload,
   StructuredAIContext
 } from '@/types/schema';
+import { registerDefaultSchemas } from './schemas/defaultSchemas';
+import { registerDefaultContextBuilders } from './schemas/defaultContextBuilders';
 import type { ResumeData, SectionType } from '@/types/resume';
 
 // Schema注册中心实现
@@ -15,6 +17,10 @@ export class SchemaRegistry implements ISchemaRegistry {
   private static instance: SchemaRegistry;
   private sectionSchemas: Map<string, SectionSchema> = new Map();
   private contextBuilders: Map<string, ContextBuilderFunction> = new Map();
+  
+  // Cache for otherSectionsContext to improve performance.
+  // The key is a combination of resume data hash and the excluded section id.
+  private otherSectionsContextCache: Map<string, string> = new Map();
 
   private constructor() {
     this.initializeDefaultSchemas();
@@ -28,572 +34,48 @@ export class SchemaRegistry implements ISchemaRegistry {
     return SchemaRegistry.instance;
   }
 
+  // Hashing function to detect changes in resumeData
+  private generateResumeDataHash(resumeData: any, sectionIdToExclude: string): string {
+    // Create a deep copy to avoid modifying the original data
+    const dataToHash = JSON.parse(JSON.stringify(resumeData));
+
+    // Exclude the section that is currently being edited from the hash
+    dataToHash.sections = dataToHash.sections.filter((section: any) => section.id !== sectionIdToExclude);
+
+    // A simple and fast hashing strategy using the filtered data.
+    return JSON.stringify(dataToHash);
+  }
+
+  private generateOtherSectionsContextKey(resumeDataHash: string, currentSectionId: string): string {
+    return `${resumeDataHash}_${currentSectionId}`;
+  }
+
+  private buildOtherSectionsContext(resumeData: any, currentSectionId: string): string {
+    const otherSectionsContextParts: string[] = [];
+    for (const otherSection of resumeData.sections) {
+      if (otherSection.id === currentSectionId) continue;
+      const otherSchemaId = otherSection.schemaId || otherSection.type;
+      const otherSchema = this.getSectionSchema(otherSchemaId);
+      if (otherSchema?.aiContext?.sectionSummaryBuilder) {
+        const summary = this.buildContext(otherSchema.aiContext.sectionSummaryBuilder, otherSection, resumeData);
+        otherSectionsContextParts.push(summary);
+      }
+    }
+    return otherSectionsContextParts.join('\n\n');
+  }
+
+  public clearContextCache(): void {
+    this.otherSectionsContextCache.clear();
+  }
+
   // 初始化默认Schema
   private initializeDefaultSchemas() {
-    // 注册现有的基础Schema（向后兼容）
-    this.registerSectionSchema(this.createLegacySummarySchema());
-    this.registerSectionSchema(this.createLegacyExperienceSchema());
-    this.registerSectionSchema(this.createLegacyEducationSchema());
-    this.registerSectionSchema(this.createLegacySkillsSchema());
-    this.registerSectionSchema(this.createLegacyCustomTextSchema());
-    
-    // 注册新的高级Schema
-    this.registerSectionSchema(ADVANCED_SKILLS_SCHEMA);
-    this.registerSectionSchema(PROJECTS_SCHEMA);
-    
-    // TEST: Register a completely new schema to verify extensibility
-    this.registerSectionSchema({
-      id: 'certifications',
-      name: 'Certifications',
-      type: 'list',
-      fields: [
-        {
-          id: 'name',
-          type: 'text',
-          label: 'Certification Name',
-          required: true,
-          aiHints: {
-            contextBuilders: {
-              improve: 'certification-name',
-              autocomplete: 'certification-name'
-            },
-            autocompleteEnabled: true,
-            priority: 'high'
-          }
-        },
-        {
-          id: 'issuer',
-          type: 'text',
-          label: 'Issuing Organization',
-          required: true,
-          aiHints: {
-            contextBuilders: {
-              improve: 'certification-issuer',
-              autocomplete: 'certification-issuer'
-            },
-            autocompleteEnabled: true,
-            priority: 'medium'
-          }
-        },
-        {
-          id: 'date',
-          type: 'date',
-          label: 'Date Obtained',
-          required: true
-        },
-        {
-          id: 'expiryDate',
-          type: 'date',
-          label: 'Expiry Date (if applicable)',
-          required: false
-        },
-        {
-          id: 'credentialId',
-          type: 'text',
-          label: 'Credential ID',
-          required: false
-        },
-        {
-          id: 'description',
-          type: 'textarea',
-          label: 'Description',
-          uiProps: {
-            rows: 2,
-            placeholder: 'Brief description of the certification and its relevance...',
-            markdownEnabled: true
-          },
-          aiHints: {
-            contextBuilders: {
-              improve: 'certification-description',
-              autocomplete: 'certification-description'
-            },
-            improvementPrompts: [
-              'Highlight relevance to target role',
-              'Add key skills covered',
-              'Mention if it\'s industry-recognized',
-              'Include renewal status'
-            ],
-            autocompleteEnabled: true,
-            priority: 'medium'
-          }
-        }
-      ],
-      aiContext: {
-        sectionSummaryBuilder: 'certifications-summary',
-        itemSummaryBuilder: 'certifications-item',
-        batchImprovementSupported: true
-      },
-      uiConfig: {
-        icon: 'Award',
-        defaultRenderType: 'timeline',
-        addButtonText: 'Add Certification',
-        itemDisplayTemplate: '{name} - {issuer}',
-        sortable: true
-      }
-    });
+    registerDefaultSchemas(this);
   }
 
   // 初始化上下文构建器
   private initializeContextBuilders() {
-    // 基础上下文构建器 - Updated for new system
-    
-    // Summary builders
-    this.registerContextBuilder('summary-content', (data, allData) => {
-      return data.content || data || '';
-    });
-    
-    this.registerContextBuilder('summary-section', (section, allData) => {
-      const content = section.items?.[0]?.data?.content || section.items?.[0]?.content || '';
-      return `## Summary\n${content}`;
-    });
-
-    // Experience builders
-    this.registerContextBuilder('job-title', (data, allData) => {
-      return `Job Title: ${data.jobTitle || 'Untitled Job'}`;
-    });
-
-    this.registerContextBuilder('company-name', (data, allData) => {
-      return `Company: ${data.company || 'Unnamed Company'}`;
-    });
-
-    this.registerContextBuilder('job-description', (data, allData) => {
-      return `Job: ${data.jobTitle || 'Untitled Job'} at ${data.company || 'Unnamed Company'}\nDescription: ${data.description || ''}`;
-    });
-
-    this.registerContextBuilder('experience-item', (data, allData) => {
-      return `- ${data.jobTitle || 'Untitled Job'} at ${data.company || 'Unnamed Company'}: ${data.description?.substring(0, 70)}...`;
-    });
-
-    this.registerContextBuilder('experience-summary', (section, allData) => {
-      const itemsSummary = section.items?.map((item: any) => this.buildContext('experience-item', item.data || item, allData)).join('\n') || '';
-      return `## Experience\n${itemsSummary}`;
-    });
-
-    // Education builders
-    this.registerContextBuilder('degree-name', (data, allData) => {
-      return `Degree: ${data.degree || 'Untitled Degree'}`;
-    });
-
-    this.registerContextBuilder('institution-name', (data, allData) => {
-      return `Institution: ${data.institution || 'Unnamed Institution'}`;
-    });
-
-    this.registerContextBuilder('education-details', (data, allData) => {
-      return `Education: ${data.degree || 'Untitled Degree'} from ${data.institution || 'Unnamed Institution'}\nDetails: ${data.details || ''}`;
-    });
-
-    this.registerContextBuilder('education-item', (data, allData) => {
-      return `- ${data.degree || 'Untitled Degree'} from ${data.institution || 'Unnamed Institution'}`;
-    });
-
-    this.registerContextBuilder('education-summary', (section, allData) => {
-      const itemsSummary = section.items?.map((item: any) => this.buildContext('education-item', item.data || item, allData)).join('\n') || '';
-      return `## Education\n${itemsSummary}`;
-    });
-
-    // Skills builders
-    this.registerContextBuilder('skill-name', (data, allData) => {
-      return `Skill: ${data.name || 'Unnamed Skill'}`;
-    });
-
-    this.registerContextBuilder('skill-item', (data, allData) => {
-      return `${data.name || 'Unnamed Skill'}`;
-    });
-
-    this.registerContextBuilder('skills-summary', (section, allData) => {
-      const skills = section.items?.map((item: any) => item.data?.name || item.name || 'Unnamed Skill').join(', ') || '';
-      return `## Skills\n${skills}`;
-    });
-
-    // Custom content builders
-    this.registerContextBuilder('custom-content', (data, allData) => {
-      return data.content || data || '';
-    });
-
-    this.registerContextBuilder('custom-summary', (section, allData) => {
-      const content = section.items?.[0]?.data?.content || section.items?.[0]?.content || '';
-      return `## ${section.title || 'Custom Section'}\n${content}`;
-    });
-
-    // 高级技能上下文构建器
-    this.registerContextBuilder('skill-category', (data, allData) => {
-      const skills = Array.isArray(data.skills) ? data.skills.join(', ') : data.skills || '';
-      return `Skill Category: ${data.category}, Skills: ${skills}`;
-    });
-
-    this.registerContextBuilder('skill-list', (data, allData) => {
-      return Array.isArray(data.skills) ? data.skills.join(', ') : data.skills || '';
-    });
-
-    this.registerContextBuilder('skill-proficiency', (data, allData) => {
-      return `Proficiency: ${data.proficiency || 'Not specified'}`;
-    });
-
-    this.registerContextBuilder('skill-experience', (data, allData) => {
-      return `Years of Experience: ${data.yearsOfExperience || 'Not specified'}`;
-    });
-
-    this.registerContextBuilder('advanced-skills-summary', (section, allData) => {
-      const categories = section.items?.map((item: any) => 
-        `${item.data?.category || item.category}: ${Array.isArray(item.data?.skills || item.skills) ? (item.data?.skills || item.skills).join(', ') : (item.data?.skills || item.skills) || ''}`
-      ).join('; ') || '';
-      return `## Advanced Skills\n${categories}`;
-    });
-
-    this.registerContextBuilder('advanced-skills-item', (data, allData) => {
-      const skills = Array.isArray(data.skills) ? data.skills.join(', ') : data.skills || '';
-      const proficiency = data.proficiency ? ` (${data.proficiency})` : '';
-      return `${data.category}: ${skills}${proficiency}`;
-    });
-
-    // 项目上下文构建器
-    this.registerContextBuilder('project-name', (data, allData) => {
-      return `Project: ${data.name || 'Untitled Project'}`;
-    });
-
-    this.registerContextBuilder('project-description', (data, allData) => {
-      const tech = Array.isArray(data.technologies) ? data.technologies.join(', ') : data.technologies || '';
-      return `Project: ${data.name}, Technologies: ${tech}\nDescription: ${data.description || ''}`;
-    });
-
-    this.registerContextBuilder('project-technologies', (data, allData) => {
-      return Array.isArray(data.technologies) ? data.technologies.join(', ') : data.technologies || '';
-    });
-
-    this.registerContextBuilder('projects-summary', (section, allData) => {
-      const projects = section.items?.map((item: any) => {
-        const itemData = item.data || item;
-        return `${itemData.name}: ${itemData.description?.substring(0, 50)}...`;
-      }).join('; ') || '';
-      return `## Projects\n${projects}`;
-    });
-
-    this.registerContextBuilder('projects-item', (data, allData) => {
-      const tech = Array.isArray(data.technologies) ? data.technologies.join(', ') : data.technologies || '';
-      return `Project: ${data.name}, Tech: ${tech}`;
-    });
-    
-    // Certifications context builders (for test schema)
-    this.registerContextBuilder('certification-name', (data, allData) => {
-      return `Certification: ${data.name || 'Unnamed Certification'}`;
-    });
-    
-    this.registerContextBuilder('certification-issuer', (data, allData) => {
-      return `Issuer: ${data.issuer || 'Unknown Issuer'}`;
-    });
-    
-    this.registerContextBuilder('certification-description', (data, allData) => {
-      return `Certification: ${data.name} from ${data.issuer}\nDescription: ${data.description || ''}`;
-    });
-    
-    this.registerContextBuilder('certifications-summary', (section, allData) => {
-      const certs = section.items?.map((item: any) => {
-        const itemData = item.data || item;
-        return `${itemData.name} (${itemData.issuer})`;
-      }).join(', ') || '';
-      return `## Certifications\n${certs}`;
-    });
-    
-    this.registerContextBuilder('certifications-item', (data, allData) => {
-      return `${data.name} from ${data.issuer}${data.date ? ` (${data.date})` : ''}`;
-    });
-  }
-
-  // 创建向后兼容的Schema
-  private createLegacySummarySchema(): SectionSchema {
-    return {
-      id: 'summary',
-      name: 'Summary',
-      type: 'single',
-      fields: [
-        {
-          id: 'content',
-          type: 'textarea',
-          label: 'Summary',
-          required: true,
-          uiProps: {
-            rows: 4,
-            placeholder: 'A brief summary about your professional background...',
-            markdownEnabled: true
-          },
-          aiHints: {
-            contextBuilders: {
-              improve: 'summary-content',
-              autocomplete: 'summary-content'
-            },
-            improvementPrompts: [
-              'Make it more concise',
-              'Add quantifiable achievements',
-              'Highlight key skills',
-              'Tailor to target role'
-            ],
-            autocompleteEnabled: true,
-            priority: 'high'
-          }
-        }
-      ],
-      aiContext: {
-        sectionSummaryBuilder: 'summary-section',
-        itemSummaryBuilder: 'summary-content'
-      },
-      uiConfig: {
-        icon: 'FileText',
-        defaultRenderType: 'single-text',
-        addButtonText: 'Add Summary'
-      }
-    };
-  }
-
-  private createLegacyExperienceSchema(): SectionSchema {
-    return {
-      id: 'experience',
-      name: 'Experience',
-      type: 'list',
-      fields: [
-        {
-          id: 'jobTitle',
-          type: 'text',
-          label: 'Job Title',
-          required: true,
-          aiHints: {
-            contextBuilders: {
-              improve: 'job-title',
-              autocomplete: 'job-title'
-            },
-            autocompleteEnabled: true,
-            priority: 'high'
-          }
-        },
-        {
-          id: 'company',
-          type: 'text',
-          label: 'Company',
-          required: true,
-          aiHints: {
-            contextBuilders: {
-              improve: 'company-name',
-              autocomplete: 'company-name'
-            },
-            autocompleteEnabled: true,
-            priority: 'high'
-          }
-        },
-        {
-          id: 'startDate',
-          type: 'text',
-          label: 'Start Date',
-          required: true
-        },
-        {
-          id: 'endDate',
-          type: 'text',
-          label: 'End Date',
-          required: true
-        },
-        {
-          id: 'description',
-          type: 'textarea',
-          label: 'Description',
-          required: true,
-          uiProps: {
-            rows: 4,
-            placeholder: 'Describe your responsibilities and achievements...',
-            markdownEnabled: true
-          },
-          aiHints: {
-            contextBuilders: {
-              improve: 'job-description',
-              autocomplete: 'job-description'
-            },
-            improvementPrompts: [
-              'Add quantifiable results',
-              'Use action verbs',
-              'Highlight achievements',
-              'Include relevant keywords'
-            ],
-            autocompleteEnabled: true,
-            priority: 'high'
-          }
-        }
-      ],
-      aiContext: {
-        sectionSummaryBuilder: 'experience-summary',
-        itemSummaryBuilder: 'experience-item',
-        batchImprovementSupported: true
-      },
-      uiConfig: {
-        icon: 'Briefcase',
-        defaultRenderType: 'timeline',
-        addButtonText: 'Add Experience',
-        itemDisplayTemplate: '{jobTitle} at {company}',
-        sortable: true
-      }
-    };
-  }
-
-  private createLegacyEducationSchema(): SectionSchema {
-    return {
-      id: 'education',
-      name: 'Education',
-      type: 'list',
-      fields: [
-        {
-          id: 'degree',
-          type: 'text',
-          label: 'Degree',
-          required: true,
-          aiHints: {
-            contextBuilders: {
-              improve: 'degree-name',
-              autocomplete: 'degree-name'
-            },
-            autocompleteEnabled: true,
-            priority: 'high'
-          }
-        },
-        {
-          id: 'institution',
-          type: 'text',
-          label: 'Institution',
-          required: true,
-          aiHints: {
-            contextBuilders: {
-              improve: 'institution-name',
-              autocomplete: 'institution-name'
-            },
-            autocompleteEnabled: true,
-            priority: 'high'
-          }
-        },
-        {
-          id: 'graduationYear',
-          type: 'text',
-          label: 'Graduation Year',
-          required: true
-        },
-        {
-          id: 'details',
-          type: 'textarea',
-          label: 'Details',
-          uiProps: {
-            rows: 2,
-            placeholder: 'Relevant coursework, projects, achievements...',
-            markdownEnabled: true
-          },
-          aiHints: {
-            contextBuilders: {
-              improve: 'education-details',
-              autocomplete: 'education-details'
-            },
-            improvementPrompts: [
-              'Add relevant coursework',
-              'Include academic achievements',
-              'Mention projects or thesis',
-              'Add GPA if impressive'
-            ],
-            autocompleteEnabled: true,
-            priority: 'medium'
-          }
-        }
-      ],
-      aiContext: {
-        sectionSummaryBuilder: 'education-summary',
-        itemSummaryBuilder: 'education-item'
-      },
-      uiConfig: {
-        icon: 'GraduationCap',
-        defaultRenderType: 'timeline',
-        addButtonText: 'Add Education',
-        itemDisplayTemplate: '{degree} from {institution}',
-        sortable: true
-      }
-    };
-  }
-
-  private createLegacySkillsSchema(): SectionSchema {
-    return {
-      id: 'skills',
-      name: 'Skills',
-      type: 'list',
-      fields: [
-        {
-          id: 'name',
-          type: 'text',
-          label: 'Skill',
-          required: true,
-          aiHints: {
-            contextBuilders: {
-              improve: 'skill-name',
-              autocomplete: 'skill-name'
-            },
-            improvementPrompts: [
-              'Add specific technologies',
-              'Include proficiency levels',
-              'Group related skills',
-              'Add trending skills'
-            ],
-            autocompleteEnabled: true,
-            priority: 'high'
-          }
-        }
-      ],
-      aiContext: {
-        sectionSummaryBuilder: 'skills-summary',
-        itemSummaryBuilder: 'skill-item',
-        batchImprovementSupported: true
-      },
-      uiConfig: {
-        icon: 'Wand2',
-        defaultRenderType: 'badge-list',
-        addButtonText: 'Add Skill',
-        itemDisplayTemplate: '{name}',
-        sortable: true
-      }
-    };
-  }
-
-  private createLegacyCustomTextSchema(): SectionSchema {
-    return {
-      id: 'customText',
-      name: 'Custom Section',
-      type: 'single',
-      fields: [
-        {
-          id: 'content',
-          type: 'textarea',
-          label: 'Content',
-          required: true,
-          uiProps: {
-            rows: 3,
-            placeholder: 'Enter your custom content...',
-            markdownEnabled: true
-          },
-          aiHints: {
-            contextBuilders: {
-              improve: 'custom-content',
-              autocomplete: 'custom-content'
-            },
-            improvementPrompts: [
-              'Improve clarity',
-              'Make it more professional',
-              'Add specific examples',
-              'Optimize formatting'
-            ],
-            autocompleteEnabled: true,
-            priority: 'medium'
-          }
-        }
-      ],
-      aiContext: {
-        sectionSummaryBuilder: 'custom-summary',
-        itemSummaryBuilder: 'custom-content'
-      },
-      uiConfig: {
-        icon: 'FilePlus2',
-        defaultRenderType: 'single-text',
-        addButtonText: 'Add Content'
-      }
-    };
+    registerDefaultContextBuilders(this);
   }
 
   // 公共方法
@@ -649,8 +131,8 @@ export class SchemaRegistry implements ISchemaRegistry {
   }
 
   // NEW: Main AI Context Service - The heart of the centralized logic
-  public buildAIContext(payload: AIContextPayload): StructuredAIContext {
-    const { resumeData, task, sectionId, itemId, fieldId } = payload;
+  public buildAIContext(payload: AIContextPayload & { aiConfig?: any }): StructuredAIContext {
+    const { resumeData, task, sectionId, itemId, fieldId, inputText, textAfterCursor, aiConfig } = payload;
     
     const section = resumeData.sections.find((s: any) => s.id === sectionId);
     if (!section) {
@@ -661,31 +143,53 @@ export class SchemaRegistry implements ISchemaRegistry {
     const sectionSchema = this.getSectionSchema(schemaId);
     const fieldSchema = sectionSchema?.fields.find(f => f.id === fieldId);
     
-    // 1. Build currentItemContext
     let currentItemContext = '';
     const builderId = fieldSchema?.aiHints?.contextBuilders?.[task];
+
     if (builderId) {
-      const itemData = itemId ? section.items?.find((i: any) => i.id === itemId) : section.items?.[0];
-      const itemContent = itemData?.data || itemData;
+      // 1. Get the original item data from the store's state
+      const originalItemData = itemId 
+        ? section.items?.find((i: any) => i.id === itemId) 
+        : section.items?.[0];
+
+      let itemContent = originalItemData?.data || originalItemData;
+
+      // 2. If we have live input text, create a copy of the item data and update the
+      //    field being currently edited. This gives the context builder the most
+      //    up-to-date information for the active field, while preserving all other fields.
+      if (itemContent && typeof inputText === 'string' && fieldId) {
+        // Here, we combine the text before and after the cursor to represent the full, up-to-date field value
+        const completeInput = inputText + (textAfterCursor || '');
+        itemContent = {
+          ...itemContent,
+          [fieldId]: completeInput,
+        };
+      }
+      
+      // 3. Build the context using the (potentially updated) item content.
       currentItemContext = this.buildContext(builderId, itemContent, resumeData);
     }
 
-    // 2. Build otherSectionsContext
-    const otherSectionsContextParts: string[] = [];
-    for (const otherSection of resumeData.sections) {
-      if (otherSection.id === sectionId) continue;
-      const otherSchemaId = otherSection.schemaId || otherSection.type;
-      const otherSchema = this.getSectionSchema(otherSchemaId);
-      if (otherSchema?.aiContext?.sectionSummaryBuilder) {
-        const summary = this.buildContext(otherSchema.aiContext.sectionSummaryBuilder, otherSection, resumeData);
-        otherSectionsContextParts.push(summary);
-      }
+    // 2. Build otherSectionsContext (使用缓存)
+    const currentResumeDataHash = this.generateResumeDataHash(resumeData, sectionId);
+    const cacheKey = this.generateOtherSectionsContextKey(currentResumeDataHash, sectionId);
+    
+    let otherSectionsContext = '';
+    
+    if (this.otherSectionsContextCache.has(cacheKey)) {
+      otherSectionsContext = this.otherSectionsContextCache.get(cacheKey)!;
+    } else {
+      // 缓存未命中，重新构建
+      otherSectionsContext = this.buildOtherSectionsContext(resumeData, sectionId);
+      this.otherSectionsContextCache.set(cacheKey, otherSectionsContext);
     }
 
     const result = {
       currentItemContext,
-      otherSectionsContext: otherSectionsContextParts.join('\n\n'),
+      otherSectionsContext,
       userJobTitle: resumeData.personalDetails?.jobTitle,
+      userJobInfo: aiConfig?.targetJobInfo,
+      userBio: aiConfig?.userBio,
     };
     
     return result;
@@ -699,6 +203,7 @@ export class SchemaRegistry implements ISchemaRegistry {
     fieldId: string;
     currentValue: string;
     prompt: string;
+    aiConfig?: any;
   }): Promise<string> {
     // 1. Build context using buildAIContext
     const context = this.buildAIContext({
@@ -706,7 +211,8 @@ export class SchemaRegistry implements ISchemaRegistry {
       task: 'improve',
       sectionId: payload.sectionId,
       fieldId: payload.fieldId,
-      itemId: payload.itemId
+      itemId: payload.itemId,
+      aiConfig: payload.aiConfig
     });
     
     // 2. Get field schema for additional hints
@@ -738,6 +244,7 @@ export class SchemaRegistry implements ISchemaRegistry {
     itemId: string;
     fieldId: string;
     inputText: string;
+    aiConfig?: any;
   }): Promise<string> {
     // 1. Build context using buildAIContext
     const context = this.buildAIContext({
@@ -745,7 +252,8 @@ export class SchemaRegistry implements ISchemaRegistry {
       task: 'autocomplete',
       sectionId: payload.sectionId,
       fieldId: payload.fieldId,
-      itemId: payload.itemId
+      itemId: payload.itemId,
+      aiConfig: payload.aiConfig
     });
     
     // 2. Get field schema for additional hints
@@ -770,6 +278,7 @@ export class SchemaRegistry implements ISchemaRegistry {
     resumeData: any;
     sectionId: string;
     prompt: string;
+    aiConfig?: any;
   }): Promise<any[]> {
     const section = payload.resumeData.sections.find((s: any) => s.id === payload.sectionId);
     if (!section) throw new Error('Section not found');
@@ -802,6 +311,8 @@ export class SchemaRegistry implements ISchemaRegistry {
       sectionType: schemaId,
       improvementGoals: [payload.prompt],
       userJobTitle: payload.resumeData.personalDetails?.jobTitle,
+      userJobInfo: payload.aiConfig?.targetJobInfo,
+      userBio: payload.aiConfig?.userBio,
       otherSectionsContext: this.stringifyResumeForReview(payload.resumeData)
     });
     
