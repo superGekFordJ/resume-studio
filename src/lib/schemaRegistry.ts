@@ -349,19 +349,24 @@ export class SchemaRegistry implements ISchemaRegistry {
   // NEW: Resume Stringify Service for Review
   public stringifyResumeForReview(resumeData: any): string {
     const sectionParts: string[] = [];
+
+    // Prepend the target job info and user bio for critical context
+    if (resumeData.aiConfig?.targetJobInfo) {
+      sectionParts.push(`## Target Job Description\n${resumeData.aiConfig.targetJobInfo}`);
+    }
+    if (resumeData.aiConfig?.userBio) {
+      sectionParts.push(`## User's Professional Bio\n${resumeData.aiConfig.userBio}`);
+    }
     
-    // Add personal details first
+    // Add personal details summary
     if (resumeData.personalDetails) {
       const personalInfo = [
-        resumeData.personalDetails.name,
-        resumeData.personalDetails.jobTitle,
-        resumeData.personalDetails.email,
-        resumeData.personalDetails.phone,
-        resumeData.personalDetails.location
-      ].filter(Boolean).join(' | ');
+        `Job Title: ${resumeData.personalDetails.jobTitle}`,
+        `Location: ${resumeData.personalDetails.address}`
+      ].filter(val => val.includes(': ') && val.split(': ')[1]).join(' | ');
       
       if (personalInfo) {
-        sectionParts.push(`## Personal Information\n${personalInfo}`);
+        sectionParts.push(`## Personal Information Summary\n${personalInfo}`);
       }
     }
     
@@ -380,7 +385,7 @@ export class SchemaRegistry implements ISchemaRegistry {
       }
     }
     
-    return sectionParts.join('\n\n');
+    return sectionParts.join('\n\n---\n\n');
   }
 }
 

@@ -13,6 +13,8 @@ export default {
         body: ['Inter', 'sans-serif'],
         headline: ['"Space Grotesk"', 'sans-serif'], // Ensure Space Grotesk is quoted if it contains a space
         code: ['monospace'],
+        raleway: ['Raleway', 'sans-serif'],
+        'open-sans': ['"Open Sans"', 'sans-serif'],
       },
       colors: {
         background: 'hsl(var(--background))',

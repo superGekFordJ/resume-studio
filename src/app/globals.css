@@ -1,6 +1,8 @@
 /* === Self-hosted Google Fonts via Fontsource === */
 @import "@fontsource/inter/latin.css";           /* 100-900 全权重 */
 @import "@fontsource/space-grotesk/latin.css";   /* 300-700 全权重 */
+@import "@fontsource/raleway/latin.css";
+@import "@fontsource/open-sans/latin.css";
 
 /* === Copilot React Textarea Styles === */
 @import 'copilot-react-textarea/styles.css';
@@ -132,8 +134,16 @@
   hyphens: auto;
 }
 
-.a4-canvas.full-bleed {
+/* Override padding for templates that require full-bleed layout */
+.a4-canvas[data-template-id='continuous-narrative'],
+.a4-canvas[data-template-id='parallel-modular'] {
   padding: 0 !important;
+}
+
+.a4-canvas[data-template-id='pro-classic'] {
+  padding: 32px !important;
+  /* Reset line-height to allow template-specific leading classes to take effect */
+  line-height: normal !important;
 }
 
 /* Responsive scaling for smaller screens */
@@ -181,59 +191,22 @@
     padding: 20mm 25mm !important; /* Same as display version */
     margin: 0 !important;
     box-shadow: none !important;
-    background: white !important;
-    
-    /* Ensure exact same text rendering as display */
-    font-size: 11px !important;
-    line-height: 1.4 !important;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeLegibility;
-    
-    /* Consistent text wrapping */
-    word-wrap: break-word;
-    hyphens: auto;
-    overflow: hidden;
   }
   
-  .printable-area.full-bleed {
-    padding: 0 !important;
-  }
-  
-  .a4-canvas {
-    box-shadow: none !important;
-    margin: 0 !important;
-    width: 210mm !important;
-    height: 297mm !important;
-    padding: 20mm 25mm !important; /* Consistent with display */
-    overflow: hidden !important;
-    
-    /* Ensure exact font rendering match */
-    font-size: 11px !important;
-    line-height: 1.4 !important;
-  }
-  
-  .a4-canvas.full-bleed {
-    padding: 0 !important;
-  }
-  
-  /* Hide non-printable elements */
+  /* Additional print optimizations */
   .no-print {
     display: none !important;
   }
-  
-  /* Ensure text doesn't break across pages */
+
   h1, h2, h3, h4, h5, h6 {
     page-break-after: avoid;
   }
-  
-  /* Prevent orphans and widows */
+
   p {
     orphans: 3;
     widows: 3;
   }
-  
-  /* Ensure consistent image sizing */
+
   img {
     max-width: 100% !important;
     height: auto !important;
@@ -265,4 +238,7 @@
 .slide-exit-active {
   @apply translate-x-full;
 }
+    
+/* .full-bleed class has been deprecated in favor of attribute selectors */
+
     

@@ -5,3 +5,4 @@ import '@/ai/flows/autocomplete-input.ts';
 import '@/ai/flows/review-resume.ts';
 import '@/ai/flows/improve-resume-section.ts';
 import '@/ai/flows/batch-improve-section.ts';
+import '@/ai/flows/generateResumeFromContext.ts';

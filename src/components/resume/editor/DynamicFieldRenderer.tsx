@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
+import { Combobox } from '@/components/ui/combobox';
 import { FieldSchema } from '@/types/schema';
 import AutocompleteTextarea from '@/components/resume/ui/AutocompleteTextarea';
 import type { SectionItem, ResumeSection } from '@/types/resume';
@@ -137,6 +138,25 @@ export default function DynamicFieldRenderer({
               ))}
             </SelectContent>
           </Select>
+        );
+
+      case 'combobox':
+        const comboboxOptions = (field.uiProps?.options || []).map(option => ({
+          value: option,
+          label: option
+        }));
+        
+        return (
+          <Combobox
+            options={comboboxOptions}
+            value={value || ''}
+            onValueChange={onChange}
+            placeholder={field.uiProps?.placeholder || `Select or enter ${field.label}`}
+            searchPlaceholder={`Search ${field.label}...`}
+            emptyText={`No ${field.label.toLowerCase()} found.`}
+            allowCustomValue={true}
+            className={className}
+          />
         );
 
       case 'multiselect':

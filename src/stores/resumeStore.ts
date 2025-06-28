@@ -1,10 +1,11 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import type { ResumeData, PersonalDetails, SectionItem, ExperienceEntry, EducationEntry, SkillEntry, CustomTextEntry, ResumeSection } from '@/types/resume';
 import { initialResumeData, isExtendedResumeData } from '@/types/resume';
 import type { ReviewResumeOutput } from '@/ai/flows/review-resume';
 import type { DynamicResumeSection, DynamicSectionItem } from '@/types/schema';
 import { SchemaRegistry } from '@/lib/schemaRegistry';
+import { indexedDbStorage } from './indexedDbStorage';
 
 // Version Snapshot interface
 export interface VersionSnapshot {
@@ -44,6 +45,7 @@ export interface ResumeState {
   aiPrompt: string;
   aiConfig: AIConfig;
   versionSnapshots: VersionSnapshot[]; // NEW: Version snapshots
+  isGeneratingSnapshot: boolean; // For resume generation loading state
 }
 
 // Actions interface
@@ -83,11 +85,35 @@ export interface ResumeActions {
   rejectAIImprovement: () => void;
   updateAIConfig: (config: Partial<AIConfig>) => void;
   // NEW: Version snapshot actions
-  createSnapshot: (name: string) => void;
+  createSnapshot: (name: string, dataToSnapshot?: ResumeData) => void;
   restoreSnapshot: (snapshotId: string) => void;
   deleteSnapshot: (snapshotId: string) => void;
   updateSnapshotName: (snapshotId: string, newName: string) => void;
+  // NEW: AI-powered data import actions
+  extractJobInfoFromImage: (file: File) => Promise<void>;
+  updateUserBioFromFile: (file: File) => Promise<void>;
+  generateResumeSnapshotFromBio: () => Promise<void>;
+  // NEW: Export current schema for development/debugging
+  exportCurrentSchema: () => void;
 }
+
+// Helper function to read file as Base64
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      // Result includes a data URL prefix (e.g., "data:image/png;base64,"), so we strip it.
+      const base64String = (reader.result as string).split(',')[1];
+      if (base64String) {
+        resolve(base64String);
+      } else {
+        reject(new Error('Failed to convert file to Base64.'));
+      }
+    };
+    reader.onerror = (error) => reject(error);
+  });
+};
 
 // Create the store with persist middleware
 export const useResumeStore = create<ResumeState & ResumeActions>()(
@@ -113,6 +139,7 @@ export const useResumeStore = create<ResumeState & ResumeActions>()(
         ollamaServerAddress: 'http://127.0.0.1:11434',
       },
       versionSnapshots: [], // NEW: Initialize empty snapshots array
+      isGeneratingSnapshot: false,
 
       // Actions
       setResumeData: (data) => set({ resumeData: data }),
@@ -397,18 +424,121 @@ export const useResumeStore = create<ResumeState & ResumeActions>()(
         aiConfig: { ...state.aiConfig, ...config }
       })),
 
+      // NEW: AI-powered data import action
+      extractJobInfoFromImage: async (file) => {
+        if (!file.type.startsWith('image/')) {
+          console.error('Invalid file type. Please upload an image.');
+          // Optionally, add user-facing feedback, e.g., a toast notification.
+          return;
+        }
+
+        try {
+          const imageBase64 = await fileToBase64(file);
+          const { getJobInfoFromImage } = await import('@/ai/flows/getJobInfoFromImage');
+          const extractedText = await getJobInfoFromImage({ imageBase64 });
+          
+          if (extractedText) {
+            get().updateAIConfig({ targetJobInfo: extractedText });
+          } else {
+            console.error('AI failed to extract text from the image.');
+            // Optionally, add user-facing feedback.
+          }
+        } catch (error) {
+          console.error('Error processing image for job info extraction:', error);
+          // Optionally, add user-facing feedback.
+        }
+      },
+
+      updateUserBioFromFile: async (file) => {
+        const { updateAIConfig } = get();
+        let text = '';
+        try {
+          if (file.type === 'application/pdf') {
+            const pdfjs = await import('pdfjs-dist');
+            // Dynamically import the worker. This is a common pattern for Next.js.
+            pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+            
+            const doc = await pdfjs.getDocument(await file.arrayBuffer()).promise;
+            for (let i = 1; i <= doc.numPages; i++) {
+              const page = await doc.getPage(i);
+              const content = await page.getTextContent();
+              text += content.items.map((item: any) => item.str).join(' ');
+            }
+          } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+            const docx = await import('docx-preview');
+            // docx-preview renders into a container, it doesn't return text directly.
+            // We can create a dummy container, render to it, and then extract the text.
+            const dummyContainer = document.createElement('div');
+            await docx.renderAsync(file, dummyContainer);
+            text = dummyContainer.innerText;
+          } else {
+            console.error('Unsupported file type:', file.type);
+            return;
+          }
+          updateAIConfig({ userBio: text });
+        } catch (error) {
+          console.error('Error parsing file:', error);
+        }
+      },
+
+      generateResumeSnapshotFromBio: async () => {
+        set({ isGeneratingSnapshot: true });
+        const { aiConfig, createSnapshot } = get();
+        const { userBio, targetJobInfo } = aiConfig;
+
+        if (!userBio || !targetJobInfo) {
+          console.error('User bio or target job info is missing.');
+          set({ isGeneratingSnapshot: false });
+          return;
+        }
+
+        try {
+          const { generateResumeFromContext } = await import('@/ai/flows/generateResumeFromContext');
+          const { convertAiOutputToResumeData } = await import('@/lib/aiDataTransformer');
+
+          const aiResult = await generateResumeFromContext({
+            bio: userBio,
+            jobDescription: targetJobInfo,
+          });
+
+          if (aiResult) {
+            const newResumeData = convertAiOutputToResumeData(aiResult);
+            // Before creating a snapshot, maybe we want to set it as the active resume?
+            // For now, just creating the snapshot as per the spec.
+            const snapshotName = `AI Generated - ${new Date().toLocaleDateString()}`;
+            createSnapshot(snapshotName, newResumeData);
+
+            // Optional: notify user of success
+          } else {
+            throw new Error('AI generation returned no result.');
+          }
+
+        } catch (error) {
+          console.error('Error generating resume snapshot:', error);
+          // Optional: notify user of failure
+        } finally {
+          set({ isGeneratingSnapshot: false });
+        }
+      },
+
       // NEW: Version snapshot actions
-      createSnapshot: (name) => set((state) => {
-        const currentData = state.resumeData;
+      createSnapshot: (name, dataToSnapshot) => set((state) => {
+        const data = dataToSnapshot || state.resumeData;
         // Extract schema version from resumeData or default to '1.0.0'
-        const schemaVersion = ('schemaVersion' in currentData) ? currentData.schemaVersion : '1.0.0';
+        const schemaVersion = ('schemaVersion' in data) ? data.schemaVersion : '1.0.0';
         
+        // Optimization: Deep clone and remove the avatar's base64 string before snapshotting.
+        const clonedData = JSON.parse(JSON.stringify(data));
+        if (clonedData.personalDetails) {
+          clonedData.personalDetails.avatar = ''; 
+        }
+
         const newSnapshot: VersionSnapshot = {
           id: `snapshot_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
           name,
           createdAt: new Date().toISOString(),
           schemaVersion,
-          resumeData: JSON.parse(JSON.stringify(currentData)) // Deep clone
+          resumeData: clonedData // Use the optimized, smaller data object
         };
         
         return {
@@ -449,24 +579,58 @@ export const useResumeStore = create<ResumeState & ResumeActions>()(
           s.id === snapshotId ? { ...s, name: newName } : s
         )
       })),
+
+      // NEW: Export current schema for development/debugging
+      exportCurrentSchema: () => {
+        const { resumeData } = get();
+        
+        // Create a formatted snapshot with current timestamp
+        const exportData = {
+          exportedAt: new Date().toISOString(),
+          schemaVersion: ('schemaVersion' in resumeData) ? resumeData.schemaVersion : '1.0.0',
+          resumeData: JSON.parse(JSON.stringify(resumeData)) // Deep clone to avoid references
+        };
+        
+        // Create and download the JSON file
+        const dataStr = JSON.stringify(exportData, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `resume-schema-export-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Clean up the URL object
+        URL.revokeObjectURL(url);
+        
+        console.log('Schema exported successfully:', exportData);
+      },
     }),
     {
-      name: 'resume-studio-storage', // name of the storage key
+      name: 'resume-studio-storage',
+      storage: createJSONStorage(() => indexedDbStorage),
+      
+      // This function determines which parts of the state are persisted.
+      // We are excluding the API key from being saved to IndexedDB.
       partialize: (state) => {
-        // Exclude apiKey from persistence
         const { aiConfig, ...rest } = state;
-        const { apiKey, ...aiConfigWithoutKey } = aiConfig;
-        return {
-          ...rest,
-          aiConfig: aiConfigWithoutKey
-        };
+        const { apiKey, ...restAiConfig } = aiConfig;
+        return { ...rest, aiConfig: restAiConfig };
       },
+
+      // This function merges the persisted state with the in-memory state.
+      // It's crucial for keeping non-persisted values (like the API key) alive.
       merge: (persistedState, currentState) => {
-        // Custom merge function to handle nested objects gracefully
-        return {
-          ...currentState,
-          ...(persistedState as ResumeState & ResumeActions),
-        };
+        const state = { ...currentState, ...(persistedState as Partial<ResumeState>) };
+        
+        // Ensure the API key from the initial state is not overwritten
+        // by the (intentionally) missing key from the persisted state.
+        state.aiConfig.apiKey = currentState.aiConfig.apiKey;
+        
+        return state;
       },
     }
   )

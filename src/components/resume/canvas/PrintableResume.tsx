@@ -6,6 +6,7 @@ import DefaultTemplate from "../templates/DefaultTemplate";
 import CreativeTemplate from "../templates/CreativeTemplate";
 import ContinuousNarrativeTemplate from "../templates/ContinuousNarrativeTemplate";
 import ParallelModularTemplate from "../templates/ParallelModularTemplate";
+import { ProClassicTemplate } from "../templates/ProClassicTemplate";
 
 interface PrintableResumeProps {
   resume: RenderableResume;
@@ -18,6 +19,8 @@ export default function PrintableResume({ resume, templateId }: PrintableResumeP
       return <ModernTemplate resume={resume} />;
     case 'creative':
       return <CreativeTemplate resume={resume} />;
+    case 'pro-classic':
+      return <ProClassicTemplate resume={resume} />;
     case 'continuous-narrative':
       return <ContinuousNarrativeTemplate resume={resume} />;
     case 'parallel-modular':
