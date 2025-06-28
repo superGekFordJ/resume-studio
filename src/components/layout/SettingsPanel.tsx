@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useResumeStore } from '@/stores/resumeStore';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Label } from '@/components/ui/label';
@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, Info } from 'lucide-react';
+import { AlertCircle, Info, UploadCloud } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface SettingsPanelProps {
@@ -15,13 +15,26 @@ interface SettingsPanelProps {
 }
 
 const AI_PROVIDERS = [
-  { value: 'google', label: 'Google AI (Gemini)', models: ['gemini-2.0-flash', 'gemini-1.5-pro'] },
+  { value: 'google', label: 'Google AI (Gemini)', models: [
+    'gemini-2.0-flash', 
+    'gemini-2.5-flash', 
+    'gemini-2.5-flash-lite-preview-06-17'
+  ]},
   { value: 'ollama', label: 'Ollama (Local)', models: ['llama3', 'mistral', 'phi'] },
   { value: 'anthropic', label: 'Anthropic (Claude)', models: ['claude-4-opus', 'claude-4-sonnet'] },
 ] as const;
 
 export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
-  const { aiConfig, updateAIConfig } = useResumeStore();
+  const { 
+    aiConfig,
+    isGeneratingSnapshot,
+    updateAIConfig,
+    extractJobInfoFromImage,
+    updateUserBioFromFile,
+    generateResumeSnapshotFromBio,
+  } = useResumeStore();
+  const imageFileInputRef = useRef<HTMLInputElement>(null);
+  const bioFileInputRef = useRef<HTMLInputElement>(null);
 
   const selectedProvider = AI_PROVIDERS.find(p => p.value === aiConfig.provider);
 
@@ -32,6 +45,28 @@ export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
         provider: provider as typeof aiConfig.provider,
         model: providerData.models[0], // Default to first model
       });
+    }
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      await extractJobInfoFromImage(file);
+      // Reset file input to allow re-uploading the same file
+      if (imageFileInputRef.current) {
+        imageFileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleBioFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      await updateUserBioFromFile(file);
+      // Reset file input
+      if (bioFileInputRef.current) {
+        bioFileInputRef.current.value = '';
+      }
     }
   };
 
@@ -148,21 +183,57 @@ export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
             </p>
             
             <div className="space-y-2">
-              <Label htmlFor="targetJob">Target Job/Role</Label>
+              <div className="flex justify-between items-center">
+                <Label htmlFor="targetJob">Target Job Info</Label>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => imageFileInputRef.current?.click()}
+                >
+                  <UploadCloud className="mr-2 h-4 w-4" />
+                  Upload Screenshot
+                </Button>
+              </div>
               <Input
+                id="image-upload"
+                ref={imageFileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+              <Textarea
                 id="targetJob"
-                type="text"
                 value={aiConfig.targetJobInfo || ''}
                 onChange={(e) => handleTargetJobInfoChange(e.target.value)}
-                placeholder="e.g., Senior Software Engineer at Google"
+                placeholder="e.g., Senior Software Engineer at Google. Or, upload a job description screenshot."
+                rows={4}
               />
               <p className="text-sm text-muted-foreground">
-                Describe the position you're applying for.
+                Describe the position you're applying for, or upload an image of the job post.
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="userBio">Professional Bio</Label>
+              <div className="flex justify-between items-center">
+                <Label htmlFor="userBio">Professional Bio</Label>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => bioFileInputRef.current?.click()}
+                >
+                  <UploadCloud className="mr-2 h-4 w-4" />
+                  Upload Doc/PDF
+                </Button>
+              </div>
+              <Input
+                id="bio-upload"
+                ref={bioFileInputRef}
+                type="file"
+                accept=".pdf,.docx"
+                onChange={handleBioFileUpload}
+                className="hidden"
+              />
               <Textarea
                 id="userBio"
                 value={aiConfig.userBio || ''}
@@ -174,6 +245,14 @@ export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
                 Provide context about yourself that AI can use to tailor suggestions.
               </p>
             </div>
+
+            <Button 
+              onClick={() => generateResumeSnapshotFromBio()}
+              disabled={!aiConfig.userBio || !aiConfig.targetJobInfo || isGeneratingSnapshot}
+              className="w-full"
+            >
+              {isGeneratingSnapshot ? 'Generating...' : 'Generate Resume Snapshot with AI'}
+            </Button>
           </div>
 
           <Alert>

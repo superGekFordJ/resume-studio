@@ -53,16 +53,16 @@ Context:
 {{#if context.userJobTitle}}Target role: {{context.userJobTitle}}{{/if}}
 {{#if context.userJobInfo}}Target job info: {{context.userJobInfo}}{{/if}}
 {{#if context.userBio}}User Bio: {{context.userBio}}{{/if}}
-{{#if sectionType}}Section type: {{sectionType}}{{/if}}
 
 Current item being edited:
+{{#if sectionType}}Section type: {{sectionType}}{{/if}}
 {{context.currentItemContext}}
 
 Other sections in resume:
 {{context.otherSectionsContext}}
 
 User's current text (with cursor position marked by <CURSOR>):
-{{{inputText}}}<CURSOR（The user is typing, stop the cursor here. Adjust yourself to the user's style and implied intent.）>{{{textAfterCursor}}}
+{{{inputText}}}<CURSOR(The user is typing, stop the cursor here. Adjust yourself to the user's style and implied intent.)>{{{textAfterCursor}}}
 
 Instructions:
 1. Read the text before and after <CURSOR> together with the provided context.
@@ -82,9 +82,9 @@ Guidelines by section type:
 Respond with the insertion text only.`,
   model: 'googleai/gemini-2.5-flash-lite-preview-06-17', // Explicitly using the lighter model for faster completions
   config: {
-    temperature: 0.3,
+    temperature: 0.1,
     maxOutputTokens: 10000, //allow more tokens for thought budget
-    topP: 0.95,
+    topP: 0.85,
   }
 });
 

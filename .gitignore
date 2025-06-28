@@ -39,6 +39,8 @@ next-env.d.ts
 
 .genkit/*
 .env*
+.augment-guidelines
+.serena
 
 # firebase
 firebase-debug.log
@@ -48,3 +50,6 @@ firestore-debug.log
 /docs/plan/*
 .cursor/*
 public/*
+template1.html
+TEMPLATE2.html
+template3.html

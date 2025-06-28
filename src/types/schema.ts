@@ -10,7 +10,7 @@ export interface ValidationRule {
 
 export interface FieldSchema {
   id: string;
-  type: 'text' | 'textarea' | 'date' | 'url' | 'email' | 'phone' | 'select' | 'multiselect' | 'object' | 'array';
+  type: 'text' | 'textarea' | 'date' | 'url' | 'email' | 'phone' | 'select' | 'multiselect' | 'combobox' | 'object' | 'array';
   label: string;
   required?: boolean;
   validation?: ValidationRule[];
@@ -115,11 +115,21 @@ export const ADVANCED_SKILLS_SCHEMA: SectionSchema = {
   fields: [
     {
       id: 'category',
-      type: 'select',
+      type: 'combobox',
       label: 'Category',
       required: true,
       uiProps: {
-        options: ['Technical Skills', 'Soft Skills', 'Languages', 'Certifications', 'Tools & Platforms']
+        options: [
+          'Technical Skills', 
+          'Soft Skills', 
+          'Languages', 
+          'Certifications', 
+          'Tools & Platforms', 
+          'Programming Languages', 
+          'Frameworks', 
+          'Databases', 
+          'Cloud Platforms', 
+          'DevOps Tools']
       },
       aiHints: {
         contextBuilders: {

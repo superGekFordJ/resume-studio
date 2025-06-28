@@ -5,7 +5,6 @@ import { cn } from "@/lib/utils";
 import { SchemaRegistry } from "@/lib/schemaRegistry";
 import { transformToRenderableView } from "@/lib/dataTransformer";
 import PrintableResume from "./PrintableResume";
-import { templates } from '@/types/resume';
 import { useResumeStore } from '@/stores/resumeStore';
 
 interface ResumeCanvasProps {
@@ -21,17 +20,12 @@ const ResumeCanvas = forwardRef<HTMLDivElement, ResumeCanvasProps>(
       [resumeData, schemaRegistry]
     );
 
-    const isFullBleed = templates.find(t => t.id === resumeData.templateId)?.fullBleed;
-
     return (
       <div 
         ref={ref}
-        id="resume-canvas-printable-area" 
-        className={cn(
-          "a4-canvas printable-area",
-          { "full-bleed": isFullBleed },
-          className
-        )}
+        id="resume-canvas-printable-area"
+        data-template-id={resumeData.templateId}
+        className={cn("a4-canvas printable-area", className)}
       >
         <PrintableResume resume={renderableResume} templateId={resumeData.templateId} />
       </div>

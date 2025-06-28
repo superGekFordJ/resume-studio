@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { FileText, Download, Eye, Sparkles, Printer, ChevronDown, Settings, History } from "lucide-react";
+import { FileText, Download, Sparkles, Printer, ChevronDown, Settings, History, Code } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,16 +24,22 @@ export default function Header({ onExportPdf, onPrint }: HeaderProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isVersionsOpen, setIsVersionsOpen] = useState(false);
   const resumeData = useResumeStore(state => state.resumeData);
+  const aiConfig = useResumeStore(state => state.aiConfig);
   const setIsReviewDialogOpen = useResumeStore(state => state.setIsReviewDialogOpen);
   const setReviewContent = useResumeStore(state => state.setReviewContent);
   const setIsReviewLoading = useResumeStore(state => state.setIsReviewLoading);
+  const exportCurrentSchema = useResumeStore(state => state.exportCurrentSchema);
 
   const handleReviewResume = async () => {
     setIsReviewLoading(true);
     setReviewContent(null);
     setIsReviewDialogOpen(true);
     try {
-      const resumeText = schemaRegistry.stringifyResumeForReview(resumeData);
+      const dataForReview = {
+        ...resumeData,
+        aiConfig: aiConfig,
+      };
+      const resumeText = schemaRegistry.stringifyResumeForReview(dataForReview);
       const result = await reviewResume({ resumeText });
       setReviewContent(result);
     } catch (error) {
@@ -69,6 +75,11 @@ export default function Header({ onExportPdf, onPrint }: HeaderProps) {
             <Button variant="outline" size="sm" onClick={handleReviewResume}>
               <Sparkles className="mr-2 h-4 w-4" />
               AI Review
+            </Button>
+            
+            <Button variant="outline" size="sm" onClick={exportCurrentSchema}>
+              <Code className="mr-2 h-4 w-4" />
+              Export Schema
             </Button>
             
             <DropdownMenu>

@@ -1,0 +1,248 @@
+{
+  "exportedAt": "2025-06-27T07:05:41.389Z",
+  "schemaVersion": "1.0.0",
+  "resumeData": {
+    "personalDetails": {
+      "fullName": "Your Name",
+      "jobTitle": "Aspiring Professional",
+      "email": "your.email@example.com",
+      "phone": "1111111",
+      "address": "",
+      "linkedin": "",
+      "github": "github.com/name",
+      "portfolio": "pswbst.me",
+      "avatar": ""
+    },
+    "sections": [
+      {
+        "id": "summary_1",
+        "title": "Summary",
+        "type": "summary",
+        "visible": true,
+        "isList": false,
+        "items": [
+          {
+            "id": "summary_content_1",
+            "content": "一位充满热情且以结果为导向的软件开发者，致力于技术创新和高效解决方案的构建。通过参与多个项目，我积累了丰富的数据处理、用户界面设计和自动化工具开发经验。例如，ResumeStudio 项目利用 Gemini API 简化简历制作流程，显著提升了我的前端开发和PDF生成技能。我擅长将技术栈与实际开发紧密结合，专注于构建用户友好的高性能应用。\n"
+          }
+        ]
+      },
+      {
+        "id": "projects_1750463959974",
+        "schemaId": "projects",
+        "title": "项目 Projects",
+        "visible": true,
+        "items": [
+          {
+            "id": "projects_1750464072247_4oa98",
+            "schemaId": "projects",
+            "data": {
+              "name": "Formwise",
+              "technologies": [
+                "gemini API",
+                "nextjs",
+                "TypeScript"
+              ],
+              "startDate": "2025-06-11",
+              "endDate": "2025-06-26",
+              "description": "- 使用 Gemini API 和 Next.js 开发了一款注重隐私的应用程序，用于解析基于 PDF 的调查问卷，将数据转换为结构化格式，并支持用户驱动的数据分析和可视化。\n- 利用 TypeScript 和 Tailwind CSS 实现前端组件，进行前端开发，Node.js 进行后端 API 交互，确保响应迅速且高效的用户体验。\n- 设计并实现了用户友好的数据可视化界面，以增强数据洞察力。",
+              "url": "formwise.com"
+            },
+            "metadata": {
+              "createdAt": "2025-06-21T00:01:12.247Z",
+              "updatedAt": "2025-06-21T00:01:12.247Z",
+              "aiGenerated": false
+            }
+          },
+          {
+            "id": "projects_1750974298916_unkaa",
+            "schemaId": "projects",
+            "data": {
+              "description": "设计并开发了一款基于Genkit和Gemini API的智能简历生成器，旨在简化简历制作流程。该项目融合了传统模板与AI驱动的模板，通过用户友好的界面实现简历的自动化生成和PDF导出。主要负责：\n*   **数据格式设计与对接**: 负责定义清晰的数据结构，确保前端与Gemini API之间的数据流畅传输，提升数据处理效率20%。\n*   **React组件PDF打印**: 攻克了React组件PDF打印的技术难题，实现了简历内容的高质量PDF导出，优化了用户体验。\n*   **用户界面与交互设计**: 负责设计直观易用的用户界面，提升用户在简历生成过程中的交互体验。\n*   **AI模型集成与优化**: 负责将Gemini API无缝集成至Genkit框架，并对模型响应进行调优，提升简历生成的相关性和质量。",
+              "technologies": [
+                "genkit/gemini js sdk"
+              ],
+              "name": "Resume Studio",
+              "startDate": "2025-06-16",
+              "endDate": "2025-06-27"
+            },
+            "metadata": {
+              "createdAt": "2025-06-26T21:44:58.916Z",
+              "updatedAt": "2025-06-26T21:44:58.916Z",
+              "aiGenerated": false
+            }
+          }
+        ],
+        "metadata": {
+          "customTitle": false,
+          "aiOptimized": false
+        }
+      },
+      {
+        "id": "education_1",
+        "title": "Education",
+        "type": "education",
+        "visible": true,
+        "isList": true,
+        "items": [
+          {
+            "id": "edu_1_1",
+            "degree": "B.S. in Computer Science",
+            "institution": "State University",
+            "graduationYear": "2018",
+            "details": "Relevant coursework: Data Structures, Algorithms, Database Management, Web Development. Capstone Project: Developed a full-stack e-commerce platform."
+          }
+        ]
+      },
+      {
+        "id": "customText_1750464859138",
+        "schemaId": "customText",
+        "title": "自我评价",
+        "visible": true,
+        "items": [
+          {
+            "id": "customText_1750470472761_52g9a",
+            "schemaId": "customText",
+            "data": {
+              "content": "I am highly motivated and results-oriented individual with a passion for software development."
+            },
+            "metadata": {
+              "createdAt": "2025-06-21T01:47:52.761Z",
+              "updatedAt": "2025-06-21T01:47:52.761Z",
+              "aiGenerated": false
+            }
+          }
+        ],
+        "metadata": {
+          "customTitle": false,
+          "aiOptimized": false
+        }
+      },
+      {
+        "id": "experience_1",
+        "title": "Experience",
+        "type": "experience",
+        "visible": true,
+        "isList": true,
+        "items": [
+          {
+            "id": "exp_1_1",
+            "jobTitle": "Software Engineer",
+            "company": "Tech Solutions Inc.",
+            "startDate": "Jan 2020",
+            "endDate": "Present",
+            "description": "- Developed and maintained web applications using React and Node.js.\n- Collaborated with cross-functional teams to deliver high-quality software products meeting client requirements and deadlines."
+          },
+          {
+            "id": "exp_1_2",
+            "jobTitle": "Junior Developer",
+            "company": "Web Wonders LLC",
+            "startDate": "Jun 2018",
+            "endDate": "Dec 2019",
+            "description": "Assisted senior developers in coding, testing, and debugging software. Gained experience in agile methodologies and version control systems like Git."
+          }
+        ]
+      },
+      {
+        "id": "skills_1",
+        "title": "Skills",
+        "type": "skills",
+        "visible": true,
+        "isList": true,
+        "items": [
+          {
+            "id": "skill_1_1",
+            "name": "JavaScript (ES6+)"
+          },
+          {
+            "id": "skill_1_2",
+            "name": "React & Redux"
+          },
+          {
+            "id": "skill_1_3",
+            "name": "Node.js & Express"
+          },
+          {
+            "id": "skill_1_4",
+            "name": "Python"
+          },
+          {
+            "id": "skill_1_5",
+            "name": "SQL & NoSQL Databases"
+          },
+          {
+            "id": "skill_1_6",
+            "name": "Git & GitHub"
+          },
+          {
+            "id": "skill_1_7",
+            "name": "Agile Methodologies"
+          }
+        ]
+      },
+      {
+        "id": "advanced-skills_1750464785548",
+        "schemaId": "advanced-skills",
+        "title": "Skills",
+        "visible": true,
+        "items": [
+          {
+            "id": "advanced-skills_1750464788021_fjsu6",
+            "schemaId": "advanced-skills",
+            "data": {
+              "category": "Languages",
+              "proficiency": "Advanced",
+              "skills": [
+                "English",
+                "Japanese",
+                "Chinese"
+              ]
+            },
+            "metadata": {
+              "createdAt": "2025-06-21T00:13:08.021Z",
+              "updatedAt": "2025-06-21T00:13:08.021Z",
+              "aiGenerated": false
+            }
+          }
+        ],
+        "metadata": {
+          "customTitle": false,
+          "aiOptimized": false
+        }
+      },
+      {
+        "id": "certifications_1750466133456",
+        "schemaId": "certifications",
+        "title": "Certifications",
+        "visible": true,
+        "items": [
+          {
+            "id": "certifications_1750466136141_ima4s",
+            "schemaId": "certifications",
+            "data": {
+              "name": "Toefl 100",
+              "date": "2023-02-12",
+              "description": "With a certification of TOEFL iBT score of 100, I am proficient in English communication, enabling effective collaboration in international teams.",
+              "credentialId": ""
+            },
+            "metadata": {
+              "createdAt": "2025-06-21T00:35:36.141Z",
+              "updatedAt": "2025-06-21T00:35:36.141Z",
+              "aiGenerated": false
+            }
+          }
+        ],
+        "metadata": {
+          "customTitle": false,
+          "aiOptimized": false
+        }
+      }
+    ],
+    "templateId": "pro-classic",
+    "schemaVersion": "1.0.0",
+    "metadata": {
+      "lastAIReview": "2025-06-20T23:59:19.974Z",
+      "aiOptimizationLevel": "basic"
+    }
+  }
+}
