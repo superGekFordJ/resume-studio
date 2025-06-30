@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, Info, UploadCloud } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ImageUploadArea } from './upload/ImageUploadArea';
 
 interface SettingsPanelProps {
   open: boolean;
@@ -33,8 +34,8 @@ export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
     updateUserBioFromFile,
     generateResumeSnapshotFromBio,
   } = useResumeStore();
-  const imageFileInputRef = useRef<HTMLInputElement>(null);
   const bioFileInputRef = useRef<HTMLInputElement>(null);
+  const targetJobTextAreaRef = useRef<HTMLTextAreaElement>(null);
 
   const selectedProvider = AI_PROVIDERS.find(p => p.value === aiConfig.provider);
 
@@ -48,14 +49,9 @@ export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
     }
   };
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleImageFile = async (file: File) => {
     if (file) {
       await extractJobInfoFromImage(file);
-      // Reset file input to allow re-uploading the same file
-      if (imageFileInputRef.current) {
-        imageFileInputRef.current.value = '';
-      }
     }
   };
 
@@ -183,34 +179,17 @@ export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
             </p>
             
             <div className="space-y-2">
-              <div className="flex justify-between items-center">
                 <Label htmlFor="targetJob">Target Job Info</Label>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => imageFileInputRef.current?.click()}
-                >
-                  <UploadCloud className="mr-2 h-4 w-4" />
-                  Upload Screenshot
-                </Button>
-              </div>
-              <Input
-                id="image-upload"
-                ref={imageFileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-              />
-              <Textarea
+              <ImageUploadArea
+                ref={targetJobTextAreaRef}
                 id="targetJob"
                 value={aiConfig.targetJobInfo || ''}
-                onChange={(e) => handleTargetJobInfoChange(e.target.value)}
-                placeholder="e.g., Senior Software Engineer at Google. Or, upload a job description screenshot."
+                onChange={handleTargetJobInfoChange}
+                onImageUpload={handleImageFile}
                 rows={4}
               />
               <p className="text-sm text-muted-foreground">
-                Describe the position you're applying for, or upload an image of the job post.
+                Describe the position you're applying for, or paste/drag an image of the job post.
               </p>
             </div>
 
