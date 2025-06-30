@@ -1,306 +1,296 @@
 import type { SectionSchema, ISchemaRegistry } from '@/types/schema';
-import { ADVANCED_SKILLS_SCHEMA, PROJECTS_SCHEMA } from '@/types/schema';
+
 
 // Helper function to create the legacy summary schema
-function createLegacySummarySchema(): SectionSchema {
-  return {
-    id: 'summary',
-    name: 'Summary',
-    type: 'single',
-    fields: [
-      {
-        id: 'content',
-        type: 'textarea',
-        label: 'Summary',
-        required: true,
-        uiProps: {
-          rows: 4,
-          placeholder: 'A brief summary about your professional background...',
-          markdownEnabled: true
+export const SUMMARY_SCHEMA: SectionSchema = {
+  id: 'summary',
+  name: 'Summary',
+  type: 'single',
+  fields: [
+    {
+      id: 'content',
+      type: 'textarea',
+      label: 'Summary',
+      required: true,
+      uiProps: {
+        rows: 4,
+        placeholder: 'A brief summary about your professional background...',
+        markdownEnabled: true
+      },
+      aiHints: {
+        contextBuilders: {
+          improve: 'summary-content',
+          autocomplete: 'summary-content'
         },
-        aiHints: {
-          contextBuilders: {
-            improve: 'summary-content',
-            autocomplete: 'summary-content'
-          },
-          improvementPrompts: [
-            'Make it more concise',
-            'Add quantifiable achievements',
-            'Highlight key skills',
-            'Tailor to target role'
-          ],
-          autocompleteEnabled: true,
-          priority: 'high'
-        }
+        improvementPrompts: [
+          'Make it more concise',
+          'Add quantifiable achievements',
+          'Highlight key skills',
+          'Tailor to target role'
+        ],
+        autocompleteEnabled: true,
+        priority: 'high'
       }
-    ],
-    aiContext: {
-      sectionSummaryBuilder: 'summary-section',
-      itemSummaryBuilder: 'summary-content'
-    },
-    uiConfig: {
-      icon: 'FileText',
-      defaultRenderType: 'single-text',
-      addButtonText: 'Add Summary'
     }
-  };
-}
+  ],
+  aiContext: {
+    sectionSummaryBuilder: 'summary-section',
+    itemSummaryBuilder: 'summary-content'
+  },
+  uiConfig: {
+    icon: 'FileText',
+    defaultRenderType: 'single-text',
+    addButtonText: 'Add Summary'
+  }
+};
 
 // Helper function to create the legacy experience schema
-function createLegacyExperienceSchema(): SectionSchema {
-  return {
-    id: 'experience',
-    name: 'Experience',
-    type: 'list',
-    fields: [
-      {
-        id: 'jobTitle',
-        type: 'text',
-        label: 'Job Title',
-        required: true,
-        aiHints: {
-          contextBuilders: {
-            improve: 'job-title',
-            autocomplete: 'job-title'
-          },
-          autocompleteEnabled: true,
-          priority: 'high'
-        }
-      },
-      {
-        id: 'company',
-        type: 'text',
-        label: 'Company',
-        required: true,
-        aiHints: {
-          contextBuilders: {
-            improve: 'company-name',
-            autocomplete: 'company-name'
-          },
-          autocompleteEnabled: true,
-          priority: 'high'
-        }
-      },
-      {
-        id: 'startDate',
-        type: 'text',
-        label: 'Start Date',
-        required: true
-      },
-      {
-        id: 'endDate',
-        type: 'text',
-        label: 'End Date',
-        required: true
-      },
-      {
-        id: 'description',
-        type: 'textarea',
-        label: 'Description',
-        required: true,
-        uiProps: {
-          rows: 4,
-          placeholder: 'Describe your responsibilities and achievements...',
-          markdownEnabled: true
+export const EXPERIENCE_SCHEMA: SectionSchema = {
+  id: 'experience',
+  name: 'Experience',
+  type: 'list',
+  fields: [
+    {
+      id: 'jobTitle',
+      type: 'text',
+      label: 'Job Title',
+      required: true,
+      aiHints: {
+        contextBuilders: {
+          improve: 'job-title',
+          autocomplete: 'job-title'
         },
-        aiHints: {
-          contextBuilders: {
-            improve: 'job-description',
-            autocomplete: 'job-description'
-          },
-          improvementPrompts: [
-            'Add quantifiable results',
-            'Use action verbs',
-            'Highlight achievements',
-            'Include relevant keywords'
-          ],
-          autocompleteEnabled: true,
-          priority: 'high'
-        }
+        autocompleteEnabled: true,
+        priority: 'high'
       }
-    ],
-    aiContext: {
-      sectionSummaryBuilder: 'experience-summary',
-      itemSummaryBuilder: 'experience-item',
-      batchImprovementSupported: true
     },
-    uiConfig: {
-      icon: 'Briefcase',
-      defaultRenderType: 'timeline',
-      addButtonText: 'Add Experience',
-      itemDisplayTemplate: '{jobTitle} at {company}',
-      sortable: true
+    {
+      id: 'company',
+      type: 'text',
+      label: 'Company',
+      required: true,
+      aiHints: {
+        contextBuilders: {
+          improve: 'company-name',
+          autocomplete: 'company-name'
+        },
+        autocompleteEnabled: true,
+        priority: 'high'
+      }
+    },
+    {
+      id: 'startDate',
+      type: 'text',
+      label: 'Start Date',
+      required: true
+    },
+    {
+      id: 'endDate',
+      type: 'text',
+      label: 'End Date',
+      required: true
+    },
+    {
+      id: 'description',
+      type: 'textarea',
+      label: 'Description',
+      required: true,
+      uiProps: {
+        rows: 4,
+        placeholder: 'Describe your responsibilities and achievements...',
+        markdownEnabled: true
+      },
+      aiHints: {
+        contextBuilders: {
+          improve: 'job-description',
+          autocomplete: 'job-description'
+        },
+        improvementPrompts: [
+          'Add quantifiable results',
+          'Use action verbs',
+          'Highlight achievements',
+          'Include relevant keywords'
+        ],
+        autocompleteEnabled: true,
+        priority: 'high'
+      }
     }
-  };
-}
+  ],
+  aiContext: {
+    sectionSummaryBuilder: 'experience-summary',
+    itemSummaryBuilder: 'experience-item',
+    batchImprovementSupported: true
+  },
+  uiConfig: {
+    icon: 'Briefcase',
+    defaultRenderType: 'timeline',
+    addButtonText: 'Add Experience',
+    itemDisplayTemplate: '{jobTitle} at {company}',
+    sortable: true
+  }
+};
 
 // Helper function to create the legacy education schema
-function createLegacyEducationSchema(): SectionSchema {
-  return {
-    id: 'education',
-    name: 'Education',
-    type: 'list',
-    fields: [
-      {
-        id: 'degree',
-        type: 'text',
-        label: 'Degree',
-        required: true,
-        aiHints: {
-          contextBuilders: {
-            improve: 'degree-name',
-            autocomplete: 'degree-name'
-          },
-          autocompleteEnabled: true,
-          priority: 'high'
-        }
-      },
-      {
-        id: 'institution',
-        type: 'text',
-        label: 'Institution',
-        required: true,
-        aiHints: {
-          contextBuilders: {
-            improve: 'institution-name',
-            autocomplete: 'institution-name'
-          },
-          autocompleteEnabled: true,
-          priority: 'high'
-        }
-      },
-      {
-        id: 'graduationYear',
-        type: 'text',
-        label: 'Graduation Year',
-        required: true
-      },
-      {
-        id: 'details',
-        type: 'textarea',
-        label: 'Details',
-        uiProps: {
-          rows: 2,
-          placeholder: 'Relevant coursework, projects, achievements...',
-          markdownEnabled: true
+export const EDUCATION_SCHEMA: SectionSchema = {
+  id: 'education',
+  name: 'Education',
+  type: 'list',
+  fields: [
+    {
+      id: 'degree',
+      type: 'text',
+      label: 'Degree',
+      required: true,
+      aiHints: {
+        contextBuilders: {
+          improve: 'degree-name',
+          autocomplete: 'degree-name'
         },
-        aiHints: {
-          contextBuilders: {
-            improve: 'education-details',
-            autocomplete: 'education-details'
-          },
-          improvementPrompts: [
-            'Add relevant coursework',
-            'Include academic achievements',
-            'Mention projects or thesis',
-            'Add GPA if impressive'
-          ],
-          autocompleteEnabled: true,
-          priority: 'medium'
-        }
+        autocompleteEnabled: true,
+        priority: 'high'
       }
-    ],
-    aiContext: {
-      sectionSummaryBuilder: 'education-summary',
-      itemSummaryBuilder: 'education-item'
     },
-    uiConfig: {
-      icon: 'GraduationCap',
-      defaultRenderType: 'timeline',
-      addButtonText: 'Add Education',
-      itemDisplayTemplate: '{degree} from {institution}',
-      sortable: true
+    {
+      id: 'institution',
+      type: 'text',
+      label: 'Institution',
+      required: true,
+      aiHints: {
+        contextBuilders: {
+          improve: 'institution-name',
+          autocomplete: 'institution-name'
+        },
+        autocompleteEnabled: true,
+        priority: 'high'
+      }
+    },
+    {
+      id: 'graduationYear',
+      type: 'text',
+      label: 'Graduation Year',
+      required: true
+    },
+    {
+      id: 'details',
+      type: 'textarea',
+      label: 'Details',
+      uiProps: {
+        rows: 2,
+        placeholder: 'Relevant coursework, projects, achievements...',
+        markdownEnabled: true
+      },
+      aiHints: {
+        contextBuilders: {
+          improve: 'education-details',
+          autocomplete: 'education-details'
+        },
+        improvementPrompts: [
+          'Add relevant coursework',
+          'Include academic achievements',
+          'Mention projects or thesis',
+          'Add GPA if impressive'
+        ],
+        autocompleteEnabled: true,
+        priority: 'medium'
+      }
     }
-  };
-}
+  ],
+  aiContext: {
+    sectionSummaryBuilder: 'education-summary',
+    itemSummaryBuilder: 'education-item'
+  },
+  uiConfig: {
+    icon: 'GraduationCap',
+    defaultRenderType: 'timeline',
+    addButtonText: 'Add Education',
+    itemDisplayTemplate: '{degree} from {institution}',
+    sortable: true
+  }
+};
 
 // Helper function to create the legacy skills schema
-function createLegacySkillsSchema(): SectionSchema {
-  return {
-    id: 'skills',
-    name: 'Skills',
-    type: 'list',
-    fields: [
-      {
-        id: 'name',
-        type: 'text',
-        label: 'Skill',
-        required: true,
-        aiHints: {
-          contextBuilders: {
-            improve: 'skill-name',
-            autocomplete: 'skill-name'
-          },
-          improvementPrompts: [
-            'Add specific technologies',
-            'Include proficiency levels',
-            'Group related skills',
-            'Add trending skills'
-          ],
-          autocompleteEnabled: true,
-          priority: 'high'
-        }
+export const SKILLS_SCHEMA: SectionSchema = {
+  id: 'skills',
+  name: 'Skills',
+  type: 'list',
+  fields: [
+    {
+      id: 'name',
+      type: 'text',
+      label: 'Skill',
+      required: true,
+      aiHints: {
+        contextBuilders: {
+          improve: 'skill-name',
+          autocomplete: 'skill-name'
+        },
+        improvementPrompts: [
+          'Add specific technologies',
+          'Include proficiency levels',
+          'Group related skills',
+          'Add trending skills'
+        ],
+        autocompleteEnabled: true,
+        priority: 'high'
       }
-    ],
-    aiContext: {
-      sectionSummaryBuilder: 'skills-summary',
-      itemSummaryBuilder: 'skill-item',
-      batchImprovementSupported: true
-    },
-    uiConfig: {
-      icon: 'Wand2',
-      defaultRenderType: 'badge-list',
-      addButtonText: 'Add Skill',
-      itemDisplayTemplate: '{name}',
-      sortable: true
     }
-  };
-}
+  ],
+  aiContext: {
+    sectionSummaryBuilder: 'skills-summary',
+    itemSummaryBuilder: 'skill-item',
+    batchImprovementSupported: true
+  },
+  uiConfig: {
+    icon: 'Wand2',
+    defaultRenderType: 'badge-list',
+    addButtonText: 'Add Skill',
+    itemDisplayTemplate: '{name}',
+    sortable: true
+  }
+};
 
 // Helper function to create the legacy custom text schema
-function createLegacyCustomTextSchema(): SectionSchema {
-  return {
-    id: 'customText',
-    name: 'Custom Section',
-    type: 'single',
-    fields: [
-      {
-        id: 'content',
-        type: 'textarea',
-        label: 'Content',
-        required: true,
-        uiProps: {
-          rows: 3,
-          placeholder: 'Enter your custom content...',
-          markdownEnabled: true
+export const CUSTOM_TEXT_SCHEMA: SectionSchema = {
+  id: 'customText',
+  name: 'Custom Section',
+  type: 'single',
+  fields: [
+    {
+      id: 'content',
+      type: 'textarea',
+      label: 'Content',
+      required: true,
+      uiProps: {
+        rows: 3,
+        placeholder: 'Enter your custom content...',
+        markdownEnabled: true
+      },
+      aiHints: {
+        contextBuilders: {
+          improve: 'custom-content',
+          autocomplete: 'custom-content'
         },
-        aiHints: {
-          contextBuilders: {
-            improve: 'custom-content',
-            autocomplete: 'custom-content'
-          },
-          improvementPrompts: [
-            'Improve clarity',
-            'Make it more professional',
-            'Add specific examples',
-            'Optimize formatting'
-          ],
-          autocompleteEnabled: true,
-          priority: 'medium'
-        }
+        improvementPrompts: [
+          'Improve clarity',
+          'Make it more professional',
+          'Add specific examples',
+          'Optimize formatting'
+        ],
+        autocompleteEnabled: true,
+        priority: 'medium'
       }
-    ],
-    aiContext: {
-      sectionSummaryBuilder: 'custom-summary',
-      itemSummaryBuilder: 'custom-content'
-    },
-    uiConfig: {
-      icon: 'FilePlus2',
-      defaultRenderType: 'single-text',
-      addButtonText: 'Add Content'
     }
-  };
-}
+  ],
+  aiContext: {
+    sectionSummaryBuilder: 'custom-summary',
+    itemSummaryBuilder: 'custom-content'
+  },
+  uiConfig: {
+    icon: 'FilePlus2',
+    defaultRenderType: 'single-text',
+    addButtonText: 'Add Content'
+  }
+};
 
 // Test schema for certifications
 const CERTIFICATIONS_SCHEMA: SectionSchema = {
@@ -479,17 +469,206 @@ const VOLUNTEER_EXPERIENCE_SCHEMA: SectionSchema = {
   }
 };
 
+const PROJECTS_SCHEMA: SectionSchema = {
+  id: 'projects',
+  name: 'Projects',
+  type: 'list',
+  fields: [
+    {
+      id: 'name',
+      type: 'text',
+      label: 'Project Name',
+      required: true,
+      aiHints: {
+        contextBuilders: {
+          improve: 'project-name',
+          autocomplete: 'project-name'
+        },
+        autocompleteEnabled: true,
+        priority: 'high'
+      }
+    },
+    {
+      id: 'description',
+      type: 'textarea',
+      label: 'Description',
+      required: true,
+      uiProps: {
+        rows: 3,
+        placeholder: 'Describe the project, your role, and key achievements...',
+        markdownEnabled: true
+      },
+      aiHints: {
+        contextBuilders: {
+          improve: 'project-description',
+          autocomplete: 'project-description'
+        },
+        improvementPrompts: [
+          'Add quantifiable results',
+          'Highlight technical challenges solved',
+          'Emphasize business impact',
+          'Include technologies used'
+        ],
+        autocompleteEnabled: true,
+        priority: 'high'
+      }
+    },
+    {
+      id: 'technologies',
+      type: 'multiselect',
+      label: 'Technologies Used',
+      aiHints: {
+        contextBuilders: {
+          improve: 'project-technologies',
+          autocomplete: 'project-technologies'
+        },
+        autocompleteEnabled: true,
+        priority: 'medium'
+      }
+    },
+    {
+      id: 'url',
+      type: 'url',
+      label: 'Project URL',
+      validation: [
+        { type: 'pattern', value: '^https?://', message: 'Must be a valid URL' }
+      ]
+    },
+    {
+      id: 'startDate',
+      type: 'date',
+      label: 'Start Date'
+    },
+    {
+      id: 'endDate',
+      type: 'date',
+      label: 'End Date'
+    }
+  ],
+  aiContext: {
+    sectionSummaryBuilder: 'projects-summary',
+    itemSummaryBuilder: 'projects-item',
+    batchImprovementSupported: true
+  },
+  uiConfig: {
+    icon: 'Code',
+    defaultRenderType: 'timeline',
+    addButtonText: 'Add Project',
+    itemDisplayTemplate: '{name} - {technologies}',
+    sortable: true
+  }
+}; 
+
+// 预定义的高级Schema示例
+const ADVANCED_SKILLS_SCHEMA: SectionSchema = {
+  id: 'advanced-skills',
+  name: 'Advanced Skills',
+  type: 'list',
+  fields: [
+    {
+      id: 'category',
+      type: 'combobox',
+      label: 'Category',
+      required: true,
+      uiProps: {
+        options: [
+          'Technical Skills', 
+          'Soft Skills', 
+          'Languages', 
+          'Certifications', 
+          'Tools & Platforms', 
+          'Programming Languages', 
+          'Frameworks', 
+          'Databases', 
+          'Cloud Platforms', 
+          'DevOps Tools']
+      },
+      aiHints: {
+        contextBuilders: {
+          improve: 'skill-category',
+          autocomplete: 'skill-category'
+        },
+        autocompleteEnabled: false,
+        priority: 'high'
+      }
+    },
+    {
+      id: 'skills',
+      type: 'multiselect',
+      label: 'Skills',
+      required: true,
+      aiHints: {
+        contextBuilders: {
+          improve: 'skill-list',
+          autocomplete: 'skill-list'
+        },
+        improvementPrompts: [
+          'Add industry-relevant skills',
+          'Include proficiency levels',
+          'Add trending technologies',
+          'Optimize for ATS keywords'
+        ],
+        autocompleteEnabled: true,
+        priority: 'high'
+      }
+    },
+    {
+      id: 'proficiency',
+      type: 'select',
+      label: 'Proficiency Level',
+      uiProps: {
+        options: ['Beginner', 'Intermediate', 'Advanced', 'Expert']
+      },
+      aiHints: {
+        contextBuilders: {
+          improve: 'skill-proficiency',
+          autocomplete: 'skill-proficiency'
+        },
+        priority: 'medium'
+      }
+    },
+    {
+      id: 'yearsOfExperience',
+      type: 'text',
+      label: 'Years of Experience',
+      validation: [
+        { type: 'pattern', value: '^[0-9]+$', message: 'Must be a number' }
+      ],
+      aiHints: {
+        contextBuilders: {
+          improve: 'skill-experience',
+          autocomplete: 'skill-experience'
+        },
+        priority: 'low'
+      }
+    }
+  ],
+  aiContext: {
+    sectionSummaryBuilder: 'advanced-skills-summary',
+    itemSummaryBuilder: 'advanced-skills-item',
+    batchImprovementSupported: true
+  },
+  uiConfig: {
+    icon: 'Wand2',
+    defaultRenderType: 'badge-list',
+    addButtonText: 'Add Skill Category',
+    itemDisplayTemplate: '{category}: {skills}',
+    sortable: true,
+    collapsible: true
+  }
+};
+
 /**
  * Registers all the default section schemas with the schema registry.
  * @param registry The schema registry instance.
  */
 export function registerDefaultSchemas(registry: ISchemaRegistry) {
-  // Register legacy schemas
-  registry.registerSectionSchema(createLegacySummarySchema());
-  registry.registerSectionSchema(createLegacyExperienceSchema());
-  registry.registerSectionSchema(createLegacyEducationSchema());
-  registry.registerSectionSchema(createLegacySkillsSchema());
-  registry.registerSectionSchema(createLegacyCustomTextSchema());
+  // Register legacy (now constant) schemas
+  registry.registerSectionSchema(SUMMARY_SCHEMA);
+  registry.registerSectionSchema(EXPERIENCE_SCHEMA);
+  registry.registerSectionSchema(EDUCATION_SCHEMA);
+  registry.registerSectionSchema(SKILLS_SCHEMA);
+  registry.registerSectionSchema(CUSTOM_TEXT_SCHEMA);
 
   // Register dynamic schemas
   registry.registerSectionSchema(ADVANCED_SKILLS_SCHEMA);
