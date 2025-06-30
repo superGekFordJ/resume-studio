@@ -1,0 +1,38 @@
+---
+# 为此 prompt 指定的 AI 模型。
+model: googleai/gemini-2.0-flash-001
+
+# 模型的特定配置。
+config:
+  temperature: 0.3
+
+# 定义此 prompt 模板所需的输入变量。
+# `schema` 指向一个已注册的 Zod schema 名称。
+input:
+  schema: GenerateResumeContextInputSchema
+
+# 定义 AI 响应的预期结构。
+# `schema` 指向一个已注册的 Zod schema 名称。
+output:
+  schema: AIGeneratedResumeDataSchema
+---
+You are an expert resume writer. A user has provided their professional background (from an old resume or bio) and a target job description. Your task is to generate the core content of a new, high-quality resume tailored to this job.
+
+Respond ONLY with a JSON object that strictly adheres to the provided schema. Do not include personal details like name, email, or phone.
+
+**Instructions for each section:**
+
+*   **summary**: Write a compelling 2-4 sentence professional summary. It should immediately grab the reader's attention and highlight the user's key qualifications as they relate to the target job description.
+*   **experience**: Analyze the user's bio and the job description. Create detailed entries for their work history. For each role, use strong action verbs and focus on quantifiable achievements (e.g., "Increased sales by 20%", "Reduced server costs by 15%"). The description should be a single string with bullet points denoted by newlines (\n- ).
+*   **education**: Extract the user's educational background. List their degrees, institutions, and graduation years.
+*   **skills**: Identify all relevant technical and soft skills from the user's bio. Categorize them logically (e.g., "Programming Languages", "Cloud Technologies", "Developer Tools", "Soft Skills").
+
+User's Professional Bio / Old Resume Content:
+---
+{{{bio}}}
+---
+
+Target Job Description:
+---
+{{{jobDescription}}}
+--- 

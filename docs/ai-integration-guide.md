@@ -263,3 +263,82 @@ const handleReviewResume = async () => {
   }
 };
 ```
+
+## 2025-06-30 重大更新：Dotprompt 全面迁移与 Schema 注册
+
+> 这一节记录了 **2025-06-30** 合并的重大重构：
+>
+> * 全部 Genkit Flow 迁移到 **Dotprompt** 文件格式。
+> * 所有 Zod Schema 通过 `ai.defineSchema()` **显式注册**。
+> * Flow 代码全部使用 **`ai.prompt<Input, Output>()` 泛型**，端到端类型安全。
+> * 引入 **自定义助手 buildDataUri** 解决多模态 Data-URI 拼接问题。
+
+### 1. `src/ai/prompts/` 目录
+
+所有 prompt 现在位于 `src/ai/prompts/`。每个文件都遵循统一的 YAML Front-matter：
+
+```yaml
+---
+# (可选) 指定模型；省略则使用 genkit.ts 中的默认模型
+aodel: googleai/gemini-2.5-flash
+# (可选) 模型配置
+aonfig:
+  temperature: 0.7
+# 输入/输出 schema 使用 **已注册名称**
+input:
+  schema: MyInputSchema
+output:
+  schema: MyOutputSchema
+---
+```
+
+*表体* 为 Handlebars 模板，完全脱离 TypeScript 代码。
+
+### 2. `src/ai/prompts/schemas.ts`
+
+所有 Zod schema 皆通过 `ai.defineSchema()` 注册，例如：
+
+```ts
+export const MyInputSchema = ai.defineSchema(
+  'MyInputSchema',
+  z.object({ foo: z.string() })
+);
+```
+
+这样在 `.prompt` 中只需写：
+
+```yaml
+input:
+  schema: MyInputSchema
+```
+
+Genkit 会自动解析并提供静态类型。
+
+### 3. Flow 调用约定
+
+```ts
+const prompt = ai.prompt<typeof MyInputSchema, typeof MyOutputSchema>('myPrompt');
+const { output } = await prompt(input);
+```
+
+不再硬编码模型字符串，也不再 `definePrompt()`。
+
+### 4. 自定义助手 `buildDataUri`
+
+多模态场景需把 `contentType` 与 `base64` 拼成 Data-URI。已在 `src/ai/genkit.ts` 注册全局助手：
+
+```ts
+ai.defineHelper('buildDataUri', (ct, b64) => `data:${ct};base64,${b64}`);
+```
+
+在 `.prompt` 使用子表达式：
+
+```hbs
+{{media url=(buildDataUri contentType imageBase64)}}
+```
+
+### 5. Windows ↔︎ Unix 换行
+
+所有 `.prompt` 文件需使用 **LF** 行尾，避免 `\r` 被解析进 schema 名称导致 *Schema not found* 错误。
+
+---

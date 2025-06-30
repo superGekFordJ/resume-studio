@@ -1,0 +1,19 @@
+---
+# 为此 prompt 指定的 AI 模型。
+model: googleai/gemini-2.0-flash-lite
+
+# 模型的特定配置。
+config:
+  temperature: 0.1
+
+# 定义此 prompt 模板所需的输入变量。
+# `schema` 指向一个已注册的 Zod schema 名称。
+input:
+  schema: JobInfoFromImageInputSchema
+
+# 此 prompt 的 output schema 由其调用的 flow (getJobInfoFromImageFlow) 定义，
+# 因此此处省略以避免冲突。
+---
+{{media url=(buildDataUri contentType imageBase64)}}
+
+You are an expert HR assistant. From the provided screenshot of a job posting, your task is to extract ONLY the most critical information. Ignore all website navigation, ads, sidebars, and other irrelevant text. Return a clean text block containing only these sections: 1. Job Title, 2. Company Name, 3. Key Responsibilities, 4. Required Skills and Qualifications. 
