@@ -93,6 +93,12 @@ export interface ISchemaRegistry {
   getAllSectionSchemas(): SectionSchema[];
   registerContextBuilder(id: string, builder: ContextBuilderFunction): void;
   buildContext(builderId: string, data: any, allData: any): string;
+  // New: Main method to build structured AI context
+  buildAIContext(payload: AIContextPayload): StructuredAIContext;
+  // New: Method to stringify the entire resume for review
+  stringifyResumeForReview(resumeData: any): string;
+  // NEW: Role-Map methods - simplified for static loading
+  getRoleMap(schemaId: string): RoleMap | undefined;
 }
 
 // 扩展的简历数据结构（向后兼容）
@@ -343,3 +349,25 @@ export const PROJECTS_SCHEMA: SectionSchema = {
     sortable: true
   }
 }; 
+
+// Role-Map types
+export type FieldRole = 
+  | 'title'         // Job title, position, role name
+  | 'organization'  // Company, institution, school name
+  | 'description'   // Main content description
+  | 'startDate'     // Begin date
+  | 'endDate'       // End date
+  | 'location'      // Geographic location
+  | 'dateRange'     // Combined date range
+  | 'url'           // Website link
+  | 'skills'        // Skills list
+  | 'level'         // Proficiency or education level
+  | 'identifier'    // A unique ID or code
+  | 'other';        // Catch-all for unclassifiable fields
+
+export interface RoleMap {
+  schemaId: string;
+  schemaVersion: string;
+  fieldMappings: Record<string, FieldRole | FieldRole[]>; // fieldId -> role(s)
+  inferredAt: string; // ISO timestamp
+} 

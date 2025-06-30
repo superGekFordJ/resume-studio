@@ -1,11 +1,12 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { ResumeData, PersonalDetails, SectionItem, ExperienceEntry, EducationEntry, SkillEntry, CustomTextEntry, ResumeSection } from '@/types/resume';
-import { initialResumeData, isExtendedResumeData } from '@/types/resume';
+import type { ResumeData, PersonalDetails } from '@/types/resume';
+import { initialResumeData } from '@/types/resume';
 import type { ReviewResumeOutput } from '@/ai/flows/review-resume';
 import type { DynamicResumeSection, DynamicSectionItem } from '@/types/schema';
 import { SchemaRegistry } from '@/lib/schemaRegistry';
 import { indexedDbStorage } from './indexedDbStorage';
+import { migrateLegacyResumeIfNeeded } from '@/lib/migrateLegacyResume';
 
 // Version Snapshot interface
 export interface VersionSnapshot {
@@ -178,8 +179,7 @@ export const useResumeStore = create<ResumeState & ResumeActions>()(
               sections: state.resumeData.sections.map(section => {
                 if (section.id !== payload.sectionId) return section;
                 
-                if ('schemaId' in section) {
-                  // Handle dynamic section
+                // All sections are now dynamic
                   const dynamicSection = section as DynamicResumeSection;
                   return {
                     ...dynamicSection,
@@ -189,18 +189,6 @@ export const useResumeStore = create<ResumeState & ResumeActions>()(
                         : item
                     )
                   };
-                } else {
-                  // Handle legacy section
-                  const legacySection = section as ResumeSection;
-                  return {
-                    ...legacySection,
-                    items: legacySection.items.map(item =>
-                      item.id === payload.itemId
-                        ? { ...item, [payload.fieldId]: payload.value }
-                        : item
-                    ) as SectionItem[]
-                  };
-                }
               })
             }
           };
@@ -223,8 +211,7 @@ export const useResumeStore = create<ResumeState & ResumeActions>()(
         const updatedSections = state.resumeData.sections.map(section => {
           if (section.id !== sectionId) return section;
           
-          if ('schemaId' in section) {
-            // Handle dynamic section
+          // All sections are now dynamic
             const dynamicSection = section as DynamicResumeSection;
             const sectionSchema = schemaRegistry.getSectionSchema(dynamicSection.schemaId);
             if (!sectionSchema) return section;
@@ -250,39 +237,6 @@ export const useResumeStore = create<ResumeState & ResumeActions>()(
               ...dynamicSection,
               items: [...dynamicSection.items, newItem]
             };
-          } else {
-            // Handle legacy section
-            const legacySection = section as ResumeSection;
-            const newItemId = `${legacySection.type}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-            let newItem: SectionItem;
-            
-            switch (legacySection.type) {
-              case 'experience':
-                newItem = { id: newItemId, jobTitle: '', company: '', startDate: '', endDate: '', description: '' } as ExperienceEntry;
-                break;
-              case 'education':
-                newItem = { id: newItemId, degree: '', institution: '', graduationYear: '', details: '' } as EducationEntry;
-                break;
-              case 'skills':
-                newItem = { id: newItemId, name: '' } as SkillEntry;
-                break;
-              case 'summary': 
-              case 'customText':
-                if (legacySection.isList || legacySection.items.length === 0) {
-                  newItem = { id: newItemId, content: '' } as CustomTextEntry;
-                } else {
-                  return section; // Don't add if not a list and already has content
-                }
-                break;
-              default:
-                return section;
-            }
-            
-            return {
-              ...legacySection,
-              items: [...legacySection.items, newItem]
-            };
-          }
         });
         
         return { resumeData: { ...state.resumeData, sections: updatedSections } };
@@ -294,14 +248,10 @@ export const useResumeStore = create<ResumeState & ResumeActions>()(
           sections: state.resumeData.sections.map(section => {
             if (section.id !== payload.sectionId) return section;
             
-            if ('items' in section) {
               return {
                 ...section,
                 items: section.items.filter((item: any) => item.id !== payload.itemId)
               };
-            }
-            
-            return section;
           })
         }
       })),
@@ -629,6 +579,11 @@ export const useResumeStore = create<ResumeState & ResumeActions>()(
         // Ensure the API key from the initial state is not overwritten
         // by the (intentionally) missing key from the persisted state.
         state.aiConfig.apiKey = currentState.aiConfig.apiKey;
+        
+        // Migrate legacy resume data if needed
+        if (state.resumeData) {
+          state.resumeData = migrateLegacyResumeIfNeeded(state.resumeData);
+        }
         
         return state;
       },

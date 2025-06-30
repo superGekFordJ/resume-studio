@@ -393,6 +393,92 @@ const CERTIFICATIONS_SCHEMA: SectionSchema = {
   }
 };
 
+// Experimental schema with different field names to test Role-Map
+const VOLUNTEER_EXPERIENCE_SCHEMA: SectionSchema = {
+  id: 'volunteer',
+  name: 'Volunteer Experience',
+  type: 'list',
+  fields: [
+    {
+      id: 'position', // Using 'position' instead of 'jobTitle'
+      type: 'text',
+      label: 'Position',
+      required: true,
+      aiHints: {
+        contextBuilders: {
+          improve: 'volunteer-position',
+          autocomplete: 'volunteer-position'
+        },
+        autocompleteEnabled: true,
+        priority: 'high'
+      }
+    },
+    {
+      id: 'organization', // Using 'organization' instead of 'company'
+      type: 'text',
+      label: 'Organization',
+      required: true,
+      aiHints: {
+        contextBuilders: {
+          improve: 'volunteer-org',
+          autocomplete: 'volunteer-org'
+        },
+        autocompleteEnabled: true,
+        priority: 'high'
+      }
+    },
+    {
+      id: 'startDate',
+      type: 'text',
+      label: 'Start Date',
+      required: true
+    },
+    {
+      id: 'endDate',
+      type: 'text',
+      label: 'End Date',
+      required: true
+    },
+    {
+      id: 'impact', // Using 'impact' instead of 'description'
+      type: 'textarea',
+      label: 'Impact & Contributions',
+      required: true,
+      uiProps: {
+        rows: 3,
+        placeholder: 'Describe your volunteer work and impact...',
+        markdownEnabled: true
+      },
+      aiHints: {
+        contextBuilders: {
+          improve: 'volunteer-impact',
+          autocomplete: 'volunteer-impact'
+        },
+        improvementPrompts: [
+          'Highlight community impact',
+          'Add volunteer hours',
+          'Mention skills developed',
+          'Include recognition received'
+        ],
+        autocompleteEnabled: true,
+        priority: 'high'
+      }
+    }
+  ],
+  aiContext: {
+    sectionSummaryBuilder: 'volunteer-summary',
+    itemSummaryBuilder: 'volunteer-item',
+    batchImprovementSupported: true
+  },
+  uiConfig: {
+    icon: 'Heart',
+    defaultRenderType: 'timeline',
+    addButtonText: 'Add Volunteer Experience',
+    itemDisplayTemplate: '{position} at {organization}',
+    sortable: true
+  }
+};
+
 /**
  * Registers all the default section schemas with the schema registry.
  * @param registry The schema registry instance.
@@ -411,4 +497,7 @@ export function registerDefaultSchemas(registry: ISchemaRegistry) {
   
   // Register test schemas
   registry.registerSectionSchema(CERTIFICATIONS_SCHEMA);
+  
+  // Register experimental schema with different field names
+  registry.registerSectionSchema(VOLUNTEER_EXPERIENCE_SCHEMA);
 } 

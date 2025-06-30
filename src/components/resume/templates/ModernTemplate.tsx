@@ -8,6 +8,7 @@ import { TitledBlockComponent } from '../rendering/TitledBlockComponent';
 import { SimpleListComponent } from '../rendering/SimpleListComponent';
 import { SingleTextComponent } from '../rendering/SingleTextComponent';
 import { AdvancedSkillsComponent } from '../rendering/AdvancedSkillsComponent';
+import { SchemaRegistry } from '@/lib/schemaRegistry';
 
 interface ModernTemplateProps {
   resume: RenderableResume;
@@ -23,27 +24,20 @@ const renderSectionByRenderType = (section: RenderableSection) => {
     'advanced-skills': 'advanced-skills-list', // Use specialized advanced skills rendering
   };
 
+  // Get role map for this section synchronously
+  const schemaRegistry = SchemaRegistry.getInstance();
+  const roleMap = schemaRegistry.getRoleMap(section.schemaId);
+  
   // Use template override if exists, otherwise use schema default
   const finalRenderType = templateLayoutMap[section.schemaId] || section.defaultRenderType || 'default';
 
   switch (finalRenderType) {
     case 'simple-list':
-      return <SimpleListComponent items={section.items} />;
+      return <SimpleListComponent section={section} roleMap={roleMap} />;
     case 'badge-list':
-      return (
-        <div className="modern-badge-list">
-          {section.items.map(item => {
-            const nameField = item.fields.find(f => f.key === 'name');
-            return nameField ? (
-              <span key={item.id} className="inline-block bg-gray-200 rounded-full px-2 py-1 text-[10px] font-medium text-gray-700 mr-1 mb-1">
-                {nameField.value}
-              </span>
-            ) : null;
-          })}
-        </div>
-      );
+      return <BadgeListComponent section={section} roleMap={roleMap} />;
     case 'timeline':
-      return section.items.map(item => <TitledBlockComponent key={item.id} item={item} />);
+      return section.items.map(item => <TitledBlockComponent key={item.id} item={item} roleMap={roleMap} />);
     case 'single-text':
       return <SingleTextComponent items={section.items} />;
     case 'advanced-skills-list':

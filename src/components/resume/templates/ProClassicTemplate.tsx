@@ -8,6 +8,7 @@ import { SimpleSkillsComponent } from "../rendering/pro-classic/SimpleSkillsComp
 import { OpenSourceItemComponent } from "../rendering/pro-classic/OpenSourceItemComponent";
 import { GenericSectionComponent } from "../rendering/pro-classic/GenericSectionComponent";
 import { Github, Linkedin, Mail, MapPin, Phone, Link as LinkIcon } from "lucide-react";
+import { SchemaRegistry } from "@/lib/schemaRegistry";
 
 interface ProClassicTemplateProps {
   resume: RenderableResume;
@@ -21,6 +22,7 @@ const SectionTitle = ({ title }: { title: string }) => (
 
 export const ProClassicTemplate = ({ resume }: ProClassicTemplateProps) => {
   const { personalDetails, sections } = resume;
+  const schemaRegistry = SchemaRegistry.getInstance();
 
   // --- Section Dispatching Logic ---
   // Left sidebar: Skills, certifications, and other supplementary info
@@ -38,6 +40,9 @@ export const ProClassicTemplate = ({ resume }: ProClassicTemplateProps) => {
   );
   
   const renderSection = (section: RenderableSection) => {
+    // Get the role map for this specific section
+    const roleMap = schemaRegistry.getRoleMap(section.schemaId);
+
     switch(section.schemaId) {
       case 'summary':
       case 'customText':
@@ -51,11 +56,11 @@ export const ProClassicTemplate = ({ resume }: ProClassicTemplateProps) => {
       case 'advanced-skills':
         return <CategorizedSkillsComponent items={section.items} />;
       case 'experience':
-        return section.items.map(item => <ExperienceItemComponent key={item.id} item={item} />);
+        return section.items.map(item => <ExperienceItemComponent key={item.id} item={item} roleMap={roleMap} />);
       case 'education':
-        return section.items.map(item => <EducationItemComponent key={item.id} item={item} />);
+        return section.items.map(item => <EducationItemComponent key={item.id} item={item} roleMap={roleMap} />);
       case 'projects':
-        return section.items.map(item => <OpenSourceItemComponent key={item.id} item={item} />);
+        return section.items.map(item => <OpenSourceItemComponent key={item.id} item={item} roleMap={roleMap} />);
       default:
         // Fallback for certifications and any other section
         return <GenericSectionComponent section={section} />;

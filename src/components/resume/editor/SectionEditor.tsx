@@ -3,7 +3,7 @@
 
 import type { ChangeEvent } from 'react';
 import { useEffect } from 'react';
-import { ResumeSection, PersonalDetails } from "@/types/resume";
+import { PersonalDetails } from "@/types/resume";
 import type { DynamicResumeSection } from '@/types/schema';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -105,12 +105,11 @@ export default function SectionEditor({}: SectionEditorProps) {
   const renderSectionForm = () => {
     if (!currentEditingData || !('title' in currentEditingData)) return null;
     
-    const section = currentEditingData as ResumeSection | DynamicResumeSection;
-    const schemaId = 'schemaId' in section ? section.schemaId : section.type;
-    const sectionSchema = schemaRegistry.getSectionSchema(schemaId);
+    const section = currentEditingData as DynamicResumeSection;
+    const sectionSchema = schemaRegistry.getSectionSchema(section.schemaId);
     
     if (!sectionSchema) {
-      return <div>Schema not found for {schemaId}</div>;
+      return <div>Schema not found for {section.schemaId}</div>;
     }
     
     return (

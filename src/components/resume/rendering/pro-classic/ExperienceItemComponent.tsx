@@ -1,10 +1,12 @@
 "use client";
 
-import { RenderableItem } from "@/types/schema";
+import { RenderableItem, RoleMap } from "@/types/schema";
 import { ProClassicMarkdownRenderer } from "./ProClassicMarkdownRenderer";
+import { pickFieldByRole, getItemDateRange } from "@/lib/roleMapUtils";
 
 interface ExperienceItemComponentProps {
   item: RenderableItem;
+  roleMap?: RoleMap;
 }
 
 const CalendarIcon = () => (
@@ -13,13 +15,12 @@ const CalendarIcon = () => (
   </svg>
 );
 
-export const ExperienceItemComponent = ({ item }: ExperienceItemComponentProps) => {
-  const titleField = item.fields.find(f => f.key === 'jobTitle');
-  const companyField = item.fields.find(f => f.key === 'company');
-  const dateField = item.fields.find(f => f.key === 'dateRange');
-  const descriptionField = item.fields.find(f => 
-    f.key === 'description' || f.key === 'details' || f.key === 'content'
-  );
+export const ExperienceItemComponent = ({ item, roleMap }: ExperienceItemComponentProps) => {
+  const titleField = pickFieldByRole(item, 'title', roleMap);
+  const companyField = pickFieldByRole(item, 'organization', roleMap);
+  const dateRange = getItemDateRange(item, roleMap);
+  const descriptionField = pickFieldByRole(item, 'description', roleMap);
+  
   const descriptionContent = descriptionField?.value ? 
     (Array.isArray(descriptionField.value) ? descriptionField.value.join(', ') : descriptionField.value) : '';
 
@@ -35,10 +36,10 @@ export const ExperienceItemComponent = ({ item }: ExperienceItemComponentProps) 
         )}
 
       <div className="flex flex-wrap mt-1 gap-x-4 gap-y-1 text-xs text-[#888888]">
-        {dateField?.value && (
+        {dateRange && (
           <div className="flex items-center">
             <CalendarIcon />
-            <span>{dateField.value}</span>
+            <span>{dateRange}</span>
           </div>
         )}
       </div>

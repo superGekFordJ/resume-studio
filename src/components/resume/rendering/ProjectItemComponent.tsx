@@ -1,26 +1,21 @@
 "use client";
 
-import { RenderableItem } from "@/types/schema";
+import { RenderableItem, RoleMap } from "@/types/schema";
 import { ExternalLink } from "lucide-react";
 import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
+import { pickFieldByRole, getItemDateRange } from "@/lib/roleMapUtils";
 
 interface ProjectItemComponentProps {
   item: RenderableItem;
+  roleMap?: RoleMap;
 }
 
-export const ProjectItemComponent = ({ item }: ProjectItemComponentProps) => {
-  // Extract project-specific fields
-  const nameField = item.fields.find(f => f.key === 'name');
-  const descriptionField = item.fields.find(f => f.key === 'description');
-  const technologiesField = item.fields.find(f => f.key === 'technologies');
-  const urlField = item.fields.find(f => f.key === 'url');
-  const startDateField = item.fields.find(f => f.key === 'startDate');
-  const endDateField = item.fields.find(f => f.key === 'endDate');
-
-  // Format date range - only if we have dates
-  const dateRange = (startDateField?.value || endDateField?.value)
-    ? `${startDateField?.value || ''} - ${endDateField?.value || 'Present'}`
-    : null;
+export const ProjectItemComponent = ({ item, roleMap }: ProjectItemComponentProps) => {
+  const nameField = pickFieldByRole(item, 'title', roleMap);
+  const descriptionField = pickFieldByRole(item, 'description', roleMap);
+  const technologiesField = pickFieldByRole(item, 'skills', roleMap);
+  const urlField = pickFieldByRole(item, 'url', roleMap);
+  const dateRange = getItemDateRange(item, roleMap);
 
   const descriptionContent = descriptionField?.value ? 
     (Array.isArray(descriptionField.value) ? descriptionField.value.join(', ') : descriptionField.value) : '';

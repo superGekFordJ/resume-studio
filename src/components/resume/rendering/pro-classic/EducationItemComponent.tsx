@@ -1,29 +1,20 @@
 "use client";
 
-import { RenderableItem } from "@/types/schema";
+import { RenderableItem, RoleMap } from "@/types/schema";
+import { pickFieldByRole, getItemDateRange } from "@/lib/roleMapUtils";
 
 interface EducationItemComponentProps {
   item: RenderableItem;
+  roleMap?: RoleMap;
 }
 
-export const EducationItemComponent = ({ item }: EducationItemComponentProps) => {
-  const degreeField = item.fields.find(f => f.key === 'degree');
-  const universityField = item.fields.find(f => f.key === 'institution');
-  const graduationYearField = item.fields.find(f => f.key === 'graduationYear');
-  const startDateField = item.fields.find(f => f.key === 'startDate');
-  const endDateField = item.fields.find(f => f.key === 'endDate');
+export const EducationItemComponent = ({ item, roleMap }: EducationItemComponentProps) => {
+  const degreeField = pickFieldByRole(item, 'title', roleMap);
+  const universityField = pickFieldByRole(item, 'organization', roleMap);
   
-  // Determine display date - prefer date range if available, fall back to graduation year
-  const dateDisplay = (() => {
-    if (startDateField?.value || endDateField?.value) {
-      return `${startDateField?.value || ''} - ${endDateField?.value || 'Present'}`;
-    }
-    if (graduationYearField?.value) {
-      return graduationYearField.value as string;
-    }
-    return null;
-  })();
-
+  // Use the standardized and robust date range utility
+  const dateDisplay = getItemDateRange(item, roleMap);
+  
   return (
     <div className="py-1.5 px-3">
       <div className="flex justify-between items-start">

@@ -9,6 +9,7 @@ import { SingleTextComponent } from '../rendering/SingleTextComponent';
 import { ProjectItemComponent } from '../rendering/ProjectItemComponent';
 import { CertificationItemComponent } from '../rendering/CertificationItemComponent';
 import { AdvancedSkillsComponent } from '../rendering/AdvancedSkillsComponent';
+import { SchemaRegistry } from '@/lib/schemaRegistry';
 
 interface ParallelModularTemplateProps {
   resume: RenderableResume;
@@ -27,21 +28,23 @@ const renderSectionByRenderType = (section: RenderableSection) => {
 
   // Use template override if exists, otherwise use schema default
   const finalRenderType = templateLayoutMap[section.schemaId] || section.defaultRenderType || 'default';
+  const schemaRegistry = SchemaRegistry.getInstance();
+  const roleMap = schemaRegistry.getRoleMap(section.schemaId);
 
   switch (finalRenderType) {
     case 'simple-list':
-      return <SimpleListComponent items={section.items} />;
+      return <SimpleListComponent section={section} roleMap={roleMap} />;
     case 'badge-list':
-      return <BadgeListComponent items={section.items} />;
+      return <BadgeListComponent section={section} roleMap={roleMap} />;
     case 'timeline':
-      return section.items.map(item => <TitledBlockComponent key={item.id} item={item} />);
+      return section.items.map(item => <TitledBlockComponent key={item.id} item={item} roleMap={roleMap} />);
     case 'single-text':
     case 'customText':
       return <SingleTextComponent items={section.items} />;
     case 'project-list':
-      return section.items.map(item => <ProjectItemComponent key={item.id} item={item} />);
+      return section.items.map(item => <ProjectItemComponent key={item.id} item={item} roleMap={roleMap} />);
     case 'certification-list':
-      return section.items.map(item => <CertificationItemComponent key={item.id} item={item} />);
+      return section.items.map(item => <CertificationItemComponent key={item.id} item={item} roleMap={roleMap} />);
     case 'advanced-skills-list':
       return section.items.map(item => <AdvancedSkillsComponent key={item.id} item={item} />);
     default:
@@ -66,7 +69,7 @@ const ParallelModularTemplate = ({ resume }: ParallelModularTemplateProps) => {
   const { personalDetails, sections } = resume;
 
   // Define which sections go into which column based on their function
-  const timelineSections = ['work-experience', 'education', 'projects']; // The narrative
+  const timelineSections = ['experience', 'education', 'projects', 'volunteer']; // The narrative. Corrected 'work-experience' to 'experience' and added 'volunteer'.
   const capabilitySections = ['summary', 'customText', 'skills', 'languages', 'awards', 'certifications', 'advanced-skills']; // The inventory
   
   const mainColumnSections = sections.filter(s => timelineSections.includes(s.schemaId));
