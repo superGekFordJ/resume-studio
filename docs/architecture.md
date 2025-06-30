@@ -22,7 +22,7 @@ src/
 │   │   ├── autocomplete-input.ts      # 自动补全
 │   │   ├── improve-resume-section.ts  # 简历改进
 │   │   ├── review-resume.ts           # 简历评审
-│   │   └── batch-improve-section.ts   # 批量改进 (新增)
+│   │   └── batch-improve-section.ts   # 批量改进
 │   ├── genkit.ts          # Genkit 配置
 │   └── dev.ts             # 开发环境配置
 ├── app/                   # Next.js App Router
@@ -33,25 +33,26 @@ src/
 │   ├── ui/               # 基础 UI 组件 (shadcn/ui)
 │   ├── layout/           # 布局组件
 │   │   ├── Header.tsx           # 应用头部
-│   │   └── SidebarNavigator.tsx # 两阶段侧边栏导航器 (新增)
+│   │   └── SidebarNavigator.tsx # 两阶段侧边栏导航器
 │   └── resume/           # 简历相关组件 (重组后)
 │       ├── canvas/             # 画布相关组件
 │       │   ├── ResumeCanvas.tsx      # 简历画布
-│       │   └── PrintableResume.tsx   # 可打印简历组件 (新增)
+│       │   └── PrintableResume.tsx   # 可打印简历组件
 │       ├── editor/             # 编辑器相关组件
-│       │   ├── SectionEditor.tsx     # 章节编辑器 (已重构)
-│       │   ├── PersonalDetailsEditor.tsx # 个人信息编辑器 (新增)
-│       │   ├── SectionItemEditor.tsx # 章节项目编辑器 (新增)
-│       │   ├── AIFieldWrapper.tsx    # AI字段包装器 (新增)
+│       │   ├── SectionEditor.tsx     # 章节编辑器
+│       │   ├── PersonalDetailsEditor.tsx # 个人信息编辑器
+│       │   ├── SectionItemEditor.tsx # 章节项目编辑器
+│       │   ├── AIFieldWrapper.tsx    # AI字段包装器
 │       │   ├── SectionManager.tsx    # 章节管理器
 │       │   └── DynamicFieldRenderer.tsx # 动态字段渲染器
-│       ├── rendering/          # 原子渲染组件 (新增)
+│       ├── rendering/          # 原子渲染组件
+│       │   ├── pro-classic/      # ProClassic 模板专用组件
 │       │   ├── BadgeListComponent.tsx   # 徽章列表组件
 │       │   ├── SimpleListComponent.tsx  # 简单列表组件
 │       │   ├── TitledBlockComponent.tsx # 标题块组件
 │       │   └── SingleTextComponent.tsx  # 单文本组件
 │       ├── templates/          # 模板组件
-│       │   ├── DefaultTemplate.tsx   # 默认模板 (新增)
+│       │   ├── DefaultTemplate.tsx   # 默认模板
 │       │   └── ModernTemplate.tsx    # 现代模板组件
 │       └── ui/                # UI 相关组件
 │           ├── AIReviewDialog.tsx    # AI 评审对话框
@@ -60,17 +61,22 @@ src/
 │           └── TemplateSelector.tsx  # 模板选择器
 ├── hooks/                # 自定义 Hooks
 │   ├── use-toast.ts      # Toast 通知
-│   └── useHydratedStore.ts # Zustand hydration hook (新增)
-├── stores/               # Zustand stores (新增)
+│   └── useHydratedStore.ts # Zustand hydration hook
+├── stores/               # Zustand stores
 │   └── resumeStore.ts    # 中央状态存储
 ├── lib/                  # 工具函数
 │   ├── utils.ts          # 通用工具
-│   ├── schemaRegistry.ts # Schema 注册中心 (新增)
-│   ├── dataTransformer.ts # 数据转换器 (新增)
-│   └── pdfExport.ts      # PDF 导出工具 (已简化，仅保留工具函数)
+│   ├── schemaRegistry.ts # Schema 注册中心
+│   ├── dataTransformer.ts # 数据转换器
+│   ├── pdfExport.ts      # PDF 导出工具
+│   ├── schemas/          # Schema 定义与静态数据
+│   │   ├── staticRoleMaps.ts  # (新增) 静态角色映射定义
+│   │   └── defaultSchemas.ts    # (重构自schemaRegistry) 提供默认的简历Schema
+│   │   └── defaultContextBuilders.ts # (重构自schemaRegistry) 默认上下文构建器定义
+│   └── roleMapUtils.ts   # (新增) 角色映射工具函数
 └── types/                # TypeScript 类型定义
     ├── resume.ts         # 简历相关类型
-    └── schema.ts         # Schema 定义 (新增)
+    └── schema.ts         # Schema 定义
 ```
 
 ## 核心架构模式
@@ -93,7 +99,7 @@ src/
 
 为了确保用户体验的流畅性，应用程序针对不同类型的 AI 交互采用了两种不同的数据流模式：
 
-1.  **冷路径 (Cold Path - 标准流程)**: 用于用户点击触发、对延迟不敏感的操作（如“AI改进”）。此路径遵循 `组件 -> Store -> AI -> Store -> 组件` 的完整单向数据流，保证了逻辑的集中和可维护性。
+1.  **冷路径 (Cold Path - 标准流程)**: 用于用户点击触发、对延迟不敏感的操作（如"AI改进"）。此路径遵循 `组件 -> Store -> AI -> Store -> 组件` 的完整单向数据流，保证了逻辑的集中和可维护性。
 
 2.  **热路径 (Hot Path - 优化流程)**: 专为 `autocomplete` 等需要即时响应的功能设计。此路径允许组件在从 `SchemaRegistry` 获取上下文后，直接调用 AI 服务（`组件 -> SchemaRegistry -> AI -> 组件`），绕过了 Store 的派发周期，从而将延迟降至最低。
 
@@ -152,7 +158,7 @@ src/
                            |
                            v
                    RenderableResume
-                 (View Model with defaultRenderType)
+     (View Model with defaultRenderType & Role-Map)
                            |
                            v
                    ResumeCanvas
@@ -160,13 +166,26 @@ src/
                            |
                            v
                  Template Components
-                  (Layout Dispatchers)
+            (Layout & Role-Map Dispatchers)
                            |
                            v
               Atomic Rendering Components
+           (Consume data via pickFieldByRole)
 ```
 
-**重要更新 (2025-06-20)**: PDF 导出现已通过 `react-to-print` 库直接使用 `ResumeCanvas` 组件，确保了真正的 WYSIWYG（所见即所得）体验。不再需要单独的 PDF 渲染路径。
+**重要更新 (2025-06-20)**: PDF 导出现已通过 `react-to-print` 库直接使用 `ResumeCanvas` 组件，确保了真正
+的 WYSIWYG（所见即所得）体验。不再需要单独的 PDF 渲染路径。
+
+**重要更新 (2025-06-28)**: 为了实现彻底的渲染解耦，我们引入了 **字段角色映射 (Field Role-Map)** 机制。
+
+- **问题**: 在旧架构中，原子渲染组件（如 `TitledBlockComponent`）需要硬编码查找可能的字段名（例如 `jobTitle`, `degree`, `name` 都可能被视为"标题"），这使得组件难以复用和维护。
+- **解决方案**:
+    1. **静态角色定义 (`staticRoleMaps.ts`)**: 我们创建了一个静态文件，为每个 `SectionSchema` 定义其字段 (`field.key`) 到一个通用角色 (`FieldRole`, 如 `'title'`, `'organization'`) 的映射。这是新的"单一事实来源"。
+    2. **`SchemaRegistry` 作为提供者**: `SchemaRegistry` 在启动时加载这些静态映射，并提供一个同步方法 `getRoleMap(schemaId)`。
+    3. **模板作为传递者**: 模板组件从 `SchemaRegistry` 获取对应章节的 `roleMap`，并将其作为 `prop` 传递给原子渲染组件。
+    4. **`pickFieldByRole` 作为消费者**: 原子渲染组件**必须**使用 `pickFieldByRole(item, 'title', roleMap)` 这样的工具函数来按"角色"获取数据，而不是按硬编码的字段名查找。
+
+这个机制使得原子组件完全与具体的字段名解耦，极大地提升了系统的可复用性和可维护性。
 
 #### 混合渲染模型 ("Default + Override")
 
@@ -520,23 +539,31 @@ The template system follows the hybrid rendering model, allowing each template t
 1. **Create Template Component**
    - Create a new file in `src/components/resume/templates/`
    - Accept a single prop: `{ resume: RenderableResume }`
-   - Implement layout-specific logic
+   - Implement layout-specific logic, such as defining main and side columns.
 
 2. **Implement Rendering Dispatcher**
+    The core of a template is its `renderSectionByRenderType` function. This function is responsible for retrieving the correct `RoleMap` and dispatching to the appropriate atomic rendering component.
    ```typescript
    const renderSectionByRenderType = (section: RenderableSection) => {
-     // Define template-specific overrides
+     const schemaRegistry = SchemaRegistry.getInstance();
+     
+     // 1. Get the RoleMap for the current section
+     const roleMap = schemaRegistry.getRoleMap(section.schemaId);
+
+     // 2. Define template-specific rendering overrides (optional)
      const templateLayoutMap: Record<string, string> = {
-       'skills': 'simple-list', // Override default
+       'skills': 'simple-list', // Override skills section to use a simple list
      };
      
-     // Use override or default
+     // 3. Determine the final render type
      const finalRenderType = templateLayoutMap[section.schemaId] || section.defaultRenderType;
      
-     // Dispatch to atomic components
+     // 4. Dispatch to atomic components, passing the section and roleMap
      switch (finalRenderType) {
        case 'simple-list':
-         return <SimpleListComponent items={section.items} />;
+         return <SimpleListComponent section={section} roleMap={roleMap} />;
+       case 'timeline':
+         return section.items.map(item => <TitledBlockComponent key={item.id} item={item} roleMap={roleMap} />);
        // ... other cases
      }
    };
@@ -544,7 +571,7 @@ The template system follows the hybrid rendering model, allowing each template t
 
 3. **Register Template**
    - Add to `templates` array in `src/types/resume.ts`
-   - Add case in `PrintableResume.tsx` switch statement
+   - Add case in `PrintableResume.tsx` switch statement to render the new template component.
 
 ### WYSIWYG PDF Export
 The PDF export system ensures pixel-perfect consistency between screen and print:

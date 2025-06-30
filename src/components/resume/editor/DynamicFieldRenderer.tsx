@@ -8,13 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { Combobox } from '@/components/ui/combobox';
-import { FieldSchema } from '@/types/schema';
+import { FieldSchema, DynamicResumeSection, DynamicSectionItem } from '@/types/schema';
 import AutocompleteTextarea from '@/components/resume/ui/AutocompleteTextarea';
-import type { SectionItem, ResumeSection } from '@/types/resume';
-import type { DynamicResumeSection } from '@/types/schema';
-
-// Union type to support both legacy and dynamic sections
-type AllSectionTypes = ResumeSection | DynamicResumeSection;
 
 interface DynamicFieldRendererProps {
   field: FieldSchema;
@@ -22,8 +17,8 @@ interface DynamicFieldRendererProps {
   onChange: (value: any) => void;
   // AI-related props
   userJobTitle?: string;
-  currentItem?: SectionItem | { fieldName: string } | { data: Record<string, any> };
-  allResumeSections?: AllSectionTypes[];
+  currentItem?: DynamicSectionItem | { fieldName: string };
+  allResumeSections?: DynamicResumeSection[];
   currentSectionId?: string | null;
   isAutocompleteEnabled?: boolean;
   // AI improvement props

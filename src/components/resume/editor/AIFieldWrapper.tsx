@@ -9,11 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import AutocompleteTextarea from '@/components/resume/ui/AutocompleteTextarea';
 import { cn } from "@/lib/utils";
 import { useResumeStore } from '@/stores/resumeStore';
-import type { SectionType, SectionItem, ResumeSection } from '@/types/resume';
-import type { DynamicResumeSection } from '@/types/schema';
-
-// Union type to support both legacy and dynamic sections
-type AllSectionTypes = ResumeSection | DynamicResumeSection;
+import type { DynamicResumeSection, DynamicSectionItem } from '@/types/schema';
 
 interface AIFieldWrapperProps {
   uniqueFieldId: string;
@@ -25,9 +21,9 @@ interface AIFieldWrapperProps {
   itemId?: string;
   isPersonalDetails?: boolean;
   userJobTitle?: string;
-  sectionType?: SectionType | 'personalDetailsField' | string;
-  currentItem?: SectionItem | { fieldName: string } | { data: Record<string, any> };
-  allResumeSections?: AllSectionTypes[];
+  sectionType?: string; // Now just a string for schema ID or 'personalDetailsField'
+  currentItem?: DynamicSectionItem | { fieldName: string };
+  allResumeSections?: DynamicResumeSection[];
   currentSectionId?: string | null;
   className?: string;
   placeholder?: string;

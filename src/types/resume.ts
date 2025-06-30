@@ -1,5 +1,5 @@
 // Import the new schema types for extended functionality
-import type { ExtendedResumeData } from './schema';
+import type { ExtendedResumeData, DynamicResumeSection, DynamicSectionItem } from './schema';
 
 export interface PersonalDetails {
   fullName: string;
@@ -13,72 +13,8 @@ export interface PersonalDetails {
   avatar?: string; // Base64 encoded image or URL
 }
 
-export interface ExperienceEntry {
-  id: string;
-  jobTitle: string;
-  company: string;
-  startDate: string;
-  endDate: string; // Can be 'Present'
-  description: string;
-}
-
-export interface EducationEntry {
-  id: string;
-  degree: string;
-  institution: string;
-  graduationYear: string;
-  details?: string;
-}
-
-export interface SkillEntry {
-  id: string;
-  name: string;
-}
-
-export interface CustomTextEntry {
-  id: string;
-  content: string;
-}
-
-export type SectionType =
-  | 'summary'
-  | 'experience'
-  | 'education'
-  | 'skills'
-  | 'customText';
-
-// Using a discriminated union for section items for type safety
-export type SectionItem = ExperienceEntry | EducationEntry | SkillEntry | CustomTextEntry;
-
-export interface ResumeSection {
-  id: string; // Unique ID for this section instance in the resume
-  title: string;
-  type: SectionType;
-  visible: boolean;
-  items: SectionItem[]; // Ensures items match the section type
-  isList: boolean; // true for experience, education, skills; false for summary, customText with single item
-  // content?: string; // For single-content sections like summary
-}
-
-// Legacy resume data structure (for backward compatibility)
-export interface LegacyResumeData {
-  personalDetails: PersonalDetails;
-  sections: ResumeSection[];
-  templateId: string; // e.g., 'classic', 'modern'
-}
-
-// Main ResumeData type that supports both legacy and extended formats
-export type ResumeData = LegacyResumeData | ExtendedResumeData;
-
-// Type guard to check if resume data is using the new extended format
-export function isExtendedResumeData(data: ResumeData): data is ExtendedResumeData {
-  return 'schemaVersion' in data;
-}
-
-// Type guard to check if resume data is using the legacy format
-export function isLegacyResumeData(data: ResumeData): data is LegacyResumeData {
-  return !('schemaVersion' in data);
-}
+// Main ResumeData type now directly uses ExtendedResumeData
+export type ResumeData = ExtendedResumeData;
 
 export const initialPersonalDetails: PersonalDetails = {
   fullName: 'Your Name',
@@ -97,51 +33,81 @@ export const initialResumeData: ResumeData = {
   sections: [
     {
       id: 'summary_1',
+      schemaId: 'summary',
       title: 'Summary',
-      type: 'summary',
       visible: true,
-      isList: false,
-      items: [{ id: 'summary_content_1', content: 'A brief summary about your professional background and career aspirations. Highlight your key skills and experiences that make you a strong candidate for the roles you are targeting.' } as CustomTextEntry],
-    },
+      items: [{
+        id: 'summary_content_1',
+        schemaId: 'summary',
+        data: {
+          content: 'A brief summary about your professional background and career aspirations. Highlight your key skills and experiences that make you a strong candidate for the roles you are targeting.'
+        }
+      }] as DynamicSectionItem[]
+    } as DynamicResumeSection,
     {
       id: 'experience_1',
+      schemaId: 'experience',
       title: 'Experience',
-      type: 'experience',
       visible: true,
-      isList: true,
       items: [
-        { id: 'exp_1_1', jobTitle: 'Software Engineer', company: 'Tech Solutions Inc.', startDate: 'Jan 2020', endDate: 'Present', description: 'Developed and maintained web applications using React and Node.js. Collaborated with cross-functional teams to deliver high-quality software products meeting client requirements and deadlines.' },
-        { id: 'exp_1_2', jobTitle: 'Junior Developer', company: 'Web Wonders LLC', startDate: 'Jun 2018', endDate: 'Dec 2019', description: 'Assisted senior developers in coding, testing, and debugging software. Gained experience in agile methodologies and version control systems like Git.' },
-      ] as ExperienceEntry[],
-    },
+        {
+          id: 'exp_1_1',
+          schemaId: 'experience',
+          data: {
+            jobTitle: 'Software Engineer',
+            company: 'Tech Solutions Inc.',
+            startDate: 'Jan 2020',
+            endDate: 'Present',
+            description: 'Developed and maintained web applications using React and Node.js. Collaborated with cross-functional teams to deliver high-quality software products meeting client requirements and deadlines.'
+          }
+        },
+        {
+          id: 'exp_1_2',
+          schemaId: 'experience',
+          data: {
+            jobTitle: 'Junior Developer',
+            company: 'Web Wonders LLC',
+            startDate: 'Jun 2018',
+            endDate: 'Dec 2019',
+            description: 'Assisted senior developers in coding, testing, and debugging software. Gained experience in agile methodologies and version control systems like Git.'
+          }
+        }
+      ] as DynamicSectionItem[]
+    } as DynamicResumeSection,
     {
       id: 'education_1',
+      schemaId: 'education',
       title: 'Education',
-      type: 'education',
       visible: true,
-      isList: true,
-      items: [
-        { id: 'edu_1_1', degree: 'B.S. in Computer Science', institution: 'State University', graduationYear: '2018', details: 'Relevant coursework: Data Structures, Algorithms, Database Management, Web Development. Capstone Project: Developed a full-stack e-commerce platform.' },
-      ] as EducationEntry[],
-    },
+      items: [{
+        id: 'edu_1_1',
+        schemaId: 'education',
+        data: {
+          degree: 'B.S. in Computer Science',
+          institution: 'State University',
+          graduationYear: '2018',
+          details: 'Relevant coursework: Data Structures, Algorithms, Database Management, Web Development. Capstone Project: Developed a full-stack e-commerce platform.'
+        }
+      }] as DynamicSectionItem[]
+    } as DynamicResumeSection,
     {
       id: 'skills_1',
+      schemaId: 'skills',
       title: 'Skills',
-      type: 'skills',
       visible: true,
-      isList: true,
       items: [
-        { id: 'skill_1_1', name: 'JavaScript (ES6+)' },
-        { id: 'skill_1_2', name: 'React & Redux' },
-        { id: 'skill_1_3', name: 'Node.js & Express' },
-        { id: 'skill_1_4', name: 'Python' },
-        { id: 'skill_1_5', name: 'SQL & NoSQL Databases' },
-        { id: 'skill_1_6', name: 'Git & GitHub' },
-        { id: 'skill_1_7', name: 'Agile Methodologies' },
-      ] as SkillEntry[],
-    },
+        { id: 'skill_1_1', schemaId: 'skills', data: { name: 'JavaScript (ES6+)' } },
+        { id: 'skill_1_2', schemaId: 'skills', data: { name: 'React & Redux' } },
+        { id: 'skill_1_3', schemaId: 'skills', data: { name: 'Node.js & Express' } },
+        { id: 'skill_1_4', schemaId: 'skills', data: { name: 'Python' } },
+        { id: 'skill_1_5', schemaId: 'skills', data: { name: 'SQL & NoSQL Databases' } },
+        { id: 'skill_1_6', schemaId: 'skills', data: { name: 'Git & GitHub' } },
+        { id: 'skill_1_7', schemaId: 'skills', data: { name: 'Agile Methodologies' } }
+      ] as DynamicSectionItem[]
+    } as DynamicResumeSection
   ],
   templateId: 'default',
+  schemaVersion: '1.0.0'
 };
 
 export interface TemplateInfo {
@@ -164,13 +130,14 @@ export const templates: TemplateInfo[] = [
 // However, for simplicity here, directly referencing. Ensure Lucide is client-compatible.
 // For server components, you might pass icon names and render them client-side.
 // This map is better used in a client component.
-export const sectionIconMap: Record<SectionType | 'personalDetails', string> = {
+export const sectionIconMap: Record<string, string> = {
   personalDetails: 'User',
   summary: 'FileText',
   experience: 'Briefcase',
   education: 'GraduationCap',
   skills: 'Wand2', // Changed from Lightbulb for more "skill" vibe
   customText: 'FilePlus2',
+  // Add more as needed for new sections
 };
 
     

@@ -7,12 +7,11 @@ import { SchemaRegistry } from '@/lib/schemaRegistry';
 import { useResumeStore } from '@/stores/resumeStore';
 import AIFieldWrapper from './AIFieldWrapper';
 import DynamicFieldRenderer from './DynamicFieldRenderer';
-import type { ResumeSection, SectionItem } from '@/types/resume';
 import type { DynamicResumeSection, DynamicSectionItem, FieldSchema } from '@/types/schema';
 
 interface SectionItemEditorProps {
-  item: SectionItem | DynamicSectionItem;
-  section: ResumeSection | DynamicResumeSection;
+  item: DynamicSectionItem;
+  section: DynamicResumeSection;
   index: number;
   onRemove: () => void;
 }
@@ -37,24 +36,17 @@ export default function SectionItemEditor({ item, section, index, onRemove }: Se
     });
   };
   
-  // Determine schema ID and get schema
-  const schemaId = 'schemaId' in section ? section.schemaId : section.type;
-  const sectionSchema = schemaRegistry.getSectionSchema(schemaId);
+  // Get schema for this section
+  const sectionSchema = schemaRegistry.getSectionSchema(section.schemaId);
   
   if (!sectionSchema) {
-    console.warn(`No schema found for section type: ${schemaId}`);
+    console.warn(`No schema found for section type: ${section.schemaId}`);
     return null;
   }
   
-  // Get field value based on section type
+  // Get field value from dynamic item
   const getFieldValue = (field: FieldSchema): any => {
-    if ('data' in item) {
-      // Dynamic item
       return item.data[field.id] || '';
-    } else {
-      // Legacy item
-      return (item as any)[field.id] || '';
-    }
   };
   
   return (
@@ -72,7 +64,7 @@ export default function SectionItemEditor({ item, section, index, onRemove }: Se
       </div>
       <div className="space-y-3">
         {sectionSchema.fields.map(field => {
-          const uniqueFieldId = constructUniqueFieldId(field.id, item.id, schemaId);
+          const uniqueFieldId = constructUniqueFieldId(field.id, item.id, section.schemaId);
           const currentValue = getFieldValue(field);
           
           // For AI-enabled fields, wrap in AIFieldWrapper
@@ -88,8 +80,8 @@ export default function SectionItemEditor({ item, section, index, onRemove }: Se
                 sectionId={section.id}
                 itemId={item.id}
                 userJobTitle={resumeData.personalDetails.jobTitle}
-                sectionType={schemaId}
-                currentItem={item as any}
+                sectionType={section.schemaId}
+                currentItem={item}
                 allResumeSections={resumeData.sections}
                 currentSectionId={section.id}
                 className={field.uiProps?.rows === 1 || field.type === 'text' ? "min-h-[40px]" : "min-h-[80px]"}
@@ -107,7 +99,7 @@ export default function SectionItemEditor({ item, section, index, onRemove }: Se
               value={currentValue}
               onChange={(value) => handleFieldChange(field.id, value)}
               userJobTitle={resumeData.personalDetails.jobTitle}
-              currentItem={item as any}
+              currentItem={item}
               allResumeSections={resumeData.sections}
               currentSectionId={section.id}
               isAutocompleteEnabled={isAutocompleteEnabled}

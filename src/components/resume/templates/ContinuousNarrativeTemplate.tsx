@@ -9,6 +9,7 @@ import { SingleTextComponent } from '../rendering/SingleTextComponent';
 import { ProjectItemComponent } from '../rendering/ProjectItemComponent';
 import { CertificationItemComponent } from '../rendering/CertificationItemComponent';
 import { AdvancedSkillsComponent } from '../rendering/AdvancedSkillsComponent';
+import { SchemaRegistry } from '@/lib/schemaRegistry';
 
 interface ContinuousNarrativeTemplateProps {
   resume: RenderableResume;
@@ -33,6 +34,10 @@ const SummaryWithoutTitle = ({ items }: { items: any[] }) => {
 
 // Reusable rendering dispatcher following the hybrid pattern
 const renderSectionByRenderType = (section: RenderableSection, isHeader: boolean = false) => {
+    // Get role map for this section synchronously
+  const schemaRegistry = SchemaRegistry.getInstance();
+  const roleMap = schemaRegistry.getRoleMap(section.schemaId);
+
   // Special handling for summary in header - no title
   if (isHeader && section.schemaId === 'summary') {
     return <SummaryWithoutTitle items={section.items} />;
@@ -50,17 +55,17 @@ const renderSectionByRenderType = (section: RenderableSection, isHeader: boolean
 
   switch (finalRenderType) {
     case 'simple-list':
-      return <SimpleListComponent items={section.items} />;
+      return <SimpleListComponent section={section} roleMap={roleMap} />;
     case 'badge-list':
-      return <BadgeListComponent items={section.items} />;
+      return <BadgeListComponent section={section} roleMap={roleMap} />;
     case 'timeline':
-      return section.items.map(item => <TitledBlockComponent key={item.id} item={item} />);
+      return section.items.map(item => <TitledBlockComponent key={item.id} item={item} roleMap={roleMap} />);
     case 'single-text':
       return <SingleTextComponent items={section.items} />;
     case 'project-list':
-      return section.items.map(item => <ProjectItemComponent key={item.id} item={item} />);
+      return section.items.map(item => <ProjectItemComponent key={item.id} item={item} roleMap={roleMap} />);
     case 'certification-list':
-      return section.items.map(item => <CertificationItemComponent key={item.id} item={item} />);
+      return section.items.map(item => <CertificationItemComponent key={item.id} item={item} roleMap={roleMap} />);
     case 'advanced-skills-list':
       return section.items.map(item => <AdvancedSkillsComponent key={item.id} item={item} />);
     default:

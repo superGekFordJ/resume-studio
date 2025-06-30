@@ -6,17 +6,20 @@ import {
   ADVANCED_SKILLS_SCHEMA,
   PROJECTS_SCHEMA,
   AIContextPayload,
-  StructuredAIContext
+  StructuredAIContext,
+  RoleMap
 } from '@/types/schema';
 import { registerDefaultSchemas } from './schemas/defaultSchemas';
 import { registerDefaultContextBuilders } from './schemas/defaultContextBuilders';
-import type { ResumeData, SectionType } from '@/types/resume';
+import { staticRoleMaps } from './schemas/staticRoleMaps'; // Import the static maps
+import type { ResumeData } from '@/types/resume';
 
 // Schema注册中心实现
 export class SchemaRegistry implements ISchemaRegistry {
   private static instance: SchemaRegistry;
   private sectionSchemas: Map<string, SectionSchema> = new Map();
   private contextBuilders: Map<string, ContextBuilderFunction> = new Map();
+  private roleMaps: Record<string, RoleMap> = {}; // Use a simple record/object
   
   // Cache for otherSectionsContext to improve performance.
   // The key is a combination of resume data hash and the excluded section id.
@@ -25,6 +28,7 @@ export class SchemaRegistry implements ISchemaRegistry {
   private constructor() {
     this.initializeDefaultSchemas();
     this.initializeContextBuilders();
+    this.initializeStaticRoleMaps(); // Load static maps on init
   }
 
   public static getInstance(): SchemaRegistry {
@@ -32,6 +36,10 @@ export class SchemaRegistry implements ISchemaRegistry {
       SchemaRegistry.instance = new SchemaRegistry();
     }
     return SchemaRegistry.instance;
+  }
+  
+  private initializeStaticRoleMaps(): void {
+    this.roleMaps = staticRoleMaps;
   }
 
   // Hashing function to detect changes in resumeData
@@ -386,6 +394,13 @@ export class SchemaRegistry implements ISchemaRegistry {
     }
     
     return sectionParts.join('\n\n---\n\n');
+  }
+
+  /**
+   * Synchronously gets a pre-defined RoleMap for a given schema ID.
+   */
+  public getRoleMap(schemaId: string): RoleMap | undefined {
+    return this.roleMaps[schemaId];
   }
 }
 

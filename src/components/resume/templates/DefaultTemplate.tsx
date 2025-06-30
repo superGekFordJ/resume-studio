@@ -1,6 +1,6 @@
 "use client";
 
-import { RenderableResume, RenderableSection, RenderableItem } from "@/types/schema";
+import { RenderableResume, RenderableSection, RenderableItem, RoleMap } from "@/types/schema";
 import { Mail, Phone, Linkedin, Github, Globe, MapPin } from "lucide-react";
 import { BadgeListComponent } from '../rendering/BadgeListComponent';
 import { TitledBlockComponent } from '../rendering/TitledBlockComponent';
@@ -9,59 +9,64 @@ import { SingleTextComponent } from '../rendering/SingleTextComponent';
 import { ProjectItemComponent } from '../rendering/ProjectItemComponent';
 import { CertificationItemComponent } from '../rendering/CertificationItemComponent';
 import { AdvancedSkillsComponent } from '../rendering/AdvancedSkillsComponent';
+import { SchemaRegistry } from '@/lib/schemaRegistry';
 
 interface DefaultTemplateProps {
   resume: RenderableResume;
 }
 
-// Hybrid rendering dispatcher - uses default or template override
-const renderSectionByRenderType = (section: RenderableSection) => {
-  // Template-specific overrides (demonstration)
-  const templateLayoutMap: Record<string, string> = {
-    'skills': 'simple-list', // Override skills to be a simple list instead of badge-list
-    'projects': 'project-list', // NEW: Specialized rendering for projects
-    'certifications': 'certification-list', // NEW: Specialized rendering for certifications
-    'advanced-skills': 'advanced-skills-list' // NEW: Specialized rendering for advanced skills
-  };
-
-  // Use template override if exists, otherwise use schema default
-  const finalRenderType = templateLayoutMap[section.schemaId] || section.defaultRenderType || 'default';
-
-  switch (finalRenderType) {
-    case 'simple-list':
-      return <SimpleListComponent items={section.items} />;
-    case 'badge-list':
-      return <BadgeListComponent items={section.items} />;
-    case 'timeline':
-      return section.items.map(item => <TitledBlockComponent key={item.id} item={item} />);
-    case 'single-text':
-      return <SingleTextComponent items={section.items} />;
-    case 'project-list':
-      return section.items.map(item => <ProjectItemComponent key={item.id} item={item} />);
-    case 'certification-list':
-      return section.items.map(item => <CertificationItemComponent key={item.id} item={item} />);
-    case 'advanced-skills-list':
-      return section.items.map(item => <AdvancedSkillsComponent key={item.id} item={item} />);
-    default:
-      // Generic fallback rendering
-      return section.items.map(item => (
-        <div key={item.id} className="mb-2">
-          {item.fields.map(field => (
-            <div key={field.key}>
-              {Array.isArray(field.value) ? (
-                <span>{field.value.join(', ')}</span>
-              ) : (
-                <span>{field.value}</span>
-              )}
-            </div>
-          ))}
-        </div>
-      ));
-  }
-};
-
 const DefaultTemplate = ({ resume }: DefaultTemplateProps) => {
   const { personalDetails, sections } = resume;
+  const schemaRegistry = SchemaRegistry.getInstance();
+
+  // Hybrid rendering dispatcher - uses default or template override
+  const renderSectionByRenderType = (section: RenderableSection) => {
+    // Template-specific overrides (demonstration)
+    const templateLayoutMap: Record<string, string> = {
+      'skills': 'simple-list', // Override skills to be a simple list instead of badge-list
+      'projects': 'project-list',
+      'certifications': 'certification-list',
+      'advanced-skills': 'advanced-skills-list'
+    };
+
+    // Get role map for this section synchronously
+    const roleMap = schemaRegistry.getRoleMap(section.schemaId);
+
+    // Use template override if exists, otherwise use schema default
+    const finalRenderType = templateLayoutMap[section.schemaId] || section.defaultRenderType || 'default';
+
+    switch (finalRenderType) {
+      case 'simple-list':
+        return <SimpleListComponent section={section} roleMap={roleMap} />;
+      case 'badge-list':
+        return <BadgeListComponent section={section} roleMap={roleMap} />;
+      case 'timeline':
+        return section.items.map(item => <TitledBlockComponent key={item.id} item={item} roleMap={roleMap} />);
+      case 'single-text':
+        return <SingleTextComponent items={section.items} />;
+      case 'project-list':
+        return section.items.map(item => <ProjectItemComponent key={item.id} item={item} roleMap={roleMap} />);
+      case 'certification-list':
+        return section.items.map(item => <CertificationItemComponent key={item.id} item={item} roleMap={roleMap} />);
+      case 'advanced-skills-list':
+        return section.items.map(item => <AdvancedSkillsComponent key={item.id} item={item} />);
+      default:
+        // Generic fallback rendering
+        return section.items.map(item => (
+          <div key={item.id} className="mb-2">
+            {item.fields.map(field => (
+              <div key={field.key}>
+                {Array.isArray(field.value) ? (
+                  <span>{field.value.join(', ')}</span>
+                ) : (
+                  <span>{field.value}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        ));
+    }
+  };
 
   return (
     <div className="text-[11px] leading-[1.4] h-full">

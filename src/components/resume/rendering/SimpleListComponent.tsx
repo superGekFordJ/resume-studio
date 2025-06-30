@@ -1,24 +1,34 @@
 "use client";
 
-import { RenderableItem } from "@/types/schema";
+import { RenderableSection, RoleMap } from "@/types/schema";
+import { pickFieldByRole } from "@/lib/roleMapUtils";
 
 interface SimpleListComponentProps {
-  items: RenderableItem[];
+  section: RenderableSection;
+  roleMap?: RoleMap;
 }
 
-export const SimpleListComponent = ({ items }: SimpleListComponentProps) => {
+export const SimpleListComponent = ({ section, roleMap }: SimpleListComponentProps) => {
+  // Add a guard clause to prevent rendering with incomplete data
+  if (!section || !section.items) {
+    return null;
+  }
+
   return (
-    <ul className="list-disc list-inside space-y-1">
-      {items.map(item => {
-        // Find the primary field (usually 'name' or 'content')
-        const primaryField = item.fields.find(f => f.key === 'name' || f.key === 'content') || item.fields[0];
-        if (!primaryField) return null;
+    <ul className="list-disc list-inside text-[11px] space-y-0.5">
+      {section.items.map(item => {
+        // Try to find a primary field using role mapping, fallback to first field
+        const primaryField = pickFieldByRole(item, 'title', roleMap) || 
+                           pickFieldByRole(item, 'skills', roleMap) ||
+                           pickFieldByRole(item, 'description', roleMap) || 
+                           item.fields[0];
+        if (!primaryField?.value) return null;
         
-        return (
-          <li key={item.id} className="text-[11px]">
-            {Array.isArray(primaryField.value) ? primaryField.value.join(', ') : primaryField.value}
-          </li>
-        );
+        const value = Array.isArray(primaryField.value) 
+          ? primaryField.value.join(', ')
+          : primaryField.value;
+          
+        return <li key={item.id}>{value}</li>;
       })}
     </ul>
   );
