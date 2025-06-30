@@ -1,17 +1,19 @@
 "use client";
 
-import { RenderableItem } from "@/types/schema";
+import { RenderableItem, RoleMap } from "@/types/schema";
+import { pickFieldByRole } from "@/lib/roleMapUtils";
 
 interface SimpleSkillsComponentProps {
   items: RenderableItem[];
+  roleMap?: RoleMap;
 }
 
-export const SimpleSkillsComponent = ({ items }: SimpleSkillsComponentProps) => {
+export const SimpleSkillsComponent = ({ items, roleMap }: SimpleSkillsComponentProps) => {
   const allSkills: string[] = [];
   
-  // Extract all skill names from items
+  // Extract all skill names from items using role-based lookup
   items.forEach(item => {
-    const nameField = item.fields.find(f => f.key === 'name');
+    const nameField = pickFieldByRole(item, 'skills', roleMap);
     if (nameField?.value) {
       allSkills.push(nameField.value as string);
     }

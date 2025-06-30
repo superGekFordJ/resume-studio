@@ -1,17 +1,19 @@
 "use client";
 
-import { RenderableItem } from "@/types/schema";
+import { RenderableItem, RoleMap } from "@/types/schema";
+import { pickFieldByRole } from "@/lib/roleMapUtils";
 
 interface CategorizedSkillsComponentProps {
   items: RenderableItem[];
+  roleMap?: RoleMap;
 }
 
-export const CategorizedSkillsComponent = ({ items }: CategorizedSkillsComponentProps) => {
+export const CategorizedSkillsComponent = ({ items, roleMap }: CategorizedSkillsComponentProps) => {
   return (
     <div>
       {items.map((item) => {
-        const categoryField = item.fields.find(f => f.key === 'category');
-        const skillsField = item.fields.find(f => f.key === 'skills');
+        const categoryField = pickFieldByRole(item, 'title', roleMap);
+        const skillsField = pickFieldByRole(item, 'skills', roleMap);
         
         const skills = skillsField?.value
           ? (Array.isArray(skillsField.value) ? skillsField.value : [skillsField.value])

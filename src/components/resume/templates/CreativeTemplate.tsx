@@ -40,13 +40,13 @@ const renderSectionByRenderType = (section: RenderableSection) => {
     case 'timeline':
       return section.items.map(item => <TitledBlockComponent key={item.id} item={item} roleMap={roleMap} />);
     case 'single-text':
-      return <SingleTextComponent items={section.items} />;
+      return <SingleTextComponent items={section.items} roleMap={roleMap} />;
     case 'project-list':
       return section.items.map(item => <ProjectItemComponent key={item.id} item={item} roleMap={roleMap} />);
     case 'certification-list':
       return section.items.map(item => <CertificationItemComponent key={item.id} item={item} roleMap={roleMap} />);
     case 'advanced-skills-list':
-      return section.items.map(item => <AdvancedSkillsComponent key={item.id} item={item} />);
+      return section.items.map(item => <AdvancedSkillsComponent key={item.id} item={item} roleMap={roleMap} />);
     default:
       // Generic fallback rendering
       return section.items.map(item => (
