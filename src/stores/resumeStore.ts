@@ -385,7 +385,7 @@ export const useResumeStore = create<ResumeState & ResumeActions>()(
         try {
           const imageBase64 = await fileToBase64(file);
           const { getJobInfoFromImage } = await import('@/ai/flows/getJobInfoFromImage');
-          const extractedText = await getJobInfoFromImage({ imageBase64 });
+          const extractedText = await getJobInfoFromImage({ imageBase64, contentType: file.type || 'image/png' });
           
           if (extractedText) {
             get().updateAIConfig({ targetJobInfo: extractedText });

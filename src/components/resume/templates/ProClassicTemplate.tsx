@@ -9,6 +9,7 @@ import { OpenSourceItemComponent } from "../rendering/pro-classic/OpenSourceItem
 import { GenericSectionComponent } from "../rendering/pro-classic/GenericSectionComponent";
 import { Github, Linkedin, Mail, MapPin, Phone, Link as LinkIcon } from "lucide-react";
 import { SchemaRegistry } from "@/lib/schemaRegistry";
+import { pickFieldByRole } from "@/lib/roleMapUtils";
 
 interface ProClassicTemplateProps {
   resume: RenderableResume;
@@ -47,14 +48,14 @@ export const ProClassicTemplate = ({ resume }: ProClassicTemplateProps) => {
       case 'summary':
       case 'customText':
         const summaryItem = section.items[0];
-        const summaryContent = summaryItem?.fields.find(f => 
-          f.key === 'content' || f.key === 'description'
-        )?.value as string || '';
+        const summaryField = pickFieldByRole(summaryItem, 'description', roleMap);
+        const summaryContent = summaryField?.value ? 
+          (Array.isArray(summaryField.value) ? summaryField.value.join('\n') : summaryField.value) : '';
         return <p className="text-[13px] leading-[18px] m-0 py-1.5 px-3">{summaryContent}</p>;
       case 'skills':
-        return <SimpleSkillsComponent items={section.items} />;
+        return <SimpleSkillsComponent items={section.items} roleMap={roleMap} />;
       case 'advanced-skills':
-        return <CategorizedSkillsComponent items={section.items} />;
+        return <CategorizedSkillsComponent items={section.items} roleMap={roleMap} />;
       case 'experience':
         return section.items.map(item => <ExperienceItemComponent key={item.id} item={item} roleMap={roleMap} />);
       case 'education':

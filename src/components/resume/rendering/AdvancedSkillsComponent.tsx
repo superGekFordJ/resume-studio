@@ -1,18 +1,20 @@
 "use client";
 
-import { RenderableItem } from "@/types/schema";
+import { RenderableItem, RoleMap } from "@/types/schema";
 import { ChevronRight } from "lucide-react";
+import { pickFieldByRole } from "@/lib/roleMapUtils";
 
 interface AdvancedSkillsComponentProps {
   item: RenderableItem;
+  roleMap?: RoleMap;
 }
 
-export const AdvancedSkillsComponent = ({ item }: AdvancedSkillsComponentProps) => {
-  // Extract advanced skills fields
-  const categoryField = item.fields.find(f => f.key === 'category');
-  const skillsField = item.fields.find(f => f.key === 'skills');
-  const proficiencyField = item.fields.find(f => f.key === 'proficiency');
-  const yearsField = item.fields.find(f => f.key === 'yearsOfExperience');
+export const AdvancedSkillsComponent = ({ item, roleMap }: AdvancedSkillsComponentProps) => {
+  // Extract advanced skills fields using role-based lookup
+  const categoryField = pickFieldByRole(item, 'title', roleMap);
+  const skillsField = pickFieldByRole(item, 'skills', roleMap);
+  const proficiencyField = pickFieldByRole(item, 'level', roleMap);
+  const yearsField = pickFieldByRole(item, 'other', roleMap);
 
   const skills = skillsField?.value
     ? (Array.isArray(skillsField.value) ? skillsField.value : [skillsField.value])

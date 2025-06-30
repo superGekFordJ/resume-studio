@@ -39,9 +39,9 @@ const renderSectionByRenderType = (section: RenderableSection) => {
     case 'timeline':
       return section.items.map(item => <TitledBlockComponent key={item.id} item={item} roleMap={roleMap} />);
     case 'single-text':
-      return <SingleTextComponent items={section.items} />;
+      return <SingleTextComponent items={section.items} roleMap={roleMap} />;
     case 'advanced-skills-list':
-      return section.items.map(item => <AdvancedSkillsComponent key={item.id} item={item} />);
+      return section.items.map(item => <AdvancedSkillsComponent key={item.id} item={item} roleMap={roleMap} />);
     default:
       // Improved generic fallback rendering for unknown sections
       return (

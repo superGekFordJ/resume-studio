@@ -22,6 +22,11 @@ interface InclusiveGhostTextboxProps {
   value: string
   onValueChange: (value: string) => void
   getSuggestion?: (text: string) => Promise<string>
+  /**
+   * Enhanced suggestion function that receives cursor context.
+   * If provided, this takes precedence over `getSuggestion`.
+   */
+  getSuggestionWithContext?: (payload: { text: string; cursorContext: { before: string; after: string } }) => Promise<string>
   debounceTime?: number
   disabled?: boolean
   placeholder?: string
@@ -37,6 +42,10 @@ interface InclusiveGhostTextboxProps {
   onBlur?: (event: React.FocusEvent) => void
   // Custom indicator to display when ghost text is active
   ghostIndicator?: React.ReactNode | (() => React.ReactNode)
+  /**
+   * Callback that receives the latest cursor context whenever it is recomputed.
+   */
+  onCursorContextChange?: (ctx: { before: string; after: string }) => void
 }
 
 const basePaddingX = '0.75rem'; // Corresponds to px-3
@@ -45,6 +54,7 @@ export function InclusiveGhostTextbox({
   value,
   onValueChange,
   getSuggestion,
+  getSuggestionWithContext,
   debounceTime = 300,
   disabled = false,
   placeholder = "Type here...",
@@ -58,13 +68,43 @@ export function InclusiveGhostTextbox({
   onFocus,
   onBlur,
   ghostIndicator,
+  onCursorContextChange,
 }: InclusiveGhostTextboxProps) {
   const [editor] = React.useState(() => withHistory(withReact(createEditor())))
   const [suggestion, setSuggestion] = React.useState<string>("")
   const [isLoading, setIsLoading] = React.useState(false)
   const debounceRef = React.useRef<NodeJS.Timeout>()
+  const idleCallbackRef = React.useRef<number>()
   const [prefixWidth, setPrefixWidth] = React.useState(0);
   const prefixRef = React.useRef<HTMLSpanElement>(null);
+
+  // ------------------------------
+  // Cursor context computation (non-blocking with requestIdleCallback)
+  // ------------------------------
+  const [cursorContext, setCursorContext] = React.useState<{ before: string; after: string }>({ before: "", after: "" })
+
+  const scheduleCursorContextUpdate = React.useCallback(() => {
+    if (typeof window === 'undefined') return
+    if (idleCallbackRef.current) {
+      (window as any).cancelIdleCallback?.(idleCallbackRef.current)
+    }
+
+    const cb = () => {
+      const sel = editor.selection
+      if (!sel) return
+      const before = Editor.string(editor, { anchor: Editor.start(editor, []), focus: sel.anchor })
+      const after = Editor.string(editor, { anchor: sel.anchor, focus: Editor.end(editor, []) })
+      const ctx = { before, after }
+      setCursorContext(ctx)
+      onCursorContextChange?.(ctx)
+    }
+
+    if ((window as any).requestIdleCallback) {
+      idleCallbackRef.current = (window as any).requestIdleCallback(cb, { timeout: 100 })
+    } else {
+      idleCallbackRef.current = window.setTimeout(cb, 0)
+    }
+  }, [editor, onCursorContextChange])
 
   // Init only once. Slate ignores subsequent changes; we sync manually.
   const initialValue: Descendant[] = React.useMemo(() => [
@@ -120,9 +160,10 @@ export function InclusiveGhostTextbox({
     }
   }, [value, editor])
 
-  // Debounced suggestion fetching
+  // Debounced suggestion fetching (supports context-aware function)
   React.useEffect(() => {
-    if (!getSuggestion || !value.trim()) {
+    const hasContextFn = !!getSuggestionWithContext
+    if ((hasContextFn ? !getSuggestionWithContext : !getSuggestion) || !value.trim()) {
       setSuggestion("")
       return
     }
@@ -134,7 +175,12 @@ export function InclusiveGhostTextbox({
     debounceRef.current = setTimeout(async () => {
       try {
         setIsLoading(true)
-        const newSuggestion = await getSuggestion(value)
+        let newSuggestion: string = ""
+        if (hasContextFn && getSuggestionWithContext) {
+          newSuggestion = await getSuggestionWithContext({ text: value, cursorContext })
+        } else if (getSuggestion) {
+          newSuggestion = await getSuggestion(value)
+        }
         setSuggestion(newSuggestion || "")
       } catch (error) {
         console.error("Error fetching suggestion:", error)
@@ -149,7 +195,7 @@ export function InclusiveGhostTextbox({
         clearTimeout(debounceRef.current)
       }
     }
-  }, [value, getSuggestion, debounceTime])
+  }, [value, cursorContext, getSuggestion, getSuggestionWithContext, debounceTime])
 
   // Handle keyboard interactions
   const handleKeyDown = React.useCallback((event: React.KeyboardEvent) => {
@@ -219,7 +265,22 @@ export function InclusiveGhostTextbox({
     }
 
     onValueChange(newText)
-  }, [editor, onValueChange, maxLength])
+
+    // Schedule low-priority cursor context recomputation.
+    scheduleCursorContextUpdate()
+  }, [editor, onValueChange, maxLength, scheduleCursorContextUpdate])
+
+  // Auto-resize: measure combined content height (user text + ghost text)
+  const measureRef = React.useRef<HTMLDivElement>(null)
+  const [dynamicHeight, setDynamicHeight] = React.useState<number>()
+
+  React.useLayoutEffect(() => {
+    if (!measureRef.current) return
+    const scrollH = measureRef.current.scrollHeight
+    if (scrollH && scrollH !== dynamicHeight) {
+      setDynamicHeight(scrollH)
+    }
+  }, [value, suggestion, dynamicHeight])
 
   const resizeClass = {
     none: "resize-none",
@@ -275,8 +336,30 @@ export function InclusiveGhostTextbox({
             style={{
               minHeight: `${rows * 1.5}rem`,
               paddingLeft: prefixWidth > 0 ? `calc(${basePaddingX} + ${prefixWidth}px)` : basePaddingX,
+              height: dynamicHeight ? `${dynamicHeight}px` : undefined,
             }}
           />
+
+          {/* Hidden measurement div for auto-resize */}
+          <div
+            ref={measureRef}
+            className="absolute invisible whitespace-pre-wrap break-words px-3 py-2 text-base md:text-sm leading-6"
+            style={{
+              whiteSpace: 'pre-wrap',
+              width: '100%',
+              paddingLeft: prefixWidth > 0 ? `calc(${basePaddingX} + ${prefixWidth}px)` : basePaddingX,
+            }}
+          >
+            {ghostTextInfo ? (
+              <>
+                {ghostTextInfo.prefix}
+                {value}
+                {ghostTextInfo.suffix}
+              </>
+            ) : (
+              value
+            )}
+          </div>
         </div>
         
         {isLoading && (
