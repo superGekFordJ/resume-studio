@@ -1,6 +1,25 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
+// NEW: Schemas for AIDataBridge
+export const AIBridgedSectionSchema = ai.defineSchema(
+  'AIBridgedSectionSchema',
+  z.object({
+    schemaId: z.string().describe('The schema ID of the section (e.g., experience, education)'),
+    // Define items as an array of records (string keys, any values) which is a standard for dynamic objects.
+    items: z
+      .array(z.record(z.string(), z.any()))
+      .describe('Array of items with dynamic fields based on the schema'),
+  })
+);
+
+export const AIBridgedResumeSchema = ai.defineSchema(
+  'AIBridgedResumeSchema',
+  z.object({
+    sections: z.array(AIBridgedSectionSchema).describe('Array of sections in the resume'),
+  })
+);
+
 export const AutocompleteInputSchema = ai.defineSchema(
   'AutocompleteInputSchema',
   z.object({
@@ -127,7 +146,7 @@ export const ComprehensiveResumeAnalysisOutputSchema = ai.defineSchema(
   })
 );
 
-// Schemas for generateResumeFromContext
+// DEPRECATED: Old schemas for generateResumeFromContext - will be removed after migration
 export const AIGeneratedExperienceSchema = ai.defineSchema(
   'AIGeneratedExperienceSchema',
   z.object({
@@ -174,6 +193,17 @@ export const GenerateResumeContextInputSchema = ai.defineSchema(
   z.object({
     bio: z.string().describe("The user's professional background and history."),
     jobDescription: z.string().describe('The target job description.'),
+    schemaInstructions: z.string().optional().describe('Dynamic schema instructions built from SchemaRegistry'),
+    availableSchemas: z.array(z.object({
+      schemaId: z.string(),
+      name: z.string(),
+      description: z.string().optional(),
+      fields: z.array(z.object({
+        id: z.string().describe('The key to use for this field in the JSON object'),
+        label: z.string().describe('A user-friendly label for the field'),
+        description: z.string().optional().describe('A description of what the field represents'),
+      })).describe('The list of fields that each item in this section should have'),
+    })).optional().describe('Available section schemas from SchemaRegistry, including their fields'),
   })
 );
 
@@ -213,4 +243,51 @@ export const ImproveResumeSectionOutputSchema = ai.defineSchema(
   z.object({
     improvedResumeSection: z.string().describe('The AI-rewritten and improved resume section.'),
   })
+);
+
+// --- NEW SCHEMA FOR CONTEXT GENERATION (V3 - JSON String Wrapper) ---
+
+export const GeneratedResumeAsStringSchema = ai.defineSchema(
+  'GeneratedResumeAsStringSchema',
+  z.object({
+    resumeJson: z.string().describe("A string containing the full resume data as a JSON object. This string will be parsed by the application."),
+  })
+);
+
+// @deprecated - Will be removed after migration to AIBridgedResumeSchema
+const GeneratedExperienceItemSchema = z.object({
+  jobTitle: z.string(),
+  company: z.string(),
+  startDate: z.string(),
+  endDate: z.string(),
+  description: z.string().describe("A bulleted or paragraph description of responsibilities and achievements."),
+});
+
+// @deprecated - Will be removed after migration to AIBridgedResumeSchema  
+const GeneratedEducationItemSchema = z.object({
+  degree: z.string(),
+  institution: z.string(),
+  graduationYear: z.string(),
+  details: z.string().optional(),
+});
+
+// @deprecated - Will be removed after migration to AIBridgedResumeSchema
+const GeneratedSkillsItemSchema = z.object({
+  name: z.string().describe("The name of the skill."),
+});
+
+// @deprecated - Will be removed after migration to AIBridgedResumeSchema
+const GeneratedSummaryItemSchema = z.object({
+    content: z.string().describe("The full text of the professional summary."),
+});
+
+// @deprecated - Will be removed after migration to AIBridgedResumeSchema
+export const GeneratedResumeContentSchema = ai.defineSchema(
+  'GeneratedResumeContentSchema',
+  z.object({
+    summary: z.array(GeneratedSummaryItemSchema).describe("The professional summary section. Should contain exactly one item."),
+    experience: z.array(GeneratedExperienceItemSchema).describe("The work experience section."),
+    education: z.array(GeneratedEducationItemSchema).describe("The education section."),
+    skills: z.array(GeneratedSkillsItemSchema).describe("The skills section."),
+  }).describe("A structured representation of the core content of a resume.")
 );
