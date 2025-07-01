@@ -85,6 +85,8 @@ export interface ResumeActions {
   acceptAIImprovement: () => void;
   rejectAIImprovement: () => void;
   updateAIConfig: (config: Partial<AIConfig>) => void;
+  // NEW: Batch improvement action
+  batchImproveSection: (sectionId: string, prompt: string) => Promise<void>;
   // NEW: Version snapshot actions
   createSnapshot: (name: string, dataToSnapshot?: ResumeData) => void;
   restoreSnapshot: (snapshotId: string) => void;
@@ -374,6 +376,59 @@ export const useResumeStore = create<ResumeState & ResumeActions>()(
         aiConfig: { ...state.aiConfig, ...config }
       })),
 
+      // NEW: Batch improvement action
+      batchImproveSection: async (sectionId: string, prompt: string) => {
+        const state = get();
+        const { AIDataBridge } = await import('@/lib/aiDataBridge');
+        const { SchemaRegistry } = await import('@/lib/schemaRegistry');
+        const { batchImproveSection } = await import('@/ai/flows/batch-improve-section');
+        
+        const schemaRegistry = SchemaRegistry.getInstance();
+        
+        // Find the section
+        const section = state.resumeData.sections.find(s => s.id === sectionId) as DynamicResumeSection;
+        if (!section) {
+          console.error('Section not found');
+          return;
+        }
+        
+        // Check if batch improvement is supported
+        const sectionSchema = schemaRegistry.getSectionSchema(section.schemaId);
+        if (!sectionSchema?.aiContext?.batchImprovementSupported) {
+          console.error('Batch improvement not supported for this section type');
+          return;
+        }
+        
+        try {
+          // Convert section to AI-friendly format
+          const aiSection = AIDataBridge.fromSection(section, schemaRegistry);
+          
+          // Call AI flow
+          const result = await batchImproveSection({
+            section: aiSection,
+            improvementGoals: [prompt],
+            userJobTitle: state.resumeData.personalDetails?.jobTitle,
+            userJobInfo: state.aiConfig.targetJobInfo,
+            userBio: state.aiConfig.userBio,
+            otherSectionsContext: schemaRegistry.stringifyResumeForReview(state.resumeData)
+          });
+          
+          if (result && result.improvedSection) {
+            // Merge improved section back into resume data
+            const updatedResumeData = AIDataBridge.mergeImprovedSection(
+              state.resumeData,
+              result.improvedSection,
+              sectionId,
+              schemaRegistry
+            );
+            
+            set({ resumeData: updatedResumeData });
+          }
+        } catch (error) {
+          console.error('Batch improvement error:', error);
+        }
+      },
+
       // NEW: AI-powered data import action
       extractJobInfoFromImage: async (file) => {
         if (!file.type.startsWith('image/')) {
@@ -444,7 +499,10 @@ export const useResumeStore = create<ResumeState & ResumeActions>()(
 
         try {
           const { generateResumeFromContext } = await import('@/ai/flows/generateResumeFromContext');
-          const { convertAiOutputToResumeData } = await import('@/lib/aiDataTransformer');
+          const { AIDataBridge } = await import('@/lib/aiDataBridge');
+          const { SchemaRegistry } = await import('@/lib/schemaRegistry');
+
+          const schemaRegistry = SchemaRegistry.getInstance();
 
           const aiResult = await generateResumeFromContext({
             bio: userBio,
@@ -452,20 +510,17 @@ export const useResumeStore = create<ResumeState & ResumeActions>()(
           });
 
           if (aiResult) {
-            const newResumeData = convertAiOutputToResumeData(aiResult);
-            // Before creating a snapshot, maybe we want to set it as the active resume?
-            // For now, just creating the snapshot as per the spec.
+            const newResumeData = AIDataBridge.toExtendedResumeData(aiResult, schemaRegistry);
+            
             const snapshotName = `AI Generated - ${new Date().toLocaleDateString()}`;
             createSnapshot(snapshotName, newResumeData);
 
-            // Optional: notify user of success
           } else {
             throw new Error('AI generation returned no result.');
           }
 
         } catch (error) {
           console.error('Error generating resume snapshot:', error);
-          // Optional: notify user of failure
         } finally {
           set({ isGeneratingSnapshot: false });
         }

@@ -257,6 +257,9 @@ const renderSectionByRenderType = (section: RenderableSection) => {
 - **结构化输入**: AI Flow 的输入（`inputSchema`）接收的是结构化的 `context` 对象，而不是非结构化的字符串 "context blob"，这使得 Prompt Engineering 更加稳定和可控。
 - **Flow-based**: 使用 Genkit 的 Flow 模式，将每个 AI 功能封装为独立、可复用的单元。
 - **Server Actions**: 所有 AI 调用都在服务端执行，保证了安全性和性能。
+- **可靠的动态内容生成 (V2)**: 为了解决 AI 服务商对动态嵌套对象（dynamic nested objects）的 schema 验证限制，我们采用了 **"JSON 字符串包装器" (`JSON String Wrapper`)** 模式。AI Flow 会指示模型返回一个包含 JSON 字符串的简单对象，然后在 Flow 内部进行解析和验证。这确保了即使是复杂的、动态的简历结构也能可靠生成。
+
+> **[核心文档]** 关于 AI 集成、数据流和核心模式的详细说明，请参阅新的 AI 文档中心：[`docs/ai/`](./ai/)。
 
 ## 关键设计决策
 

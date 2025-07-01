@@ -3,8 +3,6 @@ import {
   FieldSchema, 
   ISchemaRegistry, 
   ContextBuilderFunction,
-  ADVANCED_SKILLS_SCHEMA,
-  PROJECTS_SCHEMA,
   AIContextPayload,
   StructuredAIContext,
   RoleMap
@@ -12,7 +10,6 @@ import {
 import { registerDefaultSchemas } from './schemas/defaultSchemas';
 import { registerDefaultContextBuilders } from './schemas/defaultContextBuilders';
 import { staticRoleMaps } from './schemas/staticRoleMaps'; // Import the static maps
-import type { ResumeData } from '@/types/resume';
 
 // Schema注册中心实现
 export class SchemaRegistry implements ISchemaRegistry {
@@ -298,25 +295,15 @@ export class SchemaRegistry implements ISchemaRegistry {
       throw new Error('Batch improvement not supported for this section type');
     }
     
-    // Import and call the batch improvement flow
+    // Import the new batch improvement flow and AIDataBridge
     const { batchImproveSection } = await import('@/ai/flows/batch-improve-section');
+    const { AIDataBridge } = await import('@/lib/aiDataBridge');
     
-    // Convert section data to the format expected by the AI flow
-    const sectionData: Record<string, any> = {};
-    if (section.items && Array.isArray(section.items)) {
-      section.items.forEach((item: any, index: number) => {
-        const itemData = item.data || item;
-        Object.keys(itemData).forEach(key => {
-          if (key !== 'id') {
-            sectionData[`item${index}_${key}`] = itemData[key];
-          }
-        });
-      });
-    }
+    // Convert section to AI-friendly format
+    const aiSection = AIDataBridge.fromSection(section, this);
     
     const result = await batchImproveSection({
-      sectionData: sectionData,
-      sectionType: schemaId,
+      section: aiSection,
       improvementGoals: [payload.prompt],
       userJobTitle: payload.resumeData.personalDetails?.jobTitle,
       userJobInfo: payload.aiConfig?.targetJobInfo,
@@ -324,22 +311,12 @@ export class SchemaRegistry implements ISchemaRegistry {
       otherSectionsContext: this.stringifyResumeForReview(payload.resumeData)
     });
     
-    // Convert the improved data back to items array
-    const improvedItems: any[] = [];
-    const itemCount = section.items?.length || 0;
-    
-    for (let i = 0; i < itemCount; i++) {
-      const improvedItem: any = { id: section.items[i].id };
-      Object.keys(result.improvedSectionData).forEach(key => {
-        if (key.startsWith(`item${i}_`)) {
-          const fieldName = key.replace(`item${i}_`, '');
-          improvedItem[fieldName] = result.improvedSectionData[key];
-        }
-      });
-      improvedItems.push(improvedItem);
+    // Return the improved items directly from the result
+    if (result && result.improvedSection && result.improvedSection.items) {
+      return result.improvedSection.items;
     }
     
-    return improvedItems;
+    return [];
   }
 
   public async reviewResume(resumeData: any): Promise<any> {

@@ -5,23 +5,28 @@ model: googleai/gemini-2.5-pro
 # 定义此 prompt 模板所需的输入变量。
 # `schema` 指向一个已注册的 Zod schema 名称。
 input:
-  schema: BatchImproveSectionInputSchema
+  schema: BatchImproveSectionInputSchemaV2
 
 # 定义 AI 响应的预期结构。
 # `schema` 指向一个已注册的 Zod schema 名称。
 output:
-  schema: BatchImproveSectionOutputSchema
+  schema: BatchImproveSectionOutputSchemaV2
 ---
 You are an expert resume writer helping to improve an entire resume section comprehensively.
 
-**Section Type:** {{sectionType}}
+**Section Type:** {{section.schemaId}}
 {{#if userJobTitle}}**Target Role:** {{userJobTitle}}{{/if}}
 {{#if userJobInfo}}**Target Job Info:** {{userJobInfo}}{{/if}}
 {{#if userBio}}**User Bio:** {{userBio}}{{/if}}
 
 **Current Section Data:**
-{{#each sectionData}}
-- {{@key}}: {{{this}}}
+Schema ID: {{section.schemaId}}
+Items:
+{{#each section.items}}
+Item {{@index}}:
+{{#each this}}
+  - {{@key}}: {{{this}}}
+{{/each}}
 {{/each}}
 
 **Improvement Goals:**
@@ -29,26 +34,19 @@ You are an expert resume writer helping to improve an entire resume section comp
 - {{this}}
 {{/each}}
 
-{{#if priorityFields}}
-**Priority Fields to Focus On:**
-{{#each priorityFields}}
-- {{this}}
-{{/each}}
-{{/if}}
-
 {{#if otherSectionsContext}}
 **Context from Other Resume Sections:**
 {{otherSectionsContext}}
 {{/if}}
 
 **Instructions:**
-1. Improve the section data comprehensively, considering all fields together for consistency
+1. Improve the section data comprehensively, considering all items and fields together for consistency
 2. Ensure improvements align with the specified goals
 3. Maintain professional tone and formatting
 4. For experience/project sections: Add quantifiable results, use action verbs, highlight impact
 5. For skills sections: Organize logically, add relevant technologies, consider market trends
 6. For education sections: Include relevant details, coursework, achievements
-7. Keep the same field structure but improve the content quality
+7. Keep the same structure: same schemaId, same number of items, same fields within each item
 8. Ensure all improvements work together cohesively
 
-Return the improved section data maintaining the exact same field structure, plus a summary of improvements made. 
+Return the improved section with the exact same structure (schemaId and items array), plus a summary of improvements made. 

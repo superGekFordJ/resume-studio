@@ -8,20 +8,16 @@ import { autocompleteInput } from '@/ai/flows/autocomplete-input';
 import { schemaRegistry } from '@/lib/schemaRegistry';
 import { useResumeStore } from '@/stores/resumeStore';
 import { cn } from "@/lib/utils";
-import type { ResumeSection, SectionItem, SectionType } from '@/types/resume';
-import type { DynamicResumeSection } from '@/types/schema';
-
-// Union type to support both legacy and dynamic sections
-type AllSectionTypes = ResumeSection | DynamicResumeSection;
+import type { DynamicResumeSection, DynamicSectionItem } from '@/types/schema';
 
 // This interface is kept largely the same to minimize changes in parent components.
 interface AutocompleteTextareaProps extends Omit<React.ComponentProps<'textarea'>, 'onChange' | 'value'> {
   value: string;
   onValueChange: (value: string) => void;
   userJobTitle?: string;
-  sectionType?: SectionType | 'personalDetailsField' | string; // Allow dynamic schema IDs
-  currentItem?: SectionItem | { fieldName: string } | { data: Record<string, any> };
-  allResumeSections?: AllSectionTypes[];
+  sectionType?: string; // Allow dynamic schema IDs
+  currentItem?: DynamicSectionItem | { fieldName: string };
+  allResumeSections?: DynamicResumeSection[];
   currentSectionId?: string | null;
   forcedSuggestion?: string | null;
   onForcedSuggestionAccepted?: () => void;
