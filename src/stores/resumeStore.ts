@@ -27,6 +27,29 @@ export interface AIConfig {
   ollamaServerAddress?: string; // For Ollama users
 }
 
+// NEW: Batch improvement review state
+export interface BatchImprovementReview {
+  sectionId: string;
+  sectionTitle: string;
+  prompt: string;
+  originalItems: any[];
+  improvedItems: any[];
+  isLoading: boolean;
+}
+
+// NEW: Single field improvement review state
+export interface SingleFieldImprovementReview {
+  uniqueFieldId: string;
+  sectionId: string;
+  itemId?: string;
+  fieldId: string;
+  originalText: string;
+  improvedText: string;
+  prompt: string;
+  isPersonalDetails?: boolean;
+  isLoading: boolean;
+}
+
 // State interface
 export interface ResumeState {
   resumeData: ResumeData;
@@ -37,12 +60,16 @@ export interface ResumeState {
   isReviewDialogOpen: boolean;
   reviewContent: ReviewResumeOutput | null;
   isReviewLoading: boolean;
+  // DEPRECATED: Keep for backward compatibility but will be removed
   aiImprovement: {
     uniqueFieldId: string;
     suggestion: string;
     originalText: string;
   } | null;
   isImprovingFieldId: string | null;
+  // NEW: Dialog-based improvement states
+  batchImprovementReview: BatchImprovementReview | null;
+  singleFieldImprovementReview: SingleFieldImprovementReview | null;
   aiPrompt: string;
   aiConfig: AIConfig;
   versionSnapshots: VersionSnapshot[]; // NEW: Version snapshots
@@ -74,6 +101,7 @@ export interface ResumeActions {
   addSectionItem: (sectionId: string) => void;
   removeSectionItem: (payload: { sectionId: string; itemId: string }) => void;
   setAIPrompt: (prompt: string) => void;
+  // DEPRECATED: Keep for backward compatibility
   startAIImprovement: (payload: { 
     sectionId: string; 
     itemId?: string; 
@@ -84,8 +112,23 @@ export interface ResumeActions {
   }) => Promise<void>;
   acceptAIImprovement: () => void;
   rejectAIImprovement: () => void;
+  // NEW: Dialog-based improvement actions
+  startBatchImprovement: (sectionId: string, prompt: string) => Promise<void>;
+  acceptBatchImprovement: (itemsToAccept: Array<{id: string, data: any}>) => void;
+  rejectBatchImprovement: () => void;
+  startSingleFieldImprovement: (payload: {
+    uniqueFieldId: string;
+    sectionId: string;
+    itemId?: string;
+    fieldId: string;
+    currentValue: string;
+    prompt: string;
+    isPersonalDetails?: boolean;
+  }) => Promise<void>;
+  acceptSingleFieldImprovement: () => void;
+  rejectSingleFieldImprovement: () => void;
   updateAIConfig: (config: Partial<AIConfig>) => void;
-  // NEW: Batch improvement action
+  // DEPRECATED: Will be replaced by startBatchImprovement
   batchImproveSection: (sectionId: string, prompt: string) => Promise<void>;
   // NEW: Version snapshot actions
   createSnapshot: (name: string, dataToSnapshot?: ResumeData) => void;
@@ -133,6 +176,8 @@ export const useResumeStore = create<ResumeState & ResumeActions>()(
       isReviewLoading: false,
       aiImprovement: null,
       isImprovingFieldId: null,
+      batchImprovementReview: null,
+      singleFieldImprovementReview: null,
       aiPrompt: '',
       aiConfig: {
         provider: 'google',
@@ -376,7 +421,216 @@ export const useResumeStore = create<ResumeState & ResumeActions>()(
         aiConfig: { ...state.aiConfig, ...config }
       })),
 
-      // NEW: Batch improvement action
+      // NEW: Dialog-based improvement actions
+      startBatchImprovement: async (sectionId: string, prompt: string) => {
+        const state = get();
+        const section = state.resumeData.sections.find(s => s.id === sectionId) as DynamicResumeSection;
+        if (!section) {
+          console.error('Section not found');
+          return;
+        }
+
+        // Set loading state
+        set({
+          batchImprovementReview: {
+            sectionId,
+            sectionTitle: section.title,
+            prompt,
+            originalItems: section.items.map(item => ({ ...item })),
+            improvedItems: [],
+            isLoading: true
+          }
+        });
+
+        try {
+          const { AIDataBridge } = await import('@/lib/aiDataBridge');
+          const { SchemaRegistry } = await import('@/lib/schemaRegistry');
+          const { batchImproveSection } = await import('@/ai/flows/batch-improve-section');
+          
+          const schemaRegistry = SchemaRegistry.getInstance();
+          
+          // Check if batch improvement is supported
+          const sectionSchema = schemaRegistry.getSectionSchema(section.schemaId);
+          if (!sectionSchema?.aiContext?.batchImprovementSupported) {
+            console.error('Batch improvement not supported for this section type');
+            set({ batchImprovementReview: null });
+            return;
+          }
+
+          // Convert section to AI-friendly format
+          const aiSection = AIDataBridge.fromSection(section, schemaRegistry);
+          
+          // Call AI flow
+          const result = await batchImproveSection({
+            section: aiSection,
+            improvementGoals: [prompt],
+            userJobTitle: state.resumeData.personalDetails?.jobTitle,
+            userJobInfo: state.aiConfig.targetJobInfo,
+            userBio: state.aiConfig.userBio,
+            otherSectionsContext: schemaRegistry.stringifyResumeForReview(state.resumeData)
+          });
+
+          if (result && result.improvedSection) {
+            // Update review state with improved items
+            set((currentState) => {
+              if (!currentState.batchImprovementReview) return currentState;
+              return {
+                batchImprovementReview: {
+                  ...currentState.batchImprovementReview,
+                  improvedItems: result.improvedSection.items,
+                  isLoading: false
+                }
+              };
+            });
+          } else {
+            set({ batchImprovementReview: null });
+          }
+        } catch (error) {
+          console.error('Batch improvement error:', error);
+          set({ batchImprovementReview: null });
+        }
+      },
+
+      acceptBatchImprovement: (itemsToAccept: Array<{id: string, data: any}>) => {
+        const state = get();
+        if (!state.batchImprovementReview) return;
+
+        const { sectionId } = state.batchImprovementReview;
+        const { AIDataBridge } = require('@/lib/aiDataBridge');
+        
+        // Apply the staged improvements to the resume data
+        const updatedResumeData = AIDataBridge.mergeImprovedSection(
+          state.resumeData,
+          sectionId,
+          itemsToAccept,
+        );
+
+        set({
+          resumeData: updatedResumeData,
+          batchImprovementReview: null,
+          aiPrompt: ''
+        });
+      },
+
+      rejectBatchImprovement: () => set({ 
+        batchImprovementReview: null 
+      }),
+
+      startSingleFieldImprovement: async (payload) => {
+        const state = get();
+        
+        // Set loading state
+        set({
+          singleFieldImprovementReview: {
+            uniqueFieldId: payload.uniqueFieldId,
+            sectionId: payload.sectionId,
+            itemId: payload.itemId,
+            fieldId: payload.fieldId,
+            originalText: payload.currentValue,
+            improvedText: '',
+            prompt: payload.prompt,
+            isPersonalDetails: payload.isPersonalDetails,
+            isLoading: true
+          }
+        });
+
+        try {
+          const schemaRegistry = SchemaRegistry.getInstance();
+          let improvedText: string;
+          
+          if (payload.isPersonalDetails) {
+            // For personal details, use the legacy flow directly
+            const { improveResumeSection } = await import('@/ai/flows/improve-resume-section');
+            const context = {
+              currentItemContext: `Personal Details Field: ${payload.fieldId}`,
+              otherSectionsContext: schemaRegistry.stringifyResumeForReview(state.resumeData),
+              userJobTitle: state.resumeData.personalDetails?.jobTitle || '',
+              userJobInfo: state.aiConfig.targetJobInfo,
+              userBio: state.aiConfig.userBio
+            };
+            
+            const result = await improveResumeSection({
+              resumeSection: payload.currentValue,
+              prompt: payload.prompt,
+              context: context,
+              sectionType: 'personalDetailsField'
+            });
+            
+            improvedText = result.improvedResumeSection;
+          } else {
+            // Use SchemaRegistry for all section fields
+            improvedText = await schemaRegistry.improveField({
+              resumeData: state.resumeData,
+              sectionId: payload.sectionId,
+              itemId: payload.itemId || '',
+              fieldId: payload.fieldId,
+              currentValue: payload.currentValue,
+              prompt: payload.prompt,
+              aiConfig: state.aiConfig
+            });
+          }
+          
+          if (improvedText) {
+            set((currentState) => {
+              if (!currentState.singleFieldImprovementReview) return currentState;
+              return {
+                singleFieldImprovementReview: {
+                  ...currentState.singleFieldImprovementReview,
+                  improvedText,
+                  isLoading: false
+                }
+              };
+            });
+          } else {
+            set({ singleFieldImprovementReview: null });
+          }
+        } catch (error) {
+          console.error('Single field improvement error:', error);
+          set({ singleFieldImprovementReview: null });
+        }
+      },
+
+      acceptSingleFieldImprovement: () => {
+        const state = get();
+        if (!state.singleFieldImprovementReview) return;
+
+        const { 
+          sectionId, 
+          itemId, 
+          fieldId, 
+          improvedText, 
+          isPersonalDetails 
+        } = state.singleFieldImprovementReview;
+
+        // Apply the improvement
+        if (isPersonalDetails) {
+          state.updateField({
+            sectionId: '',
+            fieldId,
+            value: improvedText,
+            isPersonalDetails: true
+          });
+        } else {
+          state.updateField({
+            sectionId,
+            itemId,
+            fieldId,
+            value: improvedText,
+            isPersonalDetails: false
+          });
+        }
+
+        set({ 
+          singleFieldImprovementReview: null,
+          aiPrompt: ''
+        });
+      },
+
+      rejectSingleFieldImprovement: () => set({ 
+        singleFieldImprovementReview: null 
+      }),
+
+      // DEPRECATED: Keep for backward compatibility - will be removed
       batchImproveSection: async (sectionId: string, prompt: string) => {
         const state = get();
         const { AIDataBridge } = await import('@/lib/aiDataBridge');
@@ -414,12 +668,17 @@ export const useResumeStore = create<ResumeState & ResumeActions>()(
           });
           
           if (result && result.improvedSection) {
+            // This is the deprecated path. We'll merge all items.
+            const itemsToMerge = result.improvedSection.items.map((itemData, index) => ({
+                id: section.items[index].id,
+                data: itemData
+            }));
+
             // Merge improved section back into resume data
             const updatedResumeData = AIDataBridge.mergeImprovedSection(
               state.resumeData,
-              result.improvedSection,
               sectionId,
-              schemaRegistry
+              itemsToMerge
             );
             
             set({ resumeData: updatedResumeData });

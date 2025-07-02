@@ -29,7 +29,7 @@ However, this approach consistently failed due to a strict validation rule in th
 
 To bypass this platform limitation, we inverted the responsibility. Instead of asking the AI to return a complex object that the platform struggles to validate, we ask it to return a **simple object containing a JSON-escaped string**.
 
-The end-to-end flow is as follows:
+The end-to-end flow, exemplified by `generateResumeFromContext`, is as follows:
 
 1.  **Dynamic Instruction Generation (`AIDataBridge.buildSchemaInstructions`)**:
     *   This method queries the `SchemaRegistry` to get all available section schemas.
@@ -58,9 +58,24 @@ The end-to-end flow is as follows:
     *   The validated, parsed `AIBridgedResume` object is passed to the `AIDataBridge`.
     *   The data bridge then performs its primary function: converting the AI-friendly format into the application's `ExtendedResumeData` format, creating section IDs, and adding necessary metadata.
 
-## 4. Architectural Benefits
+## 4. Generalization: Applying the Pattern to Other Flows
+
+The "JSON String Wrapper" is not a one-off fix; it is the **standard pattern** for any AI flow that needs to return a complex, dynamically-structured JSON object.
+
+### Example 2: `batchImproveSection` Flow
+
+Another critical use case is the `batchImproveSection` flow, which asks the AI to rewrite an entire resume section.
+
+1.  **The Challenge**: Just like resume generation, the output is a dynamic `AIBridgedSection` object, which would cause the same `400 Bad Request` error if requested directly.
+
+2.  **The Implementation**:
+    *   **Wrapper Schema**: We created `BatchImproveSectionOutputWrapperSchema`, which contains `improvedSectionJson: z.string()` and `improvementSummary: z.string()`.
+    *   **Prompt Instruction**: The `batchImproveSection.prompt` instructs the AI to place the modified section object into the `improvedSectionJson` field as a JSON-escaped string.
+    *   **Flow Logic**: The `batchImproveSectionFlow` receives the wrapper, parses `improvedSectionJson`, validates it against the internal `AIBridgedSectionSchema`, and then returns the structured, validated object.
+
+## 5. Architectural Benefits
 
 *   **Reliability**: This pattern completely bypasses the platform's problematic schema validation for dynamic objects, eliminating the `400 Bad Request` errors.
-*   **Decoupling**: The AI's *direct* output schema (`GeneratedResumeAsStringSchema`) is extremely simple and stable. All the complexity is handled within our own controlled environment (the AI flow and the data bridge).
+*   **Decoupling**: The AI's *direct* output schema (e.g., `GeneratedResumeAsStringSchema`) is extremely simple and stable. All the complexity is handled within our own controlled environment (the AI flow and the data bridge).
 *   **Clarity for the AI**: Providing the schema as plain-text instructions inside the prompt is often easier for an LLM to follow than relying on it to perfectly interpret a complex function-calling schema.
 *   **Maintained Principles**: We still adhere to our core principles. The AI Flow remains "pure" (it doesn't know about `ResumeData`), and the `AIDataBridge` is still the sole conversion layer. The `SchemaRegistry` remains the single source of truth for all structures. 

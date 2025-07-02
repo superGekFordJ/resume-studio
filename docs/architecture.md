@@ -31,9 +31,17 @@ src/
 │   └── page.tsx           # 主页面
 ├── components/            # React 组件
 │   ├── ui/               # 基础 UI 组件 (shadcn/ui)
+│   ├── ai/               # (新增;alpha阶段组件，没有实际调用) AI 相关组件
+│   │   └── completions/  # AI 补全功能组件
+│   │       ├── AICompletionsTextarea.tsx # AI 补全文本框
+│   │       └── types.ts  # AI 补全类型定义
 │   ├── layout/           # 布局组件
 │   │   ├── Header.tsx           # 应用头部
-│   │   └── SidebarNavigator.tsx # 两阶段侧边栏导航器
+│   │   ├── Logo.tsx             # (新增) 应用Logo组件
+│   │   ├── SettingsPanel.tsx    # 设置面板
+│   │   ├── SidebarNavigator.tsx # 两阶段侧边栏导航器
+│   │   └── upload/              # 上传相关组件
+│   │       └── ImageUploadArea.tsx # 图片上传区域
 │   └── resume/           # 简历相关组件 (重组后)
 │       ├── canvas/             # 画布相关组件
 │       │   ├── ResumeCanvas.tsx      # 简历画布
@@ -42,20 +50,29 @@ src/
 │       │   ├── SectionEditor.tsx     # 章节编辑器
 │       │   ├── PersonalDetailsEditor.tsx # 个人信息编辑器
 │       │   ├── SectionItemEditor.tsx # 章节项目编辑器
-│       │   ├── AIFieldWrapper.tsx    # AI字段包装器
+│       │   ├── AIFieldWrapper.tsx    # AI字段包装器 (重构)
 │       │   ├── SectionManager.tsx    # 章节管理器
 │       │   └── DynamicFieldRenderer.tsx # 动态字段渲染器
 │       ├── rendering/          # 原子渲染组件
 │       │   ├── pro-classic/      # ProClassic 模板专用组件
+│       │   ├── AdvancedSkillsComponent.tsx # 高级技能组件
 │       │   ├── BadgeListComponent.tsx   # 徽章列表组件
+│       │   ├── CertificationItemComponent.tsx # 认证项目组件
+│       │   ├── ProjectItemComponent.tsx # 项目项目组件
 │       │   ├── SimpleListComponent.tsx  # 简单列表组件
 │       │   ├── TitledBlockComponent.tsx # 标题块组件
 │       │   └── SingleTextComponent.tsx  # 单文本组件
 │       ├── templates/          # 模板组件
 │       │   ├── DefaultTemplate.tsx   # 默认模板
-│       │   └── ModernTemplate.tsx    # 现代模板组件
+│       │   ├── ModernTemplate.tsx    # 现代模板组件
+│       │   ├── CreativeTemplate.tsx  # 创意模板
+│       │   ├── ContinuousNarrativeTemplate.tsx # 连续叙述模板
+│       │   ├── ParallelModularTemplate.tsx # 并行模块模板
+│       │   └── ProClassicTemplate.tsx # 专业经典模板
 │       └── ui/                # UI 相关组件
 │           ├── AIReviewDialog.tsx    # AI 评审对话框
+│           ├── AISuggestionCard.tsx  # (新增) AI 建议卡片 - 单字段改进
+│           ├── BatchImprovementDialog.tsx # (重构) 批量改进对话框 - 手风琴布局
 │           ├── AutocompleteTextarea.tsx # 自动补全文本框
 │           ├── AvatarUploader.tsx    # 头像上传组件
 │           └── TemplateSelector.tsx  # 模板选择器
@@ -289,14 +306,42 @@ interface ResumeState {
   reviewContent: ReviewResumeOutput | null;
   isReviewLoading: boolean;
   
-  // 新增: AI 改进状态
-  aiImprovement: {
-    uniqueFieldId: string;
-    suggestion: string;
-    originalText: string;
-  } | null;
-  isImprovingFieldId: string | null;
-  aiPrompt: string;
+  // AI 改进系统 v3 - 基于卡片/对话框的审查流程
+  batchImprovementReview: BatchImprovementReview | null;
+  singleFieldImprovementReview: SingleFieldImprovementReview | null;
+
+  aiPrompt: string; // 通用AI提示词
+  aiConfig: AIConfig;
+  
+  // 已移除: 旧的强制建议流程 (v2)
+  // SingleFieldImproveDialog.tsx 已删除
+  // 相关 store 状态已清理
+}
+
+interface BatchImprovementReview {
+  sectionId: string;
+  isLoading: boolean;
+  improvedItems: Array<{
+    id: string;
+    originalData: any;
+    improvedData: any;
+    isSelected: boolean; // 用户是否选中此项改进
+  }>;
+  summary: string;
+}
+
+interface SingleFieldImprovementReview {
+  sectionId: string;
+  itemId?: string;
+  fieldId: string;
+  isPersonalDetails: boolean;
+  isLoading: boolean;
+  originalValue: string;
+  improvedValue: string;
+  fieldContext: {
+    label: string;
+    placeholder?: string;
+  };
 }
 
 interface ResumeActions {
@@ -306,17 +351,31 @@ interface ResumeActions {
   setSelectedTemplateId: (templateId: string) => void;
   setEditingTarget: (target: string | null) => void;
   
-  // 新增: 数据操作
+  // 数据操作
   updateField: (payload: { sectionId: string; itemId?: string; fieldId: string; value: any; isPersonalDetails?: boolean }) => void;
   updateSectionTitle: (payload: { sectionId: string; newTitle: string }) => void;
   addSectionItem: (sectionId: string) => void;
   removeSectionItem: (payload: { sectionId: string; itemId: string }) => void;
   
-  // 新增: AI 改进操作
+  // AI 改进操作 v3
   setAIPrompt: (prompt: string) => void;
-  startAIImprovement: (payload: { sectionId: string; itemId?: string; fieldId: string; currentValue: string; uniqueFieldId: string; isPersonalDetails?: boolean }) => Promise<void>;
-  acceptAIImprovement: () => void;
-  rejectAIImprovement: () => void;
+  
+  // 批量改进流程
+  startBatchImprovement: (sectionId: string, prompt: string) => Promise<void>;
+  acceptBatchImprovement: (itemsToAccept: Array<{id: string, data: any}>) => void;
+  rejectBatchImprovement: () => void;
+  
+  // 单字段改进流程
+  startSingleFieldImprovement: (payload: {
+    sectionId: string;
+    itemId?: string;
+    fieldId: string;
+    currentValue: string;
+    prompt: string;
+    isPersonalDetails?: boolean;
+  }) => Promise<void>;
+  acceptSingleFieldImprovement: () => void;
+  rejectSingleFieldImprovement: () => void;
 }
 ```
 
@@ -344,7 +403,7 @@ interface ResumeActions {
 - 保持向后兼容性的同时，自动绑定到 Store Actions
 
 ### 4. 扩展性
-- **添加新章节**: 只需在 `schemaRegistry.ts` 中定义一个新的 `SectionSchema` 并注册对应的 `ContextBuilderFunction`，UI 无需任何修改即可支持新章节的编辑和 AI 功能。
+- **添加新章节**: 只需在 `defaultSchemas.ts` 中定义一个新的 `SectionSchema` 并注册对应的 `ContextBuilderFunction`，UI 无需任何修改即可支持新章节的编辑和 AI 功能。
 - **添加新AI功能**: 只需创建一个新的 AI Flow，并在 `FieldSchema.aiHints.contextBuilders` 中为新功能添加一个 `contextBuilder` ID。
 - **添加新模板**: 创建新的模板组件，可以自由选择接受或覆写默认渲染建议。
 - **添加新渲染样式**: 创建新的原子渲染组件，在 Schema 中指定为默认，或在模板中作为覆写选项。

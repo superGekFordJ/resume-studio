@@ -38,10 +38,11 @@ Resume Text:
 {{{resumeText}}}
 
 Respond in a professional and helpful tone.`,
+  model: 'googleai/gemini-2.5-flash-lite-06-17',
   config: {
-    temperature: 0.3,
+    temperature: 0.2,
     maxOutputTokens: 2048,
-    topP: 0.95
+    topP: 0.9
   }
 });
 

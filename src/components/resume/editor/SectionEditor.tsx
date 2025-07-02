@@ -2,14 +2,14 @@
 "use client";
 
 import type { ChangeEvent } from 'react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { PersonalDetails } from "@/types/resume";
 import type { DynamicResumeSection } from '@/types/schema';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { PlusCircle, Save } from "lucide-react";
+import { PlusCircle, Save, Sparkles } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from '@/hooks/use-toast';
 import { SchemaRegistry } from '@/lib/schemaRegistry';
@@ -30,6 +30,11 @@ export default function SectionEditor({}: SectionEditorProps) {
   const editingTarget = useResumeStore(state => state.editingTarget);
   const isAutocompleteEnabled = useResumeStore(state => state.isAutocompleteEnabled);
   const toggleAutocomplete = useResumeStore(state => state.toggleAutocomplete);
+  const startBatchImprovement = useResumeStore(state => state.startBatchImprovement);
+  const batchReview = useResumeStore(state => state.batchImprovementReview);
+  
+  // Local state for batch improvement prompt
+  const [batchPrompt, setBatchPrompt] = useState('');
   
   // Get data manipulation actions from store
   const updateSectionTitle = useResumeStore(state => state.updateSectionTitle);
@@ -85,6 +90,32 @@ export default function SectionEditor({}: SectionEditorProps) {
   const handleSaveChanges = () => {
     toast({ title: "Changes Saved", description: "Your resume has been updated." });
     // Note: Changes are already saved in the store immediately, this is just for user feedback
+  };
+
+  const handleBatchImprove = async () => {
+    if (!currentEditingData || !('id' in currentEditingData) || !batchPrompt.trim()) {
+      toast({ 
+        variant: "destructive", 
+        title: "Invalid Request", 
+        description: "Please enter a prompt for batch improvement." 
+      });
+      return;
+    }
+
+    const section = currentEditingData as DynamicResumeSection;
+    const sectionSchema = schemaRegistry.getSectionSchema(section.schemaId);
+    
+    if (!sectionSchema?.aiContext?.batchImprovementSupported) {
+      toast({ 
+        variant: "destructive", 
+        title: "Not Supported", 
+        description: "Batch improvement is not supported for this section type." 
+      });
+      return;
+    }
+
+    await startBatchImprovement(section.id, batchPrompt);
+    setBatchPrompt(''); // Clear prompt after starting
   };
 
   if (!currentEditingData) {
@@ -158,15 +189,44 @@ export default function SectionEditor({}: SectionEditorProps) {
       <div className="flex flex-row items-center justify-between py-3 px-4 border-b bg-background flex-shrink-0">
         <h2 className="font-headline text-lg font-semibold text-primary">{editorTitle}</h2>
         {editingTarget !== 'personalDetails' && (
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="autocomplete-toggle-nav"
-              className="autocomplete-toggle-switch"
-              checked={isAutocompleteEnabled}
-              onCheckedChange={toggleAutocomplete}
-              aria-label="Toggle Autocomplete"
-            />
-            <Label htmlFor="autocomplete-toggle-nav" className="text-xs cursor-pointer">AI 自动补全</Label>
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="autocomplete-toggle-nav"
+                className="autocomplete-toggle-switch"
+                checked={isAutocompleteEnabled}
+                onCheckedChange={toggleAutocomplete}
+                aria-label="Toggle Autocomplete"
+              />
+              <Label htmlFor="autocomplete-toggle-nav" className="text-xs cursor-pointer">AI 自动补全</Label>
+            </div>
+            
+            {/* Batch Improvement Controls */}
+            {currentEditingData && 'schemaId' in currentEditingData && (() => {
+              const section = currentEditingData as DynamicResumeSection;
+              const sectionSchema = schemaRegistry.getSectionSchema(section.schemaId);
+              return sectionSchema?.aiContext?.batchImprovementSupported && (
+                <div className="flex items-center space-x-2">
+                  <Input
+                    placeholder="输入改进提示 (如: 更简洁)"
+                    value={batchPrompt}
+                    onChange={(e) => setBatchPrompt(e.target.value)}
+                    className="text-xs h-8 w-40"
+                    disabled={!!batchReview?.isLoading}
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleBatchImprove}
+                    disabled={!batchPrompt.trim() || !!batchReview?.isLoading}
+                    className="text-xs h-8 px-2"
+                  >
+                    <Sparkles size={12} className="mr-1" />
+                    {batchReview?.isLoading ? '改进中...' : '批量改进'}
+                  </Button>
+                </div>
+              );
+            })()}
           </div>
         )}
       </div>

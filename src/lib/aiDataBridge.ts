@@ -214,34 +214,40 @@ ${fieldDefinitions.join(',\n')}
   /**
    * Merge an improved section back into the resume data
    * @param originalResume The original resume data
-   * @param improvedSection The AI-improved section
    * @param sectionId The ID of the section to update
-   * @param registry SchemaRegistry instance
+   * @param itemsToMerge An array of items to update, each with an ID and new data
    * @returns Updated resume data with improved section
    */
   static mergeImprovedSection(
     originalResume: ResumeData,
-    improvedSection: AIBridgedSection,
     sectionId: string,
-    registry: SchemaRegistry
+    itemsToMerge: { id: string, data: Record<string, any> }[]
   ): ResumeData {
+    const itemsToMergeMap = new Map(itemsToMerge.map(item => [item.id, item.data]));
+
+    if (itemsToMergeMap.size === 0) {
+      return originalResume; // No changes to apply
+    }
+
     const updatedSections = originalResume.sections.map(section => {
       if (section.id !== sectionId) return section;
       
-      const sectionSchema = registry.getSectionSchema(section.schemaId);
-      if (!sectionSchema) return section;
+      const dynamicSection = section as DynamicResumeSection;
       
       // Map improved items back to original items
-      const updatedItems = section.items.map((originalItem: DynamicSectionItem, index: number) => {
-        const improvedItem = improvedSection.items[index];
-        if (!improvedItem) return originalItem;
+      const updatedItems = dynamicSection.items.map((originalItem) => {
+        const improvedData = itemsToMergeMap.get(originalItem.id);
+        
+        if (!improvedData) {
+            return originalItem; // This item was not staged for improvement
+        }
         
         // Merge improved data with original, preserving metadata
         return {
           ...originalItem,
           data: {
             ...originalItem.data,
-            ...improvedItem
+            ...improvedData
           },
           metadata: {
             ...originalItem.metadata,
@@ -253,7 +259,11 @@ ${fieldDefinitions.join(',\n')}
       
       return {
         ...section,
-        items: updatedItems
+        items: updatedItems,
+        metadata: {
+            ...section.metadata,
+            aiOptimized: true,
+        }
       };
     });
     

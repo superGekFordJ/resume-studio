@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'A4 Resume Studio',
+  title: 'Resume Studio',
   description: 'Create professional resumes with AI assistance.',
 };
 

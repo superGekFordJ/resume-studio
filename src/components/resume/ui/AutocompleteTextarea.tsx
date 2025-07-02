@@ -60,8 +60,8 @@ export default function AutocompleteTextarea({
       return "";
     }
 
-    // Guard: Do not suggest if autocomplete is disabled, if there's a forced suggestion from AI Improve, or if there's no text.
-    if (!isAutocompleteEnabledGlobally || forcedSuggestion || !data.textBeforeCursor.trim()) {
+    // Guard: Do not suggest if autocomplete is disabled or if there's no text.
+    if (!isAutocompleteEnabledGlobally || !data.textBeforeCursor.trim()) {
       return "";
     }
     
@@ -111,51 +111,21 @@ export default function AutocompleteTextarea({
 
   const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
-    
-    // If there's a forced suggestion and user starts typing, reject it
-    if (forcedSuggestion && newValue !== forcedSuggestion && onForcedSuggestionRejected) {
-      onForcedSuggestionRejected();
-    }
-    
     onValueChange(newValue);
   };
 
-  // This handler deals with two distinct scenarios for the Tab key:
-  // 1. When a `forcedSuggestion` (from AI Improve) is active.
-  // 2. When the user accepts a regular inline (ghost text) suggestion.
-
-  // Scenario 1: Handle forced suggestions (e.g., from "Improve with AI")
+  // SIMPLIFIED: Only handle regular inline (ghost text) suggestions
   const handleKeyDown = (event: any) => {
-    if (forcedSuggestion && event.key) {
-      if (event.key === 'Tab') {
-        event.preventDefault?.(); // Prevent focus change
-        onValueChange(forcedSuggestion);
-        if (onForcedSuggestionAccepted) {
-          onForcedSuggestionAccepted();
-        }
-        return;
-      }
-      if (event.key === 'Escape') {
-        event.preventDefault?.(); // Prevent other actions
-        if (onForcedSuggestionRejected) {
-          onForcedSuggestionRejected();
-        }
-        return;
-      }
-    }
-
-    // Scenario 2: Handle regular inline suggestions.
-    // We set a ref flag here because it's synchronous. State updates are too slow
-    // and cannot prevent the immediate re-trigger of `createSuggestion`.
-    if (!forcedSuggestion && event.key === 'Tab') {
+    // Handle regular inline suggestions with Tab key
+    if (event.key === 'Tab') {
       suggestionJustAccepted.current = true;
       console.log(`[${new Date().toISOString()}] --- AutocompleteTextarea: Tab pressed for INLINE suggestion. Setting block flag.`);
     }
   };
 
-  // The component correctly prioritizes displaying the `forcedSuggestion` from AI Improve.
-  const displayValue = forcedSuggestion || value;
-  const isDisplayingForcedSuggestion = !!forcedSuggestion;
+  // UPDATED: No longer display forcedSuggestion - use dialog-based approach instead
+  const displayValue = value; // Always use the actual value
+  const isDisplayingForcedSuggestion = false; // Never display forced suggestions in textarea
 
   return (
     <div className="relative w-full">
@@ -184,12 +154,7 @@ export default function AutocompleteTextarea({
         rows={props.rows}
         cols={props.cols}
       />
-      {/* The UI hint for `forcedSuggestion` is a simple "Tab" text.
-          A known issue is that there is no equivalent hint for accepting regular inline suggestions.
-          See: docs/FIXES_SUMMARY.md */}
-      {isDisplayingForcedSuggestion && (
-        <span className="absolute top-1.5 right-2 text-xs text-muted-foreground/90 opacity-70 select-none pointer-events-none">Tab</span>
-      )}
+      {/* REMOVED: forcedSuggestion UI hint - now using dialog-based approach */}
     </div>
   );
 }

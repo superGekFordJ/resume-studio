@@ -1,6 +1,6 @@
 ---
 # 为此 prompt 指定的 AI 模型。
-model: googleai/gemini-2.5-pro
+model: googleai/gemini-2.5-flash
 
 # 定义此 prompt 模板所需的输入变量。
 # `schema` 指向一个已注册的 Zod schema 名称。
@@ -10,7 +10,7 @@ input:
 # 定义 AI 响应的预期结构。
 # `schema` 指向一个已注册的 Zod schema 名称。
 output:
-  schema: BatchImproveSectionOutputSchemaV2
+  schema: BatchImproveSectionOutputWrapperSchema
 ---
 You are an expert resume writer helping to improve an entire resume section comprehensively.
 
@@ -49,4 +49,14 @@ Item {{@index}}:
 7. Keep the same structure: same schemaId, same number of items, same fields within each item
 8. Ensure all improvements work together cohesively
 
-Return the improved section with the exact same structure (schemaId and items array), plus a summary of improvements made. 
+**CRITICAL OUTPUT FORMAT:**
+Return the improved section as a JSON-escaped string in the 'improvedSectionJson' field. The JSON object inside the string must have this structure:
+{
+  "schemaId": "<same schemaId as input>",
+  "items": [
+    { <item fields> },
+    ...
+  ]
+}
+
+The 'improvementSummary' field should contain a plain text summary of the changes made. 
