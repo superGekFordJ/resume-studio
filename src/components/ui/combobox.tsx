@@ -102,7 +102,7 @@ export function Combobox({
    */
   const getSuggestion = React.useCallback(async (text: string): Promise<string> => {
     if (!enableGhostText) return ""
-
+    
     const trimmed = text.trim()
     if (!trimmed) return ""
 

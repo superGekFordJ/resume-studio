@@ -13,6 +13,7 @@ import {
   AIBridgedSectionSchema,
   ComprehensiveResumeAnalysisInputSchema,
   ComprehensiveResumeAnalysisOutputSchema,
+  BatchImproveSectionOutputWrapperSchema,
 } from '../prompts/schemas';
 
 // Define input and output schemas locally (not exported) to avoid Next.js export restrictions
@@ -58,15 +59,34 @@ const batchImproveSectionFlow = ai.defineFlow(
     outputSchema: BatchImproveSectionOutputSchema,
   },
   async input => {
+    // Call the prompt expecting the wrapper schema
     const prompt = ai.prompt<
       typeof BatchImproveSectionInputSchema,
-      typeof BatchImproveSectionOutputSchema
+      typeof BatchImproveSectionOutputWrapperSchema
     >('batchImproveSection');
-    const { output } = await prompt(input);
-    if (!output) {
+    
+    const { output: wrappedOutput } = await prompt(input);
+    
+    if (!wrappedOutput?.improvedSectionJson) {
       throw new Error('Batch Improve Section failed to produce an output.');
     }
-    return output;
+    
+    try {
+      // Parse the JSON string from the wrapper
+      const parsedSection = JSON.parse(wrappedOutput.improvedSectionJson);
+      
+      // Validate the parsed object against our internal schema
+      const validatedSection = AIBridgedSectionSchema.parse(parsedSection);
+      
+      // Return the final output matching the flow's expected schema
+      return {
+        improvedSection: validatedSection,
+        improvementSummary: wrappedOutput.improvementSummary,
+      };
+    } catch (error) {
+      console.error('Failed to parse or validate improved section:', error);
+      throw new Error('Failed to parse AI-generated improvements. Please try again.');
+    }
   }
 );
 

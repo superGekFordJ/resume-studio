@@ -97,6 +97,15 @@ export const BatchImproveSectionOutputSchema = ai.defineSchema(
   })
 );
 
+// NEW: Wrapper schema for batch improvement to avoid 400 errors with dynamic JSON
+export const BatchImproveSectionOutputWrapperSchema = ai.defineSchema(
+  'BatchImproveSectionOutputWrapperSchema',
+  z.object({
+    improvedSectionJson: z.string().describe("The improved section data as a single, JSON-escaped string containing the AIBridgedSection structure."),
+    improvementSummary: z.string().describe("A summary of the changes made."),
+  })
+);
+
 export const ComprehensiveResumeAnalysisInputSchema = ai.defineSchema(
   'ComprehensiveResumeAnalysisInputSchema',
   z.object({

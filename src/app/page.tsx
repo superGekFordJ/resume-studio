@@ -9,6 +9,7 @@ import SectionEditor from '@/components/resume/editor/SectionEditor';
 import SectionManager from '@/components/resume/editor/SectionManager';
 import SidebarNavigator from '@/components/layout/SidebarNavigator';
 import AIReviewDialog from '@/components/resume/ui/AIReviewDialog';
+import BatchImprovementDialog from '@/components/resume/ui/BatchImprovementDialog';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { PanelRightOpen } from 'lucide-react';
@@ -132,6 +133,7 @@ export default function ResumeStudioPage() {
       </div>
 
       <AIReviewDialog />
+      <BatchImprovementDialog />
 
        <div className="fixed bottom-4 left-4 z-50 md:hidden no-print">
          {!isLeftPanelOpen && (

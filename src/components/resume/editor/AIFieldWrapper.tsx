@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Sparkles } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import AutocompleteTextarea from '@/components/resume/ui/AutocompleteTextarea';
+import AISuggestionCard from '@/components/resume/ui/AISuggestionCard';
 import { cn } from "@/lib/utils";
 import { useResumeStore } from '@/stores/resumeStore';
 import type { DynamicResumeSection, DynamicSectionItem } from '@/types/schema';
@@ -50,34 +51,48 @@ export default function AIFieldWrapper({
 }: AIFieldWrapperProps) {
   const { toast } = useToast();
   
-  // Get AI improvement state and actions from store
+  // NEW: Get dialog-based improvement state and actions from store
+  const singleFieldReview = useResumeStore(state => state.singleFieldImprovementReview);
+  const startSingleFieldImprovement = useResumeStore(state => state.startSingleFieldImprovement);
+  const acceptSingleFieldImprovement = useResumeStore(state => state.acceptSingleFieldImprovement);
+  const rejectSingleFieldImprovement = useResumeStore(state => state.rejectSingleFieldImprovement);
+  
+  // DEPRECATED: Get old AI improvement state for backward compatibility
   const aiImprovement = useResumeStore(state => state.aiImprovement);
   const isImprovingFieldId = useResumeStore(state => state.isImprovingFieldId);
-  const aiPrompt = useResumeStore(state => state.aiPrompt);
-  const setAIPrompt = useResumeStore(state => state.setAIPrompt);
-  const startAIImprovement = useResumeStore(state => state.startAIImprovement);
   const acceptAIImprovement = useResumeStore(state => state.acceptAIImprovement);
   const rejectAIImprovement = useResumeStore(state => state.rejectAIImprovement);
   
-  // Check if this field has an active AI suggestion or is being improved
+  // Local state for improvement prompt
+  const [improvementPrompt, setImprovementPrompt] = React.useState('');
+  
+  // Check if this field has an active AI suggestion or is being improved (DEPRECATED)
   const hasAISuggestion = aiImprovement?.uniqueFieldId === uniqueFieldId;
   const isImproving = isImprovingFieldId === uniqueFieldId;
   const forcedSuggestion = hasAISuggestion ? aiImprovement.suggestion : null;
   
+  // Check if this field has an active suggestion card
+  const hasActiveSuggestionCard = singleFieldReview?.uniqueFieldId === uniqueFieldId;
+  const isImprovingInDialog = hasActiveSuggestionCard && singleFieldReview.isLoading;
+  
   const handleImproveWithAI = async () => {
-    if (!aiPrompt.trim()) {
+    if (!improvementPrompt.trim()) {
       toast({ variant: "destructive", title: "AI Prompt Empty", description: "Please provide a prompt for the AI." });
       return;
     }
     
-    await startAIImprovement({
+    await startSingleFieldImprovement({
+      uniqueFieldId,
       sectionId,
       itemId,
       fieldId,
       currentValue: value,
-      uniqueFieldId,
+      prompt: improvementPrompt,
       isPersonalDetails
     });
+    
+    // Clear the prompt after triggering improvement
+    setImprovementPrompt('');
   };
   
   // Extract field name from uniqueFieldId for AutocompleteTextarea
@@ -104,27 +119,41 @@ export default function AIFieldWrapper({
         isAutocompleteEnabledGlobally={isAutocompleteEnabled}
         itemId={itemId}
       />
+      
       {/* AI Improvement UI */}
       <div className="flex items-center gap-2 mt-1">
         <Input
           type="text"
           placeholder="AI Prompt (e.g., make it more concise)"
-          value={aiPrompt}
-          onChange={(e) => setAIPrompt(e.target.value)}
+          value={improvementPrompt}
+          onChange={(e) => setImprovementPrompt(e.target.value)}
           className="text-xs flex-grow h-8"
-          disabled={isImproving || hasAISuggestion}
+          disabled={isImproving || hasAISuggestion || isImprovingInDialog}
         />
         <Button
           variant="outline"
           size="sm"
           onClick={handleImproveWithAI}
-          disabled={isImproving || !aiPrompt.trim() || hasAISuggestion}
+          disabled={isImproving || !improvementPrompt.trim() || hasAISuggestion || isImprovingInDialog}
           className="text-xs h-8 px-2 py-1"
         >
           <Sparkles size={14} className="mr-1" />
-          {isImproving ? 'Improving...' : (hasAISuggestion ? 'Suggested' : 'Improve')}
+          {isImproving || isImprovingInDialog ? 'Improving...' : (hasAISuggestion ? 'Suggested' : 'Improve')}
         </Button>
       </div>
+      
+      {/* NEW: Inline AI Suggestion Card */}
+      {hasActiveSuggestionCard && (
+        <AISuggestionCard
+          originalValue={singleFieldReview.originalText}
+          suggestedValue={singleFieldReview.improvedText}
+          isLoading={singleFieldReview.isLoading}
+          fieldName={label}
+          prompt={singleFieldReview.prompt}
+          onAccept={acceptSingleFieldImprovement}
+          onReject={rejectSingleFieldImprovement}
+        />
+      )}
     </div>
   );
 } 

@@ -84,10 +84,11 @@ if (!apiKeyToUse && process.env.NODE_ENV === 'development') {
 
 ### 3. Zustand Store 作为 AI 交互的中介 (Updated 2025-06-23)
 
-- **重要更新**: 随着 `SectionEditor` 的重构，所有 AI 交互现在通过 `resumeStore` 进行协调。
-- UI 组件不再直接调用 AI 服务，而是派发 Store Actions（如 `startAIImprovement`）。
+- **重要更新**: 所有 AI 交互现在通过 `resumeStore` 进行协调。
+- UI 组件不再直接调用 AI 服务，而是派发 Store Actions（如 `startSingleFieldImprovement`）。
 - Store Actions 负责调用 `SchemaRegistry` 构建上下文，执行 AI 调用，并更新状态。
-- UI 组件只需订阅相关状态（如 `aiImprovement`）并进行渲染。
+- UI 组件只需订阅相关状态（如 `singleFieldImprovementReview`）并进行渲染。
+
 
 ### 4. 标准化的数据流 (Enhanced with Global Context)
 
@@ -137,96 +138,87 @@ if (!apiKeyToUse && process.env.NODE_ENV === 'development') {
 
 关键实现细节：
 
--   **适配器模式**: 该组件作为 `copilot-react-kit` 的一个"智能包装器"或适配器。它保持了一个与旧组件几乎完全相同的 props 接口，确保了与调用方（如 `AIFieldWrapper.tsx`）的向后兼容性。
--   **"热路径"调用**: 为了将延迟降至最低，该组件**不通过Zustand Store**来发起AI调用。相反，它的 `createSuggestion` 函数会：
-    1.  同步地从 `SchemaRegistry` 请求构建AI上下文。
-    2.  直接 `await` 调用 `autocompleteInput` 这个Genkit Flow。
-    3.  将返回的建议直接用于UI渲染。
--   **防抖机制**: 组件利用 `copilot-react-kit` 原生的 `debounceTime` prop 来控制 AI 建议的请求频率，防止了不必要的 API 调用。
--   **竞态条件处理**: 使用一个基于 `useRef` 的标志 (`suggestionJustAccepted`) 来解决一个关键的时序问题。当用户使用 `Tab` 键接受一个内联建议时，该标志会被立即设置。这可以防止组件因文本变化而触发冗余的、二次的 API 调用。
--   **双重建议系统**: 组件无缝地处理两种类型的建议：
-    1.  **内联自动补全**: 由组件的 `createSuggestionFunction` 提供的标准"幽灵文本"。
-    2.  **强制建议**: 从 Zustand store 通过 `forcedSuggestion` prop 传递下来的 AI *改进*建议。组件会正确地优先显示强制建议，并通过一个专用的 `onKeyDown` 处理器来处理它们的接受 (`Tab`) 和拒绝 (`Escape`) 操作。
+-   **适配器模式**: 该组件作为 `copilot-react-kit` 的一个"智能包装器"。
+-   **"热路径"调用**: 为了将延迟降至最低，该组件**不通过Zustand Store**来发起AI调用，而是直接 `await` 调用 `autocompleteInput` 这个Genkit Flow。
+-   **防抖机制**: 组件利用 `copilot-react-kit` 原生的 `debounceTime` prop 来控制 AI 建议的请求频率。
+-   **竞态条件处理**: 使用一个基于 `useRef` 的标志 (`suggestionJustAccepted`) 来解决用户接受建议时可能触发冗余调用的问题。
+-   **v3 简化**: 随着 v3 改进系统的实施，旧的、基于 `forcedSuggestion` prop 的**双重建议系统已被移除**。组件现在只专注于处理其自身的内联自动补全逻辑，代码更简洁、职责更单一。
 
 关于此组件当前的局限性和未来的改进，请参阅 `docs/FIXES_SUMMARY.md` 文档。
 
-### 2. 内容改进 (Content Improvement) - 冷路径标准流程
+### 2. 内容改进与批量改进 (v3) - 冷路径标准流程
 
-内容改进功能遵循标准的**"冷路径"**数据流，所有交互都由 Zustand store 协调。
+内容改进功能已完全重构，以提供更流畅、干扰性更低的用户体验。它现在分为两种独立的、专门设计的交互模式。
 
-#### 实现位置
-- **Flow**: `src/ai/flows/improve-resume-section.ts`
-- **Store**: `src/stores/resumeStore.ts` (在 `startAIImprovement` action 中)
-- **UI**: `src/components/resume/editor/AIFieldWrapper.tsx`
+#### 场景 1: 单字段改进 (Inline Suggestion Card)
 
-#### 输入参数 (Zod Schema in Flow)
+-   **目标**: 针对单个文本字段进行快速、上下文内的优化。
+-   **UI**: 不再使用模态框。AI 建议会通过一个**内联卡片 (`AISuggestionCard`)** 直接显示在被编辑字段的下方。
+-   **流程**:
+    1.  用户在 `AIFieldWrapper` 中输入提示，点击 "Improve"。
+    2.  `resumeStore` 的 `startSingleFieldImprovement` action 被调用。
+    3.  `singleFieldImprovementReview` 状态被更新，UI 出现加载指示。
+    4.  AI 返回结果后，状态再次更新，`AISuggestionCard` 显示差异对比。
+    5.  用户点击 "Apply" 或 "Dismiss"，调用相应的 store action 来应用更改或关闭卡片。
 
-`improve-resume-section` Flow 的输入 Schema 接收一个统一的 `context` 对象。
+#### 场景 2: 章节批量改进 (Collapsible Review Dialog)
 
-```typescript
-// in improve-resume-section.ts
-const InputSchema = z.object({
-  // ... other fields like prompt
-  
-  context: z.object({
-    currentItemContext: z.string(), // The specific context for the item being edited.
-    otherSectionsContext: z.string(), // A summary of all other sections.
-    userJobTitle: z.string().optional(), // The user's target job title.
-  }).describe('Structured context from SchemaRegistry'),
-  
-  // Optional field for backward compatibility or UI hints
-  sectionType: z.string().optional(), 
-});
-```
+-   **目标**: 对整个章节（如所有工作经历）进行全面、一致的优化。
+-   **UI**: 使用一个增强的**模态对话框 (`BatchImprovementDialog`)** 提供专用的审查环境。
+-   **流程**:
+    1.  用户在 `SectionEditor` 顶部输入提示，点击 "批量改进"。
+    2.  `resumeStore` 的 `startBatchImprovement` action 被调用。
+    3.  `batchImprovementReview` 状态被更新，UI 显示加载中的对话框。
+    4.  AI 返回结果后，对话框内容被填充。
+    5.  UI 内部使用**可折叠的手风琴布局**来展示每个条目的差异。用户可以使用**复选框**来选择性地接受个别改进。
+    6.  用户点击 "Accept Improvements (N)"，调用 `acceptBatchImprovement` action，仅传递被选中的项目。
 
-#### Store Action 调用示例
+#### Store Action 调用示例 (v3)
 
 ```typescript
-// In resumeStore.ts
+// In resumeStore.ts (simplified example)
 
-startAIImprovement: async (payload) => {
-  const { sectionId, itemId, fieldId, currentValue, uniqueFieldId, isPersonalDetails } = payload;
-  
-  // 设置加载状态
-  set({ isImprovingFieldId: uniqueFieldId });
-  
+// 单字段
+startSingleFieldImprovement: async (payload) => {
+  set({ singleFieldImprovementReview: { ...payload, isLoading: true } });
   try {
-    const state = get();
-    const schemaRegistry = SchemaRegistry.getInstance();
-    
-    // 构建 AI 上下文
-    const contextPayload: AIContextPayload = {
-      resumeData: state.resumeData,
-      task: 'improve',
-      sectionId,
-      fieldId,
-      itemId,
-    };
-    
-    const context = schemaRegistry.buildAIContext(contextPayload);
-    
-    // 调用 AI Flow
-    const { improveResumeSection } = await import('@/ai/flows/improve-resume-section');
-    const result = await improveResumeSection({
-      resumeSection: currentValue,
-      prompt: state.aiPrompt,
-      context: context,
-      sectionType: isPersonalDetails ? 'personalDetailsField' : undefined
-    });
-    
-    // 更新状态
-    set({
-      aiImprovement: {
-        uniqueFieldId,
-        suggestion: result.improvedResumeSection,
-        originalText: currentValue
-      },
-      isImprovingFieldId: null
-    });
-  } catch (error) {
-    console.error("AI improvement error:", error);
-    set({ isImprovingFieldId: null });
+    const improvedText = await schemaRegistry.improveField(...);
+    set(state => ({
+      singleFieldImprovementReview: { 
+        ...state.singleFieldImprovementReview, 
+        improvedText, 
+        isLoading: false 
+      }
+    }));
+  } catch (e) {
+    set({ singleFieldImprovementReview: null });
   }
+},
+
+// 批量
+startBatchImprovement: async (sectionId, prompt) => {
+  set({ batchImprovementReview: { sectionId, isLoading: true, ... } });
+  try {
+    const result = await batchImproveSectionFlow(...);
+    set(state => ({
+      batchImprovementReview: {
+        ...state.batchImprovementReview,
+        improvedItems: result.improvedSection.items,
+        isLoading: false
+      }
+    }));
+  } catch(e) {
+    set({ batchImprovementReview: null });
+  }
+},
+
+acceptBatchImprovement: (itemsToAccept) => {
+  const updatedData = AIDataBridge.mergeImprovedSection(
+    get().resumeData,
+    get().batchImprovementReview.sectionId,
+    itemsToAccept
+  );
+  set({ resumeData: updatedData, batchImprovementReview: null });
 }
 ```
 
