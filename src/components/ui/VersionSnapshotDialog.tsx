@@ -10,8 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useResumeStore } from '@/stores/resumeStore';
 import { Calendar, History, Save, RotateCcw, Trash2, Edit2, Check, X } from "lucide-react";
 import { useState } from "react";
@@ -104,7 +103,7 @@ export default function VersionSnapshotDialog({ open, onOpenChange }: VersionSna
           </div>
         </div>
 
-        <ScrollArea className="flex-1 px-6">
+        <ScrollArea className="flex-1 px-6 overflow-y-auto">
           <div className="py-4 space-y-3">
             {versionSnapshots.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">
@@ -194,6 +193,7 @@ export default function VersionSnapshotDialog({ open, onOpenChange }: VersionSna
               ))
             )}
           </div>
+          <ScrollBar />
         </ScrollArea>
 
         <DialogFooter className="px-6 pb-6 pt-4 border-t flex-shrink-0">
