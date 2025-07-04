@@ -29,11 +29,12 @@ Current item being edited:
 {{#if sectionType}}Section type: {{sectionType}}{{/if}}
 {{context.currentItemContext}}
 
+Being edited text (with cursor position marked by <CURSOR>):
+{{{inputText}}}<CURSOR(The user is typing, stop the cursor here. Adjust yourself to the user's style and implied intent.)>{{{textAfterCursor}}}
+
+
 Other sections in resume:
 {{context.otherSectionsContext}}
-
-User's current text (with cursor position marked by <CURSOR>):
-{{{inputText}}}<CURSOR(The user is typing, stop the cursor here. Adjust yourself to the user's style and implied intent.)>{{{textAfterCursor}}}
 
 Instructions:
 1. Read the text before and after <CURSOR> together with the provided context.

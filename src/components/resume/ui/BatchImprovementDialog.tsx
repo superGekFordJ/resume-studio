@@ -131,31 +131,73 @@ function ItemDiff({ original, improved, index, isChecked, onCheckedChange }: Ite
                 styles={{
                   variables: {
                     light: {
-                      codeFoldGutterBackground: '#f8f9fa',
-                      codeFoldBackground: '#f1f3f4',
-                      diffViewerBackground: '#ffffff',
-                      addedBackground: '#e6ffec',
-                      addedColor: '#24292e',
-                      removedBackground: '#ffeef0',
-                      removedColor: '#24292e',
-                      wordAddedBackground: '#acf2bd',
-                      wordRemovedBackground: '#fdb8c0',
+                      diffViewerBackground: '#fafbfc',
+                      diffViewerColor: '#2d3748',
+                      
+                      // AI Suggestions - Brand Orange (what we recommend)
+                      addedBackground: '#fff7ed', // Very light orange
+                      addedColor: '#1e293b', // Darker for better contrast
+                      wordAddedBackground: '#fb923c', // Soft orange for AI suggestions
+                      
+                      // Original Text - Sky Blue (current state)
+                      removedBackground: '#f0f9ff', // Very light sky blue
+                      removedColor: '#64748b', // Subtle slate gray
+                      wordRemovedBackground: '#0ea5e9', // Sky blue for user's original text
+                
+                      // Structure - Invisible integration
+                      gutterBackground: 'transparent', // Completely seamless
+                      gutterBackgroundDark: 'transparent',
+                      gutterColor: 'transparent', // Hide line numbers entirely
+                      addedGutterBackground: 'transparent',
+                      removedGutterBackground: 'transparent',
+                
+                      // Interactive states - Sophisticated hover
+                      highlightBackground: '#fff7ed', // Warm cream on hover
+                      highlightGutterBackground: 'transparent',
+                
+                      // Clean minimalism
+                      codeFoldGutterBackground: 'transparent',
+                      codeFoldBackground: '#f8fafc',
+                      emptyLineBackground: '#fafbfc',
+                      codeFoldContentColor: '#3F51B5',
+                      diffViewerTitleBackground: 'transparent',
+                      diffViewerTitleColor: '#1e293b',
+                      diffViewerTitleBorderColor: 'transparent',
                     }
                   },
                   diffContainer: {
-                    fontSize: '13px',
-                    lineHeight: '1.5',
+                    fontSize: '14px',
+                    lineHeight: '1.7', // More spacious for readability
+                    fontFamily: 'Inter, sans-serif', // Match our brand fonts
                   },
                   line: {
+                    padding: '8px 16px', // More generous padding
+                    borderRadius: '6px', // Subtle rounding
+                    margin: '2px 0', // Slight separation between lines
                     '&:hover': {
-                      background: '#f6f8fa',
+                      backgroundColor: '#f1f5f9',
+                      transition: 'background-color 0.15s ease',
                     }
                   },
                   contentText: {
-                    width: '93%', // 减去行号和+/-符号的大致宽度
-                    padding: '0 10px 0 0',
+                    width: '93%',
+                    padding: '0 16px 0 0',
                     wordBreak: 'break-word',
                     whiteSpace: 'pre-wrap',
+                    fontFamily: 'Inter, sans-serif',
+                  },
+                  wordAdded: {
+                    color: '#ffffff', // White text on orange background
+                    fontWeight: '600', // Slightly bolder for AI suggestions
+                    borderRadius: '4px',
+                    padding: '2px 6px',
+                  },
+                  wordRemoved: {
+                    color: '#ffffff', // White text on blue background  
+                    fontWeight: '500',
+                    borderRadius: '4px',
+                    padding: '2px 6px',
+                    textDecoration: 'line-through',
                   },
                 }}
               />

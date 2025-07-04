@@ -9,6 +9,7 @@ import { SingleTextComponent } from '../rendering/SingleTextComponent';
 import { ProjectItemComponent } from '../rendering/ProjectItemComponent';
 import { CertificationItemComponent } from '../rendering/CertificationItemComponent';
 import { AdvancedSkillsComponent } from '../rendering/AdvancedSkillsComponent';
+import { CoverLetterComponent } from '../rendering/CoverLetterComponent';
 import { SchemaRegistry } from '@/lib/schemaRegistry';
 
 interface ParallelModularTemplateProps {
@@ -47,6 +48,8 @@ const renderSectionByRenderType = (section: RenderableSection) => {
       return section.items.map(item => <CertificationItemComponent key={item.id} item={item} roleMap={roleMap} />);
     case 'advanced-skills-list':
       return section.items.map(item => <AdvancedSkillsComponent key={item.id} item={item} roleMap={roleMap} />);
+    case 'cover-letter':
+      return <CoverLetterComponent section={section} roleMap={roleMap} />;
     default:
       // Generic fallback rendering
       return section.items.map(item => (
@@ -67,6 +70,79 @@ const renderSectionByRenderType = (section: RenderableSection) => {
 
 const ParallelModularTemplate = ({ resume }: ParallelModularTemplateProps) => {
   const { personalDetails, sections } = resume;
+
+  // Single-column fallback logic for cover letters
+  const hasCoverLetter = sections.some(s => s.schemaId === 'cover-letter');
+  if (hasCoverLetter) {
+    const coverLetterSection = sections.find(s => s.schemaId === 'cover-letter');
+    return (
+      <div className="text-[11px] leading-[1.4] h-full flex flex-col">
+        {/* Header with shared styling */}
+        <div className="bg-gray-900 text-white px-[25mm] py-6 mb-0">
+          <div className="flex items-center gap-6">
+            {personalDetails.avatar && (
+              <div className="w-20 h-20 rounded-full overflow-hidden border-3 border-white/30 flex-shrink-0">
+                <img 
+                  src={personalDetails.avatar} 
+                  alt={personalDetails.fullName}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+            <div className="flex-grow">
+              <h1 className="font-bold text-2xl mb-1">{personalDetails.fullName}</h1>
+              <p className="text-lg text-gray-300">{personalDetails.jobTitle}</p>
+            </div>
+          </div>
+
+          {/* Contact Info Bar */}
+          <div className="flex flex-wrap items-center gap-4 mt-4 text-[10px] text-gray-300">
+            {personalDetails.email && (
+              <div className="flex items-center gap-1">
+                <Mail size={12} />
+                <span>{personalDetails.email}</span>
+              </div>
+            )}
+            {personalDetails.phone && (
+              <div className="flex items-center gap-1">
+                <Phone size={12} />
+                <span>{personalDetails.phone}</span>
+              </div>
+            )}
+            {personalDetails.linkedin && (
+              <div className="flex items-center gap-1">
+                <Linkedin size={12} />
+                <span>{personalDetails.linkedin}</span>
+              </div>
+            )}
+            {personalDetails.github && (
+              <div className="flex items-center gap-1">
+                <Github size={12} />
+                <span>{personalDetails.github}</span>
+              </div>
+            )}
+            {personalDetails.portfolio && (
+              <div className="flex items-center gap-1">
+                <Globe size={12} />
+                <span>{personalDetails.portfolio}</span>
+              </div>
+            )}
+            {personalDetails.address && (
+              <div className="flex items-center gap-1">
+                <MapPin size={12} />
+                <span>{personalDetails.address}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Cover letter content */}
+        <div className="flex-1 px-[25mm] py-6">
+          {coverLetterSection && renderSectionByRenderType(coverLetterSection)}
+        </div>
+      </div>
+    );
+  }
 
   // Define which sections go into which column based on their function
   const timelineSections = ['experience', 'education', 'projects', 'volunteer']; // The narrative. Corrected 'work-experience' to 'experience' and added 'volunteer'.

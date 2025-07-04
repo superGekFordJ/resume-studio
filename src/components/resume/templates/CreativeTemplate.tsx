@@ -9,6 +9,7 @@ import { SingleTextComponent } from '../rendering/SingleTextComponent';
 import { ProjectItemComponent } from '../rendering/ProjectItemComponent';
 import { CertificationItemComponent } from '../rendering/CertificationItemComponent';
 import { AdvancedSkillsComponent } from '../rendering/AdvancedSkillsComponent';
+import { CoverLetterComponent } from '../rendering/CoverLetterComponent';
 import { SchemaRegistry } from '@/lib/schemaRegistry';
 
 interface CreativeTemplateProps {
@@ -47,6 +48,8 @@ const renderSectionByRenderType = (section: RenderableSection) => {
       return section.items.map(item => <CertificationItemComponent key={item.id} item={item} roleMap={roleMap} />);
     case 'advanced-skills-list':
       return section.items.map(item => <AdvancedSkillsComponent key={item.id} item={item} roleMap={roleMap} />);
+    case 'cover-letter':
+      return <CoverLetterComponent section={section} roleMap={roleMap} />;
     default:
       // Generic fallback rendering
       return section.items.map(item => (
@@ -68,6 +71,8 @@ const renderSectionByRenderType = (section: RenderableSection) => {
 const CreativeTemplate = ({ resume }: CreativeTemplateProps) => {
   const { personalDetails, sections } = resume;
 
+  const hasCoverLetter = sections.some(s => s.schemaId === 'cover-letter');
+
   // Define which sections go into which column
   const sidebarSections = ['skills', 'advanced-skills', 'languages', 'certifications'];
   
@@ -77,6 +82,8 @@ const CreativeTemplate = ({ resume }: CreativeTemplateProps) => {
   const sideColumnSections = sections.filter(
     s => sidebarSections.includes(s.schemaId)
   );
+
+  const coverLetterSection = sections.find(s => s.schemaId === 'cover-letter');
 
   return (
     <div className="text-[11px] leading-[1.4] h-full flex gap-0">
@@ -139,7 +146,7 @@ const CreativeTemplate = ({ resume }: CreativeTemplateProps) => {
         </div>
 
         {/* Sidebar Sections */}
-        {sideColumnSections.map((section) => (
+        {!hasCoverLetter && sideColumnSections.map((section) => (
           <div key={section.id} className="mb-6">
             <h3 className="font-semibold text-xs uppercase tracking-wider text-gray-600 mb-3">
               {section.title}
@@ -153,14 +160,23 @@ const CreativeTemplate = ({ resume }: CreativeTemplateProps) => {
 
       {/* Main Column - Right */}
       <div className="flex-1 p-6">
-        {mainColumnSections.map((section) => (
-          <div key={section.id} className="mb-6">
+        {hasCoverLetter && coverLetterSection ? (
+          <div className="mb-6">
             <h2 className="font-bold text-base text-primary border-b-2 border-primary pb-1 mb-3">
-              {section.title}
+              {coverLetterSection.title || 'Cover Letter'}
             </h2>
-            {renderSectionByRenderType(section)}
+            {renderSectionByRenderType(coverLetterSection)}
           </div>
-        ))}
+        ) : (
+          mainColumnSections.map((section) => (
+            <div key={section.id} className="mb-6">
+              <h2 className="font-bold text-base text-primary border-b-2 border-primary pb-1 mb-3">
+                {section.title}
+              </h2>
+              {renderSectionByRenderType(section)}
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

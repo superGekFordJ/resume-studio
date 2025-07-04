@@ -197,7 +197,8 @@ export const EDUCATION_SCHEMA: SectionSchema = {
   ],
   aiContext: {
     sectionSummaryBuilder: 'education-summary',
-    itemSummaryBuilder: 'education-item'
+    itemSummaryBuilder: 'education-item',
+    batchImprovementSupported: true
   },
   uiConfig: {
     icon: 'GraduationCap',
@@ -658,6 +659,50 @@ const ADVANCED_SKILLS_SCHEMA: SectionSchema = {
   }
 };
 
+// Cover Letter Schema
+export const COVER_LETTER_SCHEMA: SectionSchema = {
+  id: 'cover-letter',
+  name: 'Cover Letter',
+  type: 'single',
+  fields: [
+    {
+      id: 'content',
+      type: 'textarea',
+      label: 'Cover Letter Content',
+      required: true,
+      uiProps: {
+        rows: 12,
+        placeholder: 'Your personalized cover letter content will appear here...',
+        markdownEnabled: true
+      },
+      aiHints: {
+        contextBuilders: {
+          improve: 'cover-letter-content',
+          autocomplete: 'cover-letter-content'
+        },
+        improvementPrompts: [
+          'Make it more compelling',
+          'Add specific examples',
+          'Tailor to company culture',
+          'Strengthen value proposition',
+          'Improve flow and readability'
+        ],
+        autocompleteEnabled: true,
+        priority: 'high'
+      }
+    }
+  ],
+  aiContext: {
+    sectionSummaryBuilder: 'cover-letter-section',
+    itemSummaryBuilder: 'cover-letter-content'
+  },
+  uiConfig: {
+    icon: 'FileText',
+    defaultRenderType: 'cover-letter',
+    addButtonText: 'Add Cover Letter'
+  }
+};
+
 /**
  * Registers all the default section schemas with the schema registry.
  * @param registry The schema registry instance.
@@ -679,4 +724,7 @@ export function registerDefaultSchemas(registry: ISchemaRegistry) {
   
   // Register experimental schema with different field names
   registry.registerSectionSchema(VOLUNTEER_EXPERIENCE_SCHEMA);
+  
+  // Register cover letter schema
+  registry.registerSectionSchema(COVER_LETTER_SCHEMA);
 } 

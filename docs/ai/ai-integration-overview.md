@@ -2,12 +2,13 @@
 
 ## AI 功能概述
 
-A4 Resume Studio 集成了四个核心 AI 功能，基于 Google Genkit 和 Gemini API 实现：
+A4 Resume Studio 集成了五个核心 AI 功能，基于 Google Genkit 和 Gemini API 实现：
 
 1. **自动补全 (Autocomplete)** - 智能文本补全建议
 2. **内容改进 (Content Improvement)** - AI 驱动的文本优化
 3. **批量改进 (Batch Improvement)** - 针对特定章节的批量内容优化
 4. **简历评审 (Resume Review)** - 全面的简历质量分析
+5. **求职信生成 (Cover Letter Generation)** - 基于简历内容和目标岗位信息，生成个性化的求职信
 
 ## 全局 AI 配置与上下文 (Updated 2025-06-23)
 

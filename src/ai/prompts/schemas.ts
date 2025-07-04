@@ -300,3 +300,29 @@ export const GeneratedResumeContentSchema = ai.defineSchema(
     skills: z.array(GeneratedSkillsItemSchema).describe("The skills section."),
   }).describe("A structured representation of the core content of a resume.")
 );
+
+// --- COVER LETTER GENERATION SCHEMAS ---
+
+export const GenerateCoverLetterInputSchema = ai.defineSchema(
+  'GenerateCoverLetterInputSchema',
+  z.object({
+    resumeContext: z.string().describe('Structured summary of the user\'s resume including skills, experience, and background'),
+    targetJobInfo: z.string().describe('Information about the target job position, company, and requirements'),
+    targetCompany: z.string().optional().describe('Specific company name if available'),
+    context: z
+      .object({
+        userJobTitle: z.string().optional().describe("The user's target job title"),
+        userBio: z.string().optional().describe("The user's professional bio"),
+      })
+      .optional()
+      .describe('Additional user context for personalization'),
+  })
+);
+
+export const GenerateCoverLetterOutputSchema = ai.defineSchema(
+  'GenerateCoverLetterOutputSchema',
+  z.object({
+    coverLetterContent: z.string().describe('The complete, professionally written cover letter content in markdown format'),
+    generationSummary: z.string().describe('A brief summary of key themes and focus areas highlighted in the cover letter'),
+  })
+);

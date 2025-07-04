@@ -32,6 +32,8 @@ export default function SectionEditor({}: SectionEditorProps) {
   const toggleAutocomplete = useResumeStore(state => state.toggleAutocomplete);
   const startBatchImprovement = useResumeStore(state => state.startBatchImprovement);
   const batchReview = useResumeStore(state => state.batchImprovementReview);
+  const generateCoverLetter = useResumeStore(state => state.generateCoverLetter);
+  const isGeneratingCoverLetter = useResumeStore(state => state.isGeneratingCoverLetter);
   
   // Local state for batch improvement prompt
   const [batchPrompt, setBatchPrompt] = useState('');
@@ -87,11 +89,6 @@ export default function SectionEditor({}: SectionEditorProps) {
     }
   };
 
-  const handleSaveChanges = () => {
-    toast({ title: "Changes Saved", description: "Your resume has been updated." });
-    // Note: Changes are already saved in the store immediately, this is just for user feedback
-  };
-
   const handleBatchImprove = async () => {
     if (!currentEditingData || !('id' in currentEditingData) || !batchPrompt.trim()) {
       toast({ 
@@ -116,6 +113,22 @@ export default function SectionEditor({}: SectionEditorProps) {
 
     await startBatchImprovement(section.id, batchPrompt);
     setBatchPrompt(''); // Clear prompt after starting
+  };
+
+  const handleGenerateCoverLetter = async () => {
+    try {
+      await generateCoverLetter();
+      toast({ 
+        title: "Cover Letter Generated", 
+        description: "Your cover letter has been generated successfully." 
+      });
+    } catch (error) {
+      toast({ 
+        variant: "destructive", 
+        title: "Generation Failed", 
+        description: "Failed to generate cover letter. Please try again." 
+      });
+    }
   };
 
   if (!currentEditingData) {
@@ -176,6 +189,31 @@ export default function SectionEditor({}: SectionEditorProps) {
           <Button variant="outline" size="sm" onClick={handleAddItem} className="mt-2">
             <PlusCircle size={16} className="mr-2" /> Add Item
           </Button>
+        )}
+
+        {/* Cover Letter Generation UI */}
+        {section.schemaId === 'cover-letter' && (
+          <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
+            <div className="flex flex-col space-y-3">
+              <div className="flex items-center space-x-2">
+                <Sparkles className="h-5 w-5 text-blue-600" />
+                <h3 className="text-sm font-semibold text-blue-900">AI Cover Letter Generator</h3>
+              </div>
+              <p className="text-xs text-blue-700">
+                Generate a personalized cover letter based on your resume content and target job information.
+              </p>
+              <Button 
+                onClick={handleGenerateCoverLetter} 
+                variant="default" 
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+                disabled={isGeneratingCoverLetter}
+              >
+                <Sparkles size={14} className="mr-2" />
+                {isGeneratingCoverLetter ? 'Generating...' : 'Generate Cover Letter'}
+              </Button>
+            </div>
+          </div>
         )}
       </>
     );
@@ -241,12 +279,7 @@ export default function SectionEditor({}: SectionEditorProps) {
         </div>
       </div>
       
-      {/* Footer with save button - always visible and sticky */}
-      <div className="border-t p-4 bg-background flex-shrink-0 sticky bottom-0">
-        <Button onClick={handleSaveChanges} size="sm" className="w-full">
-          <Save size={16} className="mr-2" /> Save Changes
-        </Button>
-      </div>
+
     </div>
   );
 }
