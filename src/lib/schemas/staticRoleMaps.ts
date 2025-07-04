@@ -103,4 +103,12 @@ export const staticRoleMaps: Record<string, RoleMap> = {
       impact: 'description',
     },
   },
+  'cover-letter': {
+    schemaId: 'cover-letter',
+    schemaVersion: version,
+    inferredAt: new Date().toISOString(),
+    fieldMappings: {
+      content: 'description',
+    },
+  },
 }; 

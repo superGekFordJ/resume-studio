@@ -12,3 +12,17 @@ ai.defineHelper(
   'buildDataUri',
   (contentType: string, base64: string) => `data:${contentType};base64,${base64}`
 );
+
+// Define a helper to format the current date for cover letters
+ai.defineHelper(
+  'formatCurrentDate',
+  () => {
+    const now = new Date();
+    const options: Intl.DateTimeFormatOptions = { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    };
+    return now.toLocaleDateString('en-US', options);
+  }
+);

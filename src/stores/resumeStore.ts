@@ -74,6 +74,7 @@ export interface ResumeState {
   aiConfig: AIConfig;
   versionSnapshots: VersionSnapshot[]; // NEW: Version snapshots
   isGeneratingSnapshot: boolean; // For resume generation loading state
+  isGeneratingCoverLetter?: boolean; // NEW: For cover letter generation
 }
 
 // Actions interface
@@ -141,6 +142,8 @@ export interface ResumeActions {
   generateResumeSnapshotFromBio: () => Promise<void>;
   // NEW: Export current schema for development/debugging
   exportCurrentSchema: () => void;
+  // NEW: Cover letter generation
+  generateCoverLetter: () => Promise<void>;
 }
 
 // Helper function to read file as Base64
@@ -188,6 +191,7 @@ export const useResumeStore = create<ResumeState & ResumeActions>()(
       },
       versionSnapshots: [], // NEW: Initialize empty snapshots array
       isGeneratingSnapshot: false,
+      isGeneratingCoverLetter: false,
 
       // Actions
       setResumeData: (data) => set({ resumeData: data }),
@@ -871,6 +875,107 @@ export const useResumeStore = create<ResumeState & ResumeActions>()(
         URL.revokeObjectURL(url);
         
         console.log('Schema exported successfully:', exportData);
+      },
+
+      // NEW: Cover letter generation
+      generateCoverLetter: async () => {
+        const state = get();
+        set({ isGeneratingCoverLetter: true });
+        const { SchemaRegistry } = await import('@/lib/schemaRegistry');
+        const { generateCoverLetter } = await import('@/ai/flows/generateCoverLetter');
+        
+        const schemaRegistry = SchemaRegistry.getInstance();
+        
+        try {
+          // Create or find the cover letter section
+          let coverLetterSection = state.resumeData.sections.find(
+            s => s.schemaId === 'cover-letter'
+          ) as DynamicResumeSection | undefined;
+          
+          if (!coverLetterSection) {
+            // Create new cover letter section
+            const newSectionId = `cover-letter_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+            coverLetterSection = {
+              id: newSectionId,
+              schemaId: 'cover-letter',
+              title: 'Cover Letter',
+              visible: true,
+              items: [{
+                id: `item_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+                schemaId: 'cover-letter',
+                data: { content: '' },
+                metadata: {
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                  aiGenerated: false
+                }
+              }]
+            };
+            
+            // Add section to resume data
+            set((currentState) => ({
+              resumeData: {
+                ...currentState.resumeData,
+                sections: [...currentState.resumeData.sections, coverLetterSection!]
+              }
+            }));
+          }
+          
+          // Prepare input for AI generation
+          const resumeContext = schemaRegistry.stringifyResumeForReview(state.resumeData);
+          const targetJobInfo = state.aiConfig.targetJobInfo || 'General position';
+          
+          const input = {
+            resumeContext,
+            targetJobInfo,
+            context: {
+              userJobTitle: state.resumeData.personalDetails?.jobTitle,
+              userBio: state.aiConfig.userBio,
+            }
+          };
+          
+          // Generate cover letter content
+          const result = await generateCoverLetter(input);
+          
+          if (result && result.coverLetterContent) {
+            // Update the cover letter section with generated content
+            set((currentState) => {
+              const updatedSections = currentState.resumeData.sections.map(section => {
+                if (section.schemaId === 'cover-letter') {
+                  const dynamicSection = section as DynamicResumeSection;
+                  return {
+                    ...dynamicSection,
+                    items: dynamicSection.items.map((item, index) => 
+                      index === 0 
+                        ? {
+                            ...item,
+                            data: { ...item.data, content: result.coverLetterContent },
+                            metadata: {
+                              ...item.metadata,
+                              updatedAt: new Date().toISOString(),
+                              aiGenerated: true
+                            }
+                          }
+                        : item
+                    )
+                  };
+                }
+                return section;
+              });
+              
+              return {
+                resumeData: {
+                  ...currentState.resumeData,
+                  sections: updatedSections
+                }
+              };
+            });
+          }
+        } catch (error) {
+          console.error('Error generating cover letter:', error);
+        } finally {
+          set({ isGeneratingCoverLetter: false });
+        }
       },
     }),
     {

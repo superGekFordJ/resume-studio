@@ -78,30 +78,68 @@ export default function AISuggestionCard({
                   styles={{
                     variables: {
                       light: {
-                        codeFoldGutterBackground: '#f8f9fa',
-                        codeFoldBackground: '#f1f3f4',
-                        diffViewerBackground: '#ffffff',
-                        addedBackground: '#d4f4dd',
-                        addedColor: '#24292e',
-                        removedBackground: '#ffeef0',
-                        removedColor: '#24292e',
-                        wordAddedBackground: '#acf2bd',
-                        wordRemovedBackground: '#fdb8c0',
+                        codeFoldGutterBackground: 'transparent',
+                        codeFoldBackground: '#f8fafc',
+                        diffViewerBackground: '#fafbfc',
+                        diffViewerColor: '#2d3748',
+                        
+                        // AI Suggestions - Brand Orange (what we recommend)
+                        addedBackground: '#fff7ed',
+                        addedColor: '#1e293b',
+                        wordAddedBackground: '#fb923c',
+                        
+                        // Original Text - Sky Blue (current state)
+                        removedBackground: '#f0f9ff',
+                        removedColor: '#64748b',
+                        wordRemovedBackground: '#0ea5e9',
+                        
+                        // Structure - Clean integration
+                        gutterBackground: 'transparent',
+                        gutterColor: 'transparent',
+                        addedGutterBackground: 'transparent',
+                        removedGutterBackground: 'transparent',
+                        highlightBackground: '#fff7ed',
+                        emptyLineBackground: '#fafbfc',
+                        diffViewerTitleBackground: 'transparent',
+                        diffViewerTitleColor: '#1e293b',
+                        diffViewerTitleBorderColor: 'transparent',
                       }
                     },
                     diffContainer: {
                       fontSize: '14px',
-                      lineHeight: '1.5',
+                      lineHeight: '1.7',
                       width: '100%',
+                    },
+                    line: {
+                      padding: '6px 12px',
+                      borderRadius: '4px',
+                      margin: '1px 0',
+                      '&:hover': {
+                        backgroundColor: '#f1f5f9',
+                        transition: 'background-color 0.15s ease',
+                      }
                     },
                     contentText: {
                         width: '70%', // 减去行号和+/-符号的大致宽度
-                        padding: '0 10px 0 0',
+                        padding: '0 12px 0 0',
                         wordBreak: 'break-word',
                         whiteSpace: 'pre-wrap',
+                        fontFamily: 'Inter, sans-serif',
+                    },
+                    wordAdded: {
+                      color: '#ffffff',
+                      fontWeight: '600',
+                      borderRadius: '4px',
+                      padding: '2px 6px',
+                    },
+                    wordRemoved: {
+                      color: '#ffffff',
+                      fontWeight: '500',
+                      borderRadius: '4px',
+                      padding: '2px 6px',
+                      textDecoration: 'line-through',
                     },
                     marker: {
-                        // 我们可以给行号列一个固定的、较小的宽度
                         width: '5px',
                         padding: '2px 2px',
                         textAlign: 'center',

@@ -9,6 +9,7 @@ import { SingleTextComponent } from '../rendering/SingleTextComponent';
 import { ProjectItemComponent } from '../rendering/ProjectItemComponent';
 import { CertificationItemComponent } from '../rendering/CertificationItemComponent';
 import { AdvancedSkillsComponent } from '../rendering/AdvancedSkillsComponent';
+import { CoverLetterComponent } from '../rendering/CoverLetterComponent';
 import { SchemaRegistry } from '@/lib/schemaRegistry';
 
 interface ContinuousNarrativeTemplateProps {
@@ -68,6 +69,8 @@ const renderSectionByRenderType = (section: RenderableSection, isHeader: boolean
       return section.items.map(item => <CertificationItemComponent key={item.id} item={item} roleMap={roleMap} />);
     case 'advanced-skills-list':
       return section.items.map(item => <AdvancedSkillsComponent key={item.id} item={item} roleMap={roleMap} />);
+    case 'cover-letter':
+      return <CoverLetterComponent section={section} roleMap={roleMap} />;
     default:
       // Generic fallback rendering
       return section.items.map(item => (
@@ -88,6 +91,68 @@ const renderSectionByRenderType = (section: RenderableSection, isHeader: boolean
 
 const ContinuousNarrativeTemplate = ({ resume }: ContinuousNarrativeTemplateProps) => {
   const { personalDetails, sections } = resume;
+
+  // Single-column fallback logic for cover letters
+  const hasCoverLetter = sections.some(s => s.schemaId === 'cover-letter');
+  if (hasCoverLetter) {
+    const coverLetterSection = sections.find(s => s.schemaId === 'cover-letter');
+    return (
+      <div className="h-full relative bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
+        {/* Header with shared styling */}
+        <div className="pt-8 pb-4 px-[25mm]">
+          <div className="text-center">
+            <h1 className="font-bold text-3xl mb-3 text-gray-800">{personalDetails.fullName}</h1>
+            <p className="text-lg text-gray-600">{personalDetails.jobTitle}</p>
+            
+            {/* Contact Info */}
+            <div className="flex flex-wrap justify-center items-center gap-4 mt-4 text-[10px] text-gray-700">
+              {personalDetails.email && (
+                <div className="flex items-center gap-1">
+                  <Mail size={12} className="text-gray-500" />
+                  <span>{personalDetails.email}</span>
+                </div>
+              )}
+              {personalDetails.phone && (
+                <div className="flex items-center gap-1">
+                  <Phone size={12} className="text-gray-500" />
+                  <span>{personalDetails.phone}</span>
+                </div>
+              )}
+              {personalDetails.linkedin && (
+                <div className="flex items-center gap-1">
+                  <Linkedin size={12} className="text-gray-500" />
+                  <span>{personalDetails.linkedin}</span>
+                </div>
+              )}
+              {personalDetails.github && (
+                <div className="flex items-center gap-1">
+                  <Github size={12} className="text-gray-500" />
+                  <span>{personalDetails.github}</span>
+                </div>
+              )}
+              {personalDetails.portfolio && (
+                <div className="flex items-center gap-1">
+                  <Globe size={12} className="text-gray-500" />
+                  <span>{personalDetails.portfolio}</span>
+                </div>
+              )}
+              {personalDetails.address && (
+                <div className="flex items-center gap-1">
+                  <MapPin size={12} className="text-gray-500" />
+                  <span>{personalDetails.address}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Cover letter content */}
+        <div className="bg-white shadow-lg px-[25mm] py-8 mx-0">
+          {coverLetterSection && renderSectionByRenderType(coverLetterSection)}
+        </div>
+      </div>
+    );
+  }
 
   // Use summary as the prologue
   const prologueSectionId = 'summary';

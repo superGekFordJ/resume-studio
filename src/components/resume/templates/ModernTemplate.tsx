@@ -8,6 +8,7 @@ import { TitledBlockComponent } from '../rendering/TitledBlockComponent';
 import { SimpleListComponent } from '../rendering/SimpleListComponent';
 import { SingleTextComponent } from '../rendering/SingleTextComponent';
 import { AdvancedSkillsComponent } from '../rendering/AdvancedSkillsComponent';
+import { CoverLetterComponent } from '../rendering/CoverLetterComponent';
 import { SchemaRegistry } from '@/lib/schemaRegistry';
 
 interface ModernTemplateProps {
@@ -42,6 +43,8 @@ const renderSectionByRenderType = (section: RenderableSection) => {
       return <SingleTextComponent items={section.items} roleMap={roleMap} />;
     case 'advanced-skills-list':
       return section.items.map(item => <AdvancedSkillsComponent key={item.id} item={item} roleMap={roleMap} />);
+    case 'cover-letter':
+      return <CoverLetterComponent section={section} roleMap={roleMap} />;
     default:
       // Improved generic fallback rendering for unknown sections
       return (

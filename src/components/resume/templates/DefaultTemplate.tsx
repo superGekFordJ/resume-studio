@@ -9,6 +9,7 @@ import { SingleTextComponent } from '../rendering/SingleTextComponent';
 import { ProjectItemComponent } from '../rendering/ProjectItemComponent';
 import { CertificationItemComponent } from '../rendering/CertificationItemComponent';
 import { AdvancedSkillsComponent } from '../rendering/AdvancedSkillsComponent';
+import { CoverLetterComponent } from '../rendering/CoverLetterComponent';
 import { SchemaRegistry } from '@/lib/schemaRegistry';
 
 interface DefaultTemplateProps {
@@ -50,6 +51,8 @@ const DefaultTemplate = ({ resume }: DefaultTemplateProps) => {
         return section.items.map(item => <CertificationItemComponent key={item.id} item={item} roleMap={roleMap} />);
       case 'advanced-skills-list':
         return section.items.map(item => <AdvancedSkillsComponent key={item.id} item={item} roleMap={roleMap} />);
+      case 'cover-letter':
+        return <CoverLetterComponent section={section} roleMap={roleMap} />;
       default:
         // Generic fallback rendering
         return section.items.map(item => (
