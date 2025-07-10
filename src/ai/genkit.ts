@@ -19,3 +19,8 @@ ai.defineHelper(
     return now.toLocaleDateString('en-US', options);
   }
 );
+
+ai.defineHelper(
+  'eq',
+  (a: any, b: any) => a === b
+);
