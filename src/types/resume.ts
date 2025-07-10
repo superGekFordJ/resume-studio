@@ -120,6 +120,8 @@ export interface TemplateInfo {
 export const templates: TemplateInfo[] = [
   { id: 'default', name: 'Classic Professional', imageUrl: 'https://placehold.co/200x283.png', dataAiHint: 'resume template' },
   { id: 'pro-classic', name: 'Pro Classic (2-Col)', imageUrl: 'https://placehold.co/200x283.png', dataAiHint: 'professional two column resume' },
+  { id: 'sapphire-sidebar', name: 'Sapphire Sidebar', imageUrl: '/images/templates/sapphire-sidebar.png', dataAiHint: 'elegant two column resume with dark sidebar' },
+  { id: 'veridian-sidebar', name: 'Veridian Sidebar', imageUrl: '/images/templates/veridian-sidebar.png', dataAiHint: 'classic two column resume with dark teal sidebar and serif fonts' },
   { id: 'modern-minimalist', name: 'Modern Minimalist', imageUrl: 'https://placehold.co/200x283.png', dataAiHint: 'modern resume' },
   { id: 'creative', name: 'Creative Two-Column', imageUrl: 'https://placehold.co/200x283.png', dataAiHint: 'creative design' },
   { id: 'continuous-narrative', name: 'Continuous Narrative', imageUrl: 'https://placehold.co/200x283.png', dataAiHint: 'continuous flow magazine-style' },

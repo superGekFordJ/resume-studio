@@ -3,6 +3,9 @@
 @import "@fontsource/space-grotesk/latin.css";   /* 300-700 全权重 */
 @import "@fontsource/raleway/latin.css";
 @import "@fontsource/open-sans/latin.css";
+@import "@fontsource/rubik/latin.css";
+@import "@fontsource/volkhov/latin.css";         /* For Veridian template */
+@import "@fontsource/pt-sans/latin.css";         /* For Veridian template */
 
 /* === Copilot React Textarea Styles === */
 @import 'copilot-react-textarea/styles.css';
@@ -102,6 +105,15 @@
   .font-body {
     font-family: 'Inter', sans-serif;
   }
+  .font-rubik {
+    font-family: 'Rubik', sans-serif;
+  }
+  .font-volkhov {
+    font-family: 'Volkhov', serif;
+  }
+  .font-sans {
+    font-family: 'PT Sans', sans-serif;
+  }
 }
 
 /* A4 Canvas specific styles */
@@ -136,7 +148,9 @@
 
 /* Override padding for templates that require full-bleed layout */
 .a4-canvas[data-template-id='continuous-narrative'],
-.a4-canvas[data-template-id='parallel-modular'] {
+.a4-canvas[data-template-id='parallel-modular'],
+.a4-canvas[data-template-id='sapphire-sidebar'],
+.a4-canvas[data-template-id='veridian-sidebar'] {
   padding: 0 !important;
 }
 

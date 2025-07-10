@@ -7,6 +7,8 @@ import CreativeTemplate from "../templates/CreativeTemplate";
 import ContinuousNarrativeTemplate from "../templates/ContinuousNarrativeTemplate";
 import ParallelModularTemplate from "../templates/ParallelModularTemplate";
 import { ProClassicTemplate } from "../templates/ProClassicTemplate";
+import { SapphireSidebarTemplate } from "../templates/SapphireSidebarTemplate";
+import { VeridianSidebarTemplate } from "../templates/VeridianSidebarTemplate";
 
 interface PrintableResumeProps {
   resume: RenderableResume;
@@ -21,6 +23,10 @@ export default function PrintableResume({ resume, templateId }: PrintableResumeP
       return <CreativeTemplate resume={resume} />;
     case 'pro-classic':
       return <ProClassicTemplate resume={resume} />;
+    case 'sapphire-sidebar':
+      return <SapphireSidebarTemplate resume={resume} />;
+    case 'veridian-sidebar':
+      return <VeridianSidebarTemplate resume={resume} />;
     case 'continuous-narrative':
       return <ContinuousNarrativeTemplate resume={resume} />;
     case 'parallel-modular':

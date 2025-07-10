@@ -272,7 +272,7 @@ const handleReviewResume = async () => {
 
 ```yaml
 ---
-# (可选) 指定模型；省略则使用 genkit.ts 中的默认模型
+# 指定模型；省略则使用 genkit.ts 中的默认模型
 aodel: googleai/gemini-2.5-flash
 # (可选) 模型配置
 aonfig:
