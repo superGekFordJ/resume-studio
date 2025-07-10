@@ -6,13 +6,6 @@ export const ai = genkit({
   promptDir: 'src/ai/prompts',
 });
 
-// Define a custom helper to build a data URI for multimodal prompts.
-// This prevents template-in-template parsing issues.
-ai.defineHelper(
-  'buildDataUri',
-  (contentType: string, base64: string) => `data:${contentType};base64,${base64}`
-);
-
 // Define a helper to format the current date for cover letters
 ai.defineHelper(
   'formatCurrentDate',

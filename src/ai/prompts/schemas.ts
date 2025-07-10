@@ -220,10 +220,18 @@ export const GenerateResumeContextInputSchema = ai.defineSchema(
 export const JobInfoFromImageInputSchema = ai.defineSchema(
   'JobInfoFromImageInputSchema',
   z.object({
-    imageBase64: z.string().describe('A Base64 encoded image of a job posting.'),
-    contentType: z.string().optional().default('image/png').describe('The MIME type of the image.'),
+    dataUri: z.string().describe('A full data URI for the image (e.g., data:image/png;base64,...)'),
   })
 );
+
+// NEW: Schema for the output of getJobInfoFromImage
+export const JobInfoFromImageOutputSchema = ai.defineSchema(
+  'JobInfoFromImageOutputSchema',
+  z.object({
+    extractedText: z.string().describe('The extracted job information text from the image.'),
+  })
+);
+
 
 // Schemas for improve-resume-section
 export const ImproveResumeSectionInputSchema = ai.defineSchema(

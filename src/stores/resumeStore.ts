@@ -152,10 +152,9 @@ const fileToBase64 = (file: File): Promise<string> => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = () => {
-      // Result includes a data URL prefix (e.g., "data:image/png;base64,"), so we strip it.
-      const base64String = (reader.result as string).split(',')[1];
-      if (base64String) {
-        resolve(base64String);
+      const result = reader.result as string;
+      if (result) {
+        resolve(result);
       } else {
         reject(new Error('Failed to convert file to Base64.'));
       }
@@ -701,9 +700,9 @@ export const useResumeStore = create<ResumeState & ResumeActions>()(
         }
 
         try {
-          const imageBase64 = await fileToBase64(file);
+          const dataUri = await fileToBase64(file);
           const { getJobInfoFromImage } = await import('@/ai/flows/getJobInfoFromImage');
-          const extractedText = await getJobInfoFromImage({ imageBase64, contentType: file.type || 'image/png' });
+          const extractedText = await getJobInfoFromImage({ dataUri });
           
           if (extractedText) {
             get().updateAIConfig({ targetJobInfo: extractedText });
