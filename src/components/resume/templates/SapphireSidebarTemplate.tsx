@@ -147,7 +147,7 @@ export const SapphireSidebarTemplate = ({ resume }: SapphireSidebarTemplateProps
 
   let resumeContent 
   resumeContent = (
-    <div className="grid grid-cols-[326px_614px] w-[940px] min-h-[11in] bg-white shadow-lg">
+    <div className="grid grid-cols-[326px_614px] w-[940px] h-[352mm] bg-white shadow-lg">
       <aside className="bg-[#22405C] text-white px-[30px] py-[40px]">
         <div className="flex justify-center mb-10">
           <div className="w-[130px] h-[130px] rounded-full bg-white/10 border-2 border-white/20 flex items-center justify-center">

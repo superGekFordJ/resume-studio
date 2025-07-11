@@ -147,7 +147,7 @@ export const VeridianSidebarTemplate = ({ resume }: VeridianSidebarTemplateProps
   const mainSections = sections.filter(s => mainSchemaIds.includes(s.schemaId));
 
   const resumeContent = (
-    <div className="grid grid-cols-[1fr_300px] w-[816px] min-h-[11in] bg-white shadow-lg font-sans">
+    <div className="grid grid-cols-[1fr_300px] w-[816px] h-[306mm] bg-white shadow-lg font-sans">
       <main className="px-9 py-9 text-[#333]">
         <header className="mb-7">
           <h1 className="font-volkhov text-[28px] leading-[1.3] uppercase tracking-wide text-[#333] mb-1">
