@@ -246,14 +246,12 @@ export default function SectionEditor({}: SectionEditorProps) {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-4 pb-20 space-y-4 bg-muted/20">
-          {isCurrentlyEditingPersonalDetails ? (
-            <PersonalDetailsEditor personalDetails={currentEditingData as PersonalDetails} />
-          ) : (
-            renderSectionForm()
-          )}
-        </div>
+      <div className="flex-1 overflow-y-auto p-4 pb-20 space-y-4 bg-muted/20">
+        {isCurrentlyEditingPersonalDetails ? (
+          <PersonalDetailsEditor personalDetails={currentEditingData as PersonalDetails} />
+        ) : (
+          renderSectionForm()
+        )}
       </div>
 
       {/* No more dialog component needed here */}
