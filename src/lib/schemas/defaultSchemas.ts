@@ -615,7 +615,7 @@ const ADVANCED_SKILLS_SCHEMA: SectionSchema = {
     },
     {
       id: 'proficiency',
-      type: 'select',
+      type: 'combobox',
       label: 'Proficiency Level',
       uiProps: {
         options: ['Beginner', 'Intermediate', 'Advanced', 'Expert']
