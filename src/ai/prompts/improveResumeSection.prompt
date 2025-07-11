@@ -1,8 +1,7 @@
 ---
-model: googleai/gemini-2.0-flash-lite
+model: googleai/gemini-2.5-flash
 config:
   temperature: 0.3
-  maxOutputTokens: 1000
   topP: 0.95
 
 # 定义此 prompt 模板所需的输入变量。
