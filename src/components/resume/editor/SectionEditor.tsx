@@ -2,20 +2,22 @@
 "use client";
 
 import type { ChangeEvent } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { PersonalDetails } from "@/types/resume";
 import type { DynamicResumeSection } from '@/types/schema';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { PlusCircle, Save, Sparkles } from "lucide-react";
+import { PlusCircle, Sparkles } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from '@/hooks/use-toast';
 import { SchemaRegistry } from '@/lib/schemaRegistry';
 import { useResumeStore } from '@/stores/resumeStore';
 import PersonalDetailsEditor from './PersonalDetailsEditor';
 import SectionItemEditor from './SectionItemEditor';
+import { BatchImprovementPromptPopover } from '../ui/BatchImprovementPromptPopover'; // 替换导入
+import { Wand2 } from 'lucide-react';
 
 interface SectionEditorProps {
   // No props needed anymore
@@ -35,8 +37,7 @@ export default function SectionEditor({}: SectionEditorProps) {
   const generateCoverLetter = useResumeStore(state => state.generateCoverLetter);
   const isGeneratingCoverLetter = useResumeStore(state => state.isGeneratingCoverLetter);
   
-  // Local state for batch improvement prompt
-  const [batchPrompt, setBatchPrompt] = useState('');
+  // No more local state needed for dialog visibility
   
   // Get data manipulation actions from store
   const updateSectionTitle = useResumeStore(state => state.updateSectionTitle);
@@ -89,30 +90,12 @@ export default function SectionEditor({}: SectionEditorProps) {
     }
   };
 
-  const handleBatchImprove = async () => {
-    if (!currentEditingData || !('id' in currentEditingData) || !batchPrompt.trim()) {
-      toast({ 
-        variant: "destructive", 
-        title: "Invalid Request", 
-        description: "Please enter a prompt for batch improvement." 
-      });
-      return;
-    }
+  const handleStartBatchImprove = async (prompt: string) => {
+    if (!currentEditingData || !('id' in currentEditingData)) return;
 
     const section = currentEditingData as DynamicResumeSection;
-    const sectionSchema = schemaRegistry.getSectionSchema(section.schemaId);
-    
-    if (!sectionSchema?.aiContext?.batchImprovementSupported) {
-      toast({ 
-        variant: "destructive", 
-        title: "Not Supported", 
-        description: "Batch improvement is not supported for this section type." 
-      });
-      return;
-    }
-
-    await startBatchImprovement(section.id, batchPrompt);
-    setBatchPrompt(''); // Clear prompt after starting
+    await startBatchImprovement(section.id, prompt);
+    // No need to manage dialog state here anymore
   };
 
   const handleGenerateCoverLetter = async () => {
@@ -221,65 +204,59 @@ export default function SectionEditor({}: SectionEditorProps) {
   
   const editorTitle = isCurrentlyEditingPersonalDetails ? "Personal Details" : (currentEditingData && 'title' in currentEditingData ? currentEditingData.title : "Edit Section");
 
+  const canBatchImprove = currentEditingData && 
+                          'schemaId' in currentEditingData && 
+                          schemaRegistry.getSectionSchema((currentEditingData as DynamicResumeSection).schemaId)?.aiContext?.batchImprovementSupported;
+
   return (
     <div className="flex flex-col h-full no-print">
       {/* Header with title and controls */}
       <div className="flex flex-row items-center justify-between py-3 px-4 border-b bg-background flex-shrink-0">
         <h2 className="font-headline text-lg font-semibold text-primary">{editorTitle}</h2>
-        {editingTarget !== 'personalDetails' && (
-          <div className="flex items-center space-x-3">
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="autocomplete-toggle-nav"
-                className="autocomplete-toggle-switch"
-                checked={isAutocompleteEnabled}
-                onCheckedChange={toggleAutocomplete}
-                aria-label="Toggle Autocomplete"
-              />
-              <Label htmlFor="autocomplete-toggle-nav" className="text-xs cursor-pointer">AI 自动补全</Label>
-            </div>
-            
-            {/* Batch Improvement Controls */}
-            {currentEditingData && 'schemaId' in currentEditingData && (() => {
-              const section = currentEditingData as DynamicResumeSection;
-              const sectionSchema = schemaRegistry.getSectionSchema(section.schemaId);
-              return sectionSchema?.aiContext?.batchImprovementSupported && (
-                <div className="flex items-center space-x-2">
-                  <Input
-                    placeholder="输入改进提示 (如: 更简洁)"
-                    value={batchPrompt}
-                    onChange={(e) => setBatchPrompt(e.target.value)}
-                    className="text-xs h-8 w-40"
-                    disabled={!!batchReview?.isLoading}
-                  />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleBatchImprove}
-                    disabled={!batchPrompt.trim() || !!batchReview?.isLoading}
-                    className="text-xs h-8 px-2"
-                  >
-                    <Sparkles size={12} className="mr-1" />
-                    {batchReview?.isLoading ? '改进中...' : '批量改进'}
-                  </Button>
-                </div>
-              );
-            })()}
-          </div>
-        )}
-      </div>
-      
-      {/* Scrollable Content Area - takes remaining space */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-4 pb-20 space-y-4">
-          {isCurrentlyEditingPersonalDetails 
-            ? <PersonalDetailsEditor personalDetails={resumeData.personalDetails as PersonalDetails} />
-            : renderSectionForm()
-          }
+        <div className="flex items-center space-x-4">
+          {editingTarget !== 'personalDetails' && (
+             <div className="flex items-center space-x-2">
+                <Switch
+                  id="autocomplete-toggle-nav"
+                  className="autocomplete-toggle-switch data-[state=checked]:bg-orange-400"
+                  checked={isAutocompleteEnabled}
+                  onCheckedChange={toggleAutocomplete}
+                  aria-label="Toggle Autocomplete"
+                />
+                <Label htmlFor="autocomplete-toggle-nav" className="text-xs cursor-pointer">AI Autocomplete</Label>
+              </div>
+          )}
+          {editingTarget !== 'personalDetails' && canBatchImprove && currentEditingData && 'title' in currentEditingData && (
+            <BatchImprovementPromptPopover
+              onSubmit={handleStartBatchImprove}
+              isLoading={batchReview?.isLoading ?? false}
+              sectionTitle={currentEditingData.title}
+            >
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="hover:bg-orange-400 hover:text-white hover:border-orange-400"
+              >
+                <Wand2 size={16} className="mr-2" />
+                Batch Improve
+              </Button>
+            </BatchImprovementPromptPopover>
+          )}
         </div>
       </div>
-      
 
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-4 pb-20 space-y-4 bg-muted/20">
+          {isCurrentlyEditingPersonalDetails ? (
+            <PersonalDetailsEditor personalDetails={currentEditingData as PersonalDetails} />
+          ) : (
+            renderSectionForm()
+          )}
+        </div>
+      </div>
+
+      {/* No more dialog component needed here */}
     </div>
   );
 }
