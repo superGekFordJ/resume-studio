@@ -16,8 +16,23 @@ import { SchemaRegistry } from '@/lib/schemaRegistry';
 import { useResumeStore } from '@/stores/resumeStore';
 import PersonalDetailsEditor from './PersonalDetailsEditor';
 import SectionItemEditor from './SectionItemEditor';
-import { BatchImprovementPromptPopover } from '../ui/BatchImprovementPromptPopover'; // 替换导入
+import { BatchImprovementPromptPopover } from '../ui/BatchImprovementPromptPopover';
 import { Wand2 } from 'lucide-react';
+import {
+  DndContext,
+  closestCenter,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 
 interface SectionEditorProps {
   // No props needed anymore
@@ -37,12 +52,11 @@ export default function SectionEditor({}: SectionEditorProps) {
   const generateCoverLetter = useResumeStore(state => state.generateCoverLetter);
   const isGeneratingCoverLetter = useResumeStore(state => state.isGeneratingCoverLetter);
   
-  // No more local state needed for dialog visibility
-  
   // Get data manipulation actions from store
   const updateSectionTitle = useResumeStore(state => state.updateSectionTitle);
   const addSectionItem = useResumeStore(state => state.addSectionItem);
   const removeSectionItem = useResumeStore(state => state.removeSectionItem);
+  const reorderSectionItems = useResumeStore(state => state.reorderSectionItems);
   
   // Derive the current editing data from store state
   const currentEditingData = (() => {
@@ -114,6 +128,24 @@ export default function SectionEditor({}: SectionEditorProps) {
     }
   };
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over || !currentEditingData || !('id' in currentEditingData)) return;
+    
+    const section = currentEditingData as DynamicResumeSection;
+    const activeIndex = section.items.findIndex(item => item.id === active.id);
+    const overIndex = section.items.findIndex(item => item.id === over.id);
+    
+    if (activeIndex !== overIndex) {
+      reorderSectionItems({
+        sectionId: section.id,
+        fromIndex: activeIndex,
+        toIndex: overIndex
+      });
+    }
+  };
+
   if (!currentEditingData) {
     return (
       <Card className="sticky top-[calc(theme(spacing.16)+1rem)] h-fit no-print">
@@ -146,18 +178,32 @@ export default function SectionEditor({}: SectionEditorProps) {
           <Input id="sectionTitle" value={section.title} onChange={handleSectionTitleChange} />
         </div>
 
-        {/* Render items for list sections */}
-        {sectionSchema.type === 'list' && section.items.map((item, index) => (
-          <SectionItemEditor
-            key={item.id}
-            item={item}
-            section={section}
-            index={index}
-            onRemove={() => handleRemoveItem(item.id)}
-          />
-        ))}
+        {/* Render items for list sections with drag-and-drop */}
+        {sectionSchema.type === 'list' && section.items.length > 0 && (
+          <DndContext
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={section.items.map(item => item.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <Accordion type="single" collapsible className="w-full">
+                {section.items.map((item, index) => (
+                  <SectionItemEditor
+                    key={item.id}
+                    item={item}
+                    section={section}
+                    index={index}
+                    onRemove={() => handleRemoveItem(item.id)}
+                  />
+                ))}
+              </Accordion>
+            </SortableContext>
+          </DndContext>
+        )}
         
-        {/* Render single item for single sections */}
+        {/* Render single item for single sections (no drag-and-drop needed) */}
         {sectionSchema.type === 'single' && section.items.length > 0 && (
           <SectionItemEditor
             item={section.items[0]}
@@ -212,13 +258,13 @@ export default function SectionEditor({}: SectionEditorProps) {
     <div className="flex flex-col h-full no-print">
       {/* Header with title and controls */}
       <div className="flex flex-row items-center justify-between py-3 px-4 border-b bg-background flex-shrink-0">
-        <h2 className="font-headline text-lg font-semibold text-primary">{editorTitle}</h2>
+        <h2 className="font-headline text-lg font-semibold text-[#3F51B5]">{editorTitle}</h2>
         <div className="flex items-center space-x-4">
           {editingTarget !== 'personalDetails' && (
              <div className="flex items-center space-x-2">
                 <Switch
                   id="autocomplete-toggle-nav"
-                  className="autocomplete-toggle-switch data-[state=checked]:bg-orange-400"
+                  className="autocomplete-toggle-switch data-[state=checked]:bg-[#FF9800]"
                   checked={isAutocompleteEnabled}
                   onCheckedChange={toggleAutocomplete}
                   aria-label="Toggle Autocomplete"
@@ -235,7 +281,7 @@ export default function SectionEditor({}: SectionEditorProps) {
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="hover:bg-orange-400 hover:text-white hover:border-orange-400"
+                className="hover:bg-[#FF9800] hover:text-white hover:border-[#FF9800] focus:bg-[#FF9800] focus:text-white focus:border-[#FF9800]"
               >
                 <Wand2 size={16} className="mr-2" />
                 Batch Improve

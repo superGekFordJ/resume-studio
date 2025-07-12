@@ -4,11 +4,21 @@ import React from 'react';
 import type { DynamicResumeSection } from '@/types/schema';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { GripVertical, Eye, EyeOff, PlusCircle, ArrowUp, ArrowDown, Edit3, Trash2 } from 'lucide-react';
+import { GripVertical, Eye, EyeOff, PlusCircle, Edit3, Trash2 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react'; 
-import { sectionIconMap } from '@/types/resume';
-import { SchemaRegistry } from '@/lib/schemaRegistry';
 import { useResumeStore } from '@/stores/resumeStore';
+import {
+  DndContext,
+  closestCenter,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { SchemaRegistry } from '@/lib/schemaRegistry';
 
 interface SectionManagerProps {
   // No props needed anymore
@@ -18,10 +28,72 @@ const getIconComponent = (iconName: string): React.ElementType => {
   return (LucideIcons as any)[iconName] || LucideIcons.FileText;
 };
 
+// New Sortable Section Item Component
+interface SortableSectionItemProps {
+  section: DynamicResumeSection;
+  onToggleVisibility: (id: string) => void;
+  onSetEditingTarget: (id: string) => void;
+  onRemove: (id: string) => void;
+}
+
+function SortableSectionItem({ section, onToggleVisibility, onSetEditingTarget, onRemove }: SortableSectionItemProps) {
+  const schemaRegistry = SchemaRegistry.getInstance();
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: section.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  const schema = schemaRegistry.getSectionSchema(section.schemaId);
+  const iconName = schema?.uiConfig?.icon || 'FileText';
+  const IconComponent = getIconComponent(iconName);
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center justify-between p-2 mb-2 border rounded-md shadow-sm bg-card group"
+    >
+      <div className="flex items-center gap-2 flex-grow min-w-0">
+        <div {...attributes} {...listeners} className="cursor-grab p-1">
+          <GripVertical size={18} className="text-muted-foreground" />
+        </div>
+        <IconComponent className="h-5 w-5 text-primary flex-shrink-0" />
+        <span className="font-medium truncate">{section.title}</span>
+        <span className="text-xs bg-primary/10 text-primary px-1 py-0.5 rounded">
+          {section.schemaId}
+        </span>
+      </div>
+      <div className="flex items-center gap-1 flex-shrink-0">
+        <Button variant="ghost" size="icon" onClick={() => onSetEditingTarget(section.id)} aria-label={`Edit ${section.title}`}>
+          <Edit3 size={16} />
+        </Button>
+        <Button variant="ghost" size="icon" onClick={() => onToggleVisibility(section.id)} aria-label={section.visible ? `Hide ${section.title}` : `Show ${section.title}`}>
+          {section.visible ? <Eye size={16} /> : <EyeOff size={16} />}
+        </Button>
+        <Button variant="ghost" size="icon" onClick={() => onRemove(section.id)} className="text-destructive hover:text-destructive/80 opacity-0 group-hover:opacity-100 transition-opacity" aria-label={`Delete ${section.title}`}>
+          <Trash2 size={16} />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+
 export default function SectionManager({}: SectionManagerProps) {
   const resumeData = useResumeStore(state => state.resumeData);
   const updateResumeData = useResumeStore(state => state.updateResumeData);
   const setEditingTarget = useResumeStore(state => state.setEditingTarget);
+  const reorderSections = useResumeStore(state => state.reorderSections);
   const schemaRegistry = SchemaRegistry.getInstance();
   
   const handleToggleVisibility = (sectionId: string) => {
@@ -31,17 +103,16 @@ export default function SectionManager({}: SectionManagerProps) {
       updateResumeData(prev => ({ ...prev, sections: updatedSections }));
   };
 
-  const handleMoveSection = (sectionId: string, direction: 'up' | 'down') => {
-    const sections = [...resumeData.sections];
-    const index = sections.findIndex(s => s.id === sectionId);
-    if (index === -1) return;
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over) return;
+    
+    const activeIndex = resumeData.sections.findIndex(s => s.id === active.id);
+    const overIndex = resumeData.sections.findIndex(s => s.id === over.id);
 
-    const newIndex = direction === 'up' ? index - 1 : index + 1;
-    if (newIndex < 0 || newIndex >= sections.length) return;
-
-    // Swap elements
-    [sections[index], sections[newIndex]] = [sections[newIndex], sections[index]];
-    updateResumeData(prev => ({ ...prev, sections }));
+    if (activeIndex !== overIndex) {
+      reorderSections({ fromIndex: activeIndex, toIndex: overIndex });
+    }
   };
   
   const handleAddSection = (schemaId: string) => {
@@ -50,7 +121,6 @@ export default function SectionManager({}: SectionManagerProps) {
 
     const newSectionId = `${schemaId}_${Date.now()}`;
     
-      // Create new dynamic section
       const newDynamicSection: DynamicResumeSection = {
         id: newSectionId,
         schemaId: schemaId,
@@ -81,14 +151,7 @@ export default function SectionManager({}: SectionManagerProps) {
     updateResumeData(prev => ({ ...prev, sections: updatedSections }));
   };
 
-  // Get available section types from schema registry
   const availableSectionTypes = schemaRegistry.getAllSectionSchemas();
-
-  // Helper function to get section icon
-  const getSectionIcon = (section: DynamicResumeSection) => {
-      const schema = schemaRegistry.getSectionSchema(section.schemaId);
-      return schema?.uiConfig?.icon || 'FileText';
-  };
 
   return (
     <Card className="no-print">
@@ -99,7 +162,7 @@ export default function SectionManager({}: SectionManagerProps) {
         {/* Personal Details - Fixed */}
         <div className="flex items-center justify-between p-2 mb-2 border rounded-md shadow-sm bg-card">
           <div className="flex items-center gap-2">
-            {React.createElement(getIconComponent(sectionIconMap.personalDetails), { className: "h-5 w-5 text-primary" })}
+            <LucideIcons.UserCircle2 className="h-5 w-5 text-primary ml-2" />
             <span className="font-medium">Personal Details</span>
           </div>
           <Button variant="ghost" size="icon" onClick={() => setEditingTarget('personalDetails')} aria-label="Edit Personal Details">
@@ -108,43 +171,25 @@ export default function SectionManager({}: SectionManagerProps) {
         </div>
         
         {/* Reorderable Sections */}
-        {resumeData.sections.map((section, index) => {
-          const iconName = getSectionIcon(section as DynamicResumeSection);
-          const IconComponent = getIconComponent(iconName);
-          const sectionTitle = section.title;
-          
-          return (
-            <div key={section.id} className="flex items-center justify-between p-2 mb-2 border rounded-md shadow-sm bg-card group">
-              <div className="flex items-center gap-2 flex-grow min-w-0">
-                <GripVertical size={18} className="text-muted-foreground cursor-grab flex-shrink-0" />
-                <IconComponent className="h-5 w-5 text-primary flex-shrink-0" />
-                <span className="font-medium truncate">{sectionTitle}</span>
-                {/* Show schema indicator for dynamic sections */}
-                  <span className="text-xs bg-primary/10 text-primary px-1 py-0.5 rounded">
-                  {(section as DynamicResumeSection).schemaId}
-                  </span>
-              </div>
-              <div className="flex items-center gap-1 flex-shrink-0">
-                <Button variant="ghost" size="icon" onClick={() => handleMoveSection(section.id, 'up')} disabled={index === 0} aria-label="Move section up">
-                  <ArrowUp size={16} />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => handleMoveSection(section.id, 'down')} disabled={index === resumeData.sections.length - 1} aria-label="Move section down">
-                  <ArrowDown size={16} />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => setEditingTarget(section.id)} aria-label={`Edit ${sectionTitle}`}>
-                  <Edit3 size={16} />
-                </Button>
-                 <Button variant="ghost" size="icon" onClick={() => handleToggleVisibility(section.id)} aria-label={section.visible ? `Hide ${sectionTitle}` : `Show ${sectionTitle}`}>
-                  {section.visible ? <Eye size={16} /> : <EyeOff size={16} />}
-                </Button>
-                 {/* Allow deletion of all sections */}
-                  <Button variant="ghost" size="icon" onClick={() => handleRemoveSection(section.id)} className="text-destructive hover:text-destructive/80 opacity-0 group-hover:opacity-100 transition-opacity" aria-label={`Delete ${sectionTitle}`}>
-                    <Trash2 size={16} />
-                  </Button>
-              </div>
-            </div>
-          );
-        })}
+        <DndContext
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={resumeData.sections.map(s => s.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            {resumeData.sections.map(section => (
+              <SortableSectionItem
+                key={section.id}
+                section={section as DynamicResumeSection}
+                onToggleVisibility={handleToggleVisibility}
+                onSetEditingTarget={setEditingTarget}
+                onRemove={handleRemoveSection}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
       
         <div className="mt-4">
             <h4 className="font-headline text-md mb-2">Add New Section</h4>

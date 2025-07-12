@@ -95,6 +95,7 @@ export interface ResumeActions {
   addSectionItem: (sectionId: string) => void;
   removeSectionItem: (payload: { sectionId: string; itemId: string }) => void;
   reorderSectionItems: (payload: { sectionId: string; fromIndex: number; toIndex: number; }) => void;
+  reorderSections: (payload: { fromIndex: number; toIndex: number; }) => void;
   setAIPrompt: (prompt: string) => void;
   // DEPRECATED: Keep for backward compatibility
   startAIImprovement: (payload: { 
