@@ -128,6 +128,17 @@ export default function SectionItemEditor({ item, section, index, onRemove }: Se
   }
 
   // For list type sections, use accordion with drag-and-drop
+  const getDisplayTitle = () => {
+    if (sectionSchema?.fields && sectionSchema.fields.length > 0) {
+      const firstFieldId = sectionSchema.fields[0].id;
+      const title = item.data[firstFieldId];
+      if (title && typeof title === 'string' && title.trim() !== '') {
+        return title;
+      }
+    }
+    return `Item ${index + 1}`;
+  };
+
   return (
     <AccordionItem
       ref={setNodeRef}
@@ -144,7 +155,9 @@ export default function SectionItemEditor({ item, section, index, onRemove }: Se
           >
             <GripVertical size={16} className="text-[#3F51B5]" />
           </div>
-          <span className="font-medium text-[#3F51B5]">Item {index + 1}</span>
+          <span className="font-medium text-[#3F51B5] truncate" title={getDisplayTitle()}>
+            {getDisplayTitle()}
+          </span>
           <div className="flex-1" />
           <div
             role="button"

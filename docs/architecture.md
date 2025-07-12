@@ -55,6 +55,8 @@ src/
 │       │   └── DynamicFieldRenderer.tsx # 动态字段渲染器
 │       ├── rendering/          # 原子渲染组件
 │       │   ├── pro-classic/      # ProClassic 模板专用组件
+│       │   ├── sapphire/ # SapphireSidebar 模板专用组件
+│       │   ├── veridian/ # VeridianSidebar 模板专用组件
 │       │   ├── AdvancedSkillsComponent.tsx # 高级技能组件
 │       │   ├── BadgeListComponent.tsx   # 徽章列表组件
 │       │   ├── CertificationItemComponent.tsx # 认证项目组件
@@ -69,6 +71,8 @@ src/
 │       │   ├── ContinuousNarrativeTemplate.tsx # 连续叙述模板
 │       │   ├── ParallelModularTemplate.tsx # 并行模块模板
 │       │   └── ProClassicTemplate.tsx # 专业经典模板
+│       │   └── SapphireSidebarTemplate.tsx # 蓝宝石模板
+│       │   └── VeridianSidebarTemplate.tsx # 维尔德尼模板
 │       └── ui/                # UI 相关组件
 │           ├── AIReviewDialog.tsx    # AI 评审对话框
 │           ├── AISuggestionCard.tsx  # (新增) AI 建议卡片 - 单字段改进
@@ -81,6 +85,12 @@ src/
 │   └── useHydratedStore.ts # Zustand hydration hook
 ├── stores/               # Zustand stores
 │   └── resumeStore.ts    # 中央状态存储
+│   └── types.ts          # 类型定义
+│   └── actions/          # 动作定义
+│       ├── dataActions.ts # 数据动作定义
+│       └── aiActions.ts   # AI动作定义
+│       └── uiActions.ts   # UI动作定义
+│       └── snapshotActions.ts # 快照动作定义
 ├── lib/                  # 工具函数
 │   ├── utils.ts          # 通用工具
 │   ├── schemaRegistry.ts # Schema 注册中心
@@ -269,6 +279,10 @@ const renderSectionByRenderType = (section: RenderableSection) => {
    - `AIFieldWrapper`: 封装所有 AI 改进 UI 交互
    - `AutocompleteTextarea`: 处理自动补全交互。它直接调用 AI flow 来获取内联建议，并通过 props 接收来自 store 的"强制建议"（AI 改进建议）。
 
+**UI/UX 增强 (Updated 2025-07-04)**:
+- **`SectionManager`**: 章节管理功能已增强，通过 `dnd-kit` 支持**拖拽排序**，取代了原有的上下箭头按钮，提升了操作的流畅性。
+- **`SectionItemEditor`**: 章节内的项目现已重构为**可拖拽的、可折叠的手风琴式 (`Accordion`) 项目**。为了提高可用性，手风琴的标题会动态显示该项目第一个字段的内容。
+
 ### 5. AI 集成架构
 - **统一的上下文构建**: 所有 AI 功能的上下文都由 `schemaRegistry.buildAIContext` 方法统一构建，确保了数据的一致性和可预测性。
 - **结构化输入**: AI Flow 的输入（`inputSchema`）接收的是结构化的 `context` 对象，而不是非结构化的字符串 "context blob"，这使得 Prompt Engineering 更加稳定和可控。
@@ -356,6 +370,8 @@ interface ResumeActions {
   updateSectionTitle: (payload: { sectionId: string; newTitle: string }) => void;
   addSectionItem: (sectionId: string) => void;
   removeSectionItem: (payload: { sectionId: string; itemId: string }) => void;
+  reorderSectionItems: (payload: { sectionId: string; fromIndex: number; toIndex: number; }) => void;
+  reorderSections: (payload: { fromIndex: number; toIndex: number; }) => void;
   
   // AI 改进操作 v3
   setAIPrompt: (prompt: string) => void;
