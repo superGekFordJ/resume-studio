@@ -11,7 +11,7 @@
  *   - `ImproveResumeSectionOutput`: The TypeScript interface defining the output schema for the flow.
  */
 
-import { ai } from '@/ai/genkit';
+import { aiManager } from '@/ai/AIManager';
 import { z } from 'genkit';
 import {
   ImproveResumeSectionInputSchema,
@@ -30,25 +30,27 @@ export type ImproveResumeSectionOutput = z.infer<
 export async function improveResumeSection(
   input: ImproveResumeSectionInput
 ): Promise<ImproveResumeSectionOutput> {
+  const ai = aiManager.getGenkit(input.aiConfig);
+  
+  // Define the Genkit flow for improving a resume section.
+  const improveResumeSectionFlow = ai.defineFlow(
+    {
+      name: 'improveResumeSectionFlow',
+      inputSchema: ImproveResumeSectionInputSchema,
+      outputSchema: ImproveResumeSectionOutputSchema,
+    },
+    async (flowInput) => {
+      const prompt = ai.prompt<
+        typeof ImproveResumeSectionInputSchema,
+        typeof ImproveResumeSectionOutputSchema
+      >('improveResumeSection');
+      const { output } = await prompt(flowInput);
+      if (!output) {
+        throw new Error('Improve resume section failed to produce an output.');
+      }
+      return output;
+    }
+  );
+
   return improveResumeSectionFlow(input);
 }
-
-// Define the Genkit flow for improving a resume section.
-const improveResumeSectionFlow = ai.defineFlow(
-  {
-    name: 'improveResumeSectionFlow',
-    inputSchema: ImproveResumeSectionInputSchema,
-    outputSchema: ImproveResumeSectionOutputSchema,
-  },
-  async input => {
-    const prompt = ai.prompt<
-      typeof ImproveResumeSectionInputSchema,
-      typeof ImproveResumeSectionOutputSchema
-    >('improveResumeSection');
-    const { output } = await prompt(input);
-    if (!output) {
-      throw new Error('Improve resume section failed to produce an output.');
-    }
-    return output;
-  }
-);

@@ -90,6 +90,7 @@ export default function AutocompleteTextarea({
         textAfterCursor: data.textAfterCursor,
         context: context,
         sectionType: sectionType,
+        aiConfig: aiConfig,
       });
 
       const completion = (result.completion || "").trim();

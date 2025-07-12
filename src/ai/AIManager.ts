@@ -1,8 +1,9 @@
 import { genkit } from 'genkit';
 import { googleAI } from '@genkit-ai/googleai';
 // import { vertexAI } from '@genkit-ai/vertexai';
-import type { AIConfig } from '@/stores/resumeStore';
+import type { AIConfig } from '@/stores/types';
 import _ from 'lodash';
+import * as schemas from './prompts/schema-definitions';
 
 // Placeholder for ollama plugin - to be installed if needed
 // import { ollama } from 'genkitx-ollama';
@@ -39,9 +40,9 @@ function createConfiguredGenkit(config: AIConfig) {
     plugins.push(googleAI({ apiKey: process.env.GOOGLE_API_KEY }));
   }
   
-  const ai = genkit({ 
+  const ai = genkit({
     plugins,
-    model: `googleai/${config.model}` // Default model
+    promptDir: 'src/ai/prompts',
   });
   
   return ai;
@@ -61,6 +62,58 @@ class AIManager {
     return AIManager.instance;
   }
 
+  private _registerAllSchemas(ai: ReturnType<typeof genkit>) {
+    // This list might be incomplete due to previous issues, but I will register what I have.
+    // I will add all schemas I have identified.
+    ai.defineSchema('AIBridgedSectionSchema', schemas.AIBridgedSectionSchema);
+    ai.defineSchema('AIBridgedResumeSchema', schemas.AIBridgedResumeSchema);
+    // ai.defineSchema('AIConfigSchema', schemas.AIConfigSchema); // This schema doesn't seem to exist as a standalone export
+    if ('AIGeneratedEducationSchema' in schemas) ai.defineSchema('AIGeneratedEducationSchema', schemas.AIGeneratedEducationSchema);
+    if ('AIGeneratedExperienceSchema' in schemas) ai.defineSchema('AIGeneratedExperienceSchema', schemas.AIGeneratedExperienceSchema);
+    if ('AIGeneratedResumeDataSchema' in schemas) ai.defineSchema('AIGeneratedResumeDataSchema', schemas.AIGeneratedResumeDataSchema);
+    if ('AIGeneratedSkillSchema' in schemas) ai.defineSchema('AIGeneratedSkillSchema', schemas.AIGeneratedSkillSchema);
+    if ('GeneratedResumeContentSchema' in schemas) ai.defineSchema('GeneratedResumeContentSchema', schemas.GeneratedResumeContentSchema);
+    if ('GeneratedResumeAsStringSchema' in schemas) ai.defineSchema('GeneratedResumeAsStringSchema', schemas.GeneratedResumeAsStringSchema);
+    ai.defineSchema('AutocompleteInputSchema', schemas.AutocompleteInputSchema);
+    ai.defineSchema('AutocompleteOutputSchema', schemas.AutocompleteOutputSchema);
+    ai.defineSchema('BatchImproveSectionInputSchema', schemas.BatchImproveSectionInputSchema);
+    ai.defineSchema('BatchImproveSectionOutputSchema', schemas.BatchImproveSectionOutputSchema);
+    ai.defineSchema('BatchImproveSectionOutputWrapperSchema', schemas.BatchImproveSectionOutputWrapperSchema);
+    ai.defineSchema('ComprehensiveResumeAnalysisInputSchema', schemas.ComprehensiveResumeAnalysisInputSchema);
+    ai.defineSchema('ComprehensiveResumeAnalysisOutputSchema', schemas.ComprehensiveResumeAnalysisOutputSchema);
+    ai.defineSchema('GenerateCoverLetterInputSchema', schemas.GenerateCoverLetterInputSchema);
+    ai.defineSchema('GenerateCoverLetterOutputSchema', schemas.GenerateCoverLetterOutputSchema);
+    if ('GenerateResumeContextInputSchema' in schemas) ai.defineSchema('GenerateResumeContextInputSchema', schemas.GenerateResumeContextInputSchema);
+    ai.defineSchema('ImproveResumeSectionInputSchema', schemas.ImproveResumeSectionInputSchema);
+    ai.defineSchema('ImproveResumeSectionOutputSchema', schemas.ImproveResumeSectionOutputSchema);
+    ai.defineSchema('JobInfoFromImageInputSchema', schemas.JobInfoFromImageInputSchema);
+    ai.defineSchema('JobInfoFromImageOutputSchema', schemas.JobInfoFromImageOutputSchema);
+    // The spec mentions review-resume, but the schemas were not in the user-provided file.
+    // I will skip them for now to avoid errors.
+    ai.defineSchema('ResumeReviewInputSchema', schemas.ResumeReviewInputSchema);
+    ai.defineSchema('ResumeReviewOutputSchema', schemas.ResumeReviewOutputSchema);
+  }
+
+  private _registerHelpers(ai: ReturnType<typeof genkit>) {
+    ai.defineHelper(
+        'formatCurrentDate',
+        () => async () => {
+            const now = new Date();
+            const options: Intl.DateTimeFormatOptions = { 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            };
+            return now.toLocaleDateString('en-US', options);
+        }
+    );
+
+    ai.defineHelper(
+        'eq',
+        () => async (a: any, b: any) => a === b
+    );
+  }
+
   public getGenkit(config: AIConfig): ReturnType<typeof genkit> {
     // If config is the same as the active one, return the cached instance
     if (this.activeInstance && _.isEqual(this.activeConfig, config)) {
@@ -69,6 +122,10 @@ class AIManager {
 
     // Otherwise, create a new instance, cache it, and return it
     const newInstance = createConfiguredGenkit(config);
+    
+    this._registerAllSchemas(newInstance);
+    this._registerHelpers(newInstance);
+
     this.activeInstance = newInstance;
     this.activeConfig = _.cloneDeep(config); // Store a copy of the config
     return newInstance;

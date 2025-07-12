@@ -8,51 +8,39 @@
  * - ReviewResumeOutput - The return type for the reviewResume function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { aiManager } from '@/ai/AIManager';
+import { z } from 'genkit';
+import { 
+  ResumeReviewInputSchema, 
+  ResumeReviewOutputSchema 
+} from '../prompts/schemas';
 
-const ReviewResumeInputSchema = z.object({
-  resumeText: z.string().describe('The complete text content of the resume to be reviewed.'),
-});
-export type ReviewResumeInput = z.infer<typeof ReviewResumeInputSchema>;
-
-const ReviewResumeOutputSchema = z.object({
-  overallQuality: z.string().describe('An overall assessment of the resume quality.'),
-  suggestions: z
-    .string()
-    .describe('Specific, actionable suggestions for improving the resume.'),
-});
-export type ReviewResumeOutput = z.infer<typeof ReviewResumeOutputSchema>;
+export type ReviewResumeInput = z.infer<typeof ResumeReviewInputSchema>;
+export type ReviewResumeOutput = z.infer<typeof ResumeReviewOutputSchema>;
 
 export async function reviewResume(input: ReviewResumeInput): Promise<ReviewResumeOutput> {
+  const ai = aiManager.getGenkit(input.aiConfig);
+
+  const reviewResumeFlow = ai.defineFlow(
+    {
+      name: 'reviewResumeFlow',
+      inputSchema: ResumeReviewInputSchema,
+      outputSchema: ResumeReviewOutputSchema,
+    },
+    async (flowInput) => {
+      const prompt = ai.prompt<
+        typeof ResumeReviewInputSchema,
+        typeof ResumeReviewOutputSchema
+      >('reviewResume');
+
+      const { output } = await prompt(flowInput);
+      
+      if (!output) {
+        throw new Error('Resume review failed to produce an output.');
+      }
+      return output;
+    }
+  );
+  
   return reviewResumeFlow(input);
 }
-
-const reviewResumePrompt = ai.definePrompt({
-  name: 'reviewResumePrompt',
-  input: {schema: ReviewResumeInputSchema},
-  output: {schema: ReviewResumeOutputSchema},
-  prompt: `You are an expert resume reviewer. Analyze the following resume text and provide an overall quality assessment and specific suggestions for improvement.
-
-Resume Text:
-{{{resumeText}}}
-
-Respond in a professional and helpful tone.`,
-  model: 'googleai/gemini-2.5-pro',
-  config: {
-    temperature: 0.2,
-    topP: 0.9
-  }
-});
-
-const reviewResumeFlow = ai.defineFlow(
-  {
-    name: 'reviewResumeFlow',
-    inputSchema: ReviewResumeInputSchema,
-    outputSchema: ReviewResumeOutputSchema,
-  },
-  async input => {
-    const {output} = await reviewResumePrompt(input);
-    return output!;
-  }
-);

@@ -70,7 +70,8 @@ export const createAIActions: StateCreator<
               resumeSection: payload.currentValue,
               prompt: state.aiPrompt,
               context: context,
-              sectionType: 'personalDetailsField'
+              sectionType: 'personalDetailsField',
+              aiConfig: state.aiConfig,
             });
             
             improvedText = result.improvedResumeSection;
@@ -200,7 +201,8 @@ export const createAIActions: StateCreator<
             userJobTitle: state.resumeData.personalDetails?.jobTitle,
             userJobInfo: state.aiConfig.targetJobInfo,
             userBio: state.aiConfig.userBio,
-            otherSectionsContext: schemaRegistry.stringifyResumeForReview(state.resumeData)
+            otherSectionsContext: schemaRegistry.stringifyResumeForReview(state.resumeData),
+            aiConfig: state.aiConfig
           });
 
           if (result && result.improvedSection) {
@@ -286,7 +288,8 @@ export const createAIActions: StateCreator<
               resumeSection: payload.currentValue,
               prompt: payload.prompt,
               context: context,
-              sectionType: 'personalDetailsField'
+              sectionType: 'personalDetailsField',
+              aiConfig: state.aiConfig
             });
             
             improvedText = result.improvedResumeSection;
@@ -479,6 +482,7 @@ export const createAIActions: StateCreator<
       },
 
       generateResumeSnapshotFromBio: async () => {
+
         set({ isGeneratingSnapshot: true });
         const { aiConfig, createSnapshot } = get();
         const { userBio, targetJobInfo } = aiConfig;

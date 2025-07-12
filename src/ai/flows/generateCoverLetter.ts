@@ -10,7 +10,7 @@
  *   - `GenerateCoverLetterOutput`: The TypeScript interface defining the output schema for the flow.
  */
 
-import { ai } from '@/ai/genkit';
+import { aiManager } from '@/ai/AIManager';
 import { z } from 'genkit';
 import {
   GenerateCoverLetterInputSchema,
@@ -29,25 +29,27 @@ export type GenerateCoverLetterOutput = z.infer<
 export async function generateCoverLetter(
   input: GenerateCoverLetterInput
 ): Promise<GenerateCoverLetterOutput> {
-  return generateCoverLetterFlow(input);
-}
+  const ai = aiManager.getGenkit(input.aiConfig);
 
-// Define the Genkit flow for generating a cover letter.
-const generateCoverLetterFlow = ai.defineFlow(
-  {
-    name: 'generateCoverLetterFlow',
-    inputSchema: GenerateCoverLetterInputSchema,
-    outputSchema: GenerateCoverLetterOutputSchema,
-  },
-  async input => {
-    const prompt = ai.prompt<
-      typeof GenerateCoverLetterInputSchema,
-      typeof GenerateCoverLetterOutputSchema
-    >('generate-cover-letter');
-    const { output } = await prompt(input);
-    if (!output) {
-      throw new Error('Cover letter generation failed to produce an output.');
+  // Define the Genkit flow for generating a cover letter.
+  const generateCoverLetterFlow = ai.defineFlow(
+    {
+      name: 'generateCoverLetterFlow',
+      inputSchema: GenerateCoverLetterInputSchema,
+      outputSchema: GenerateCoverLetterOutputSchema,
+    },
+    async (flowInput) => {
+      const prompt = ai.prompt<
+        typeof GenerateCoverLetterInputSchema,
+        typeof GenerateCoverLetterOutputSchema
+      >('generate-cover-letter');
+      const { output } = await prompt(flowInput);
+      if (!output) {
+        throw new Error('Cover letter generation failed to produce an output.');
+      }
+      return output;
     }
-    return output;
-  }
-); 
+  );
+  
+  return generateCoverLetterFlow(input);
+} 

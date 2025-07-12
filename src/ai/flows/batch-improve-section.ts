@@ -7,37 +7,17 @@
  * providing more comprehensive and contextually aware improvements.
  */
 
-import { ai } from '@/ai/genkit';
+import { aiManager } from '@/ai/AIManager';
 import { z } from 'genkit';
 import {
   AIBridgedSectionSchema,
+  BatchImproveSectionOutputWrapperSchema,
   ComprehensiveResumeAnalysisInputSchema,
   ComprehensiveResumeAnalysisOutputSchema,
-  BatchImproveSectionOutputWrapperSchema,
+  BatchImproveSectionInputSchema,
+  BatchImproveSectionOutputSchema,
 } from '../prompts/schemas';
 
-// Define input and output schemas locally (not exported) to avoid Next.js export restrictions
-const BatchImproveSectionInputSchema = ai.defineSchema(
-  'BatchImproveSectionInputSchemaV2',
-  z.object({
-    section: AIBridgedSectionSchema,
-    improvementGoals: z
-      .array(z.string())
-      .describe('List of improvement goals'),
-    userJobTitle: z.string().optional(),
-    userJobInfo: z.string().optional(),
-    userBio: z.string().optional(),
-    otherSectionsContext: z.string().optional(),
-  })
-);
-
-const BatchImproveSectionOutputSchema = ai.defineSchema(
-  'BatchImproveSectionOutputSchemaV2',
-  z.object({
-    improvedSection: AIBridgedSectionSchema,
-    improvementSummary: z.string(),
-  })
-);
 
 export type BatchImproveSectionInput = z.infer<
   typeof BatchImproveSectionInputSchema
@@ -49,46 +29,49 @@ export type BatchImproveSectionOutput = z.infer<
 export async function batchImproveSection(
   input: BatchImproveSectionInput
 ): Promise<BatchImproveSectionOutput> {
+  const ai = aiManager.getGenkit(input.aiConfig);
+
+  const batchImproveSectionFlow = ai.defineFlow(
+    {
+      name: 'batchImproveSectionFlow',
+      inputSchema: BatchImproveSectionInputSchema,
+      outputSchema: BatchImproveSectionOutputSchema,
+    },
+    async (flowInput) => {
+      // Call the prompt expecting the wrapper schema
+      const prompt = ai.prompt<
+        typeof BatchImproveSectionInputSchema,
+        typeof BatchImproveSectionOutputWrapperSchema
+      >('batchImproveSection');
+      
+      const { output: wrappedOutput } = await prompt(flowInput);
+      
+      if (!wrappedOutput?.improvedSectionJson) {
+        throw new Error('Batch Improve Section failed to produce an output.');
+      }
+      
+      try {
+        // Parse the JSON string from the wrapper
+        const parsedSection = JSON.parse(wrappedOutput.improvedSectionJson);
+        
+        // Validate the parsed object against our internal schema
+        // Note: The original file used AIBridgedSectionSchema.parse, but the flow output is BatchImproveSectionOutputSchema
+        // The spec requires using the imported schemas. I'll align the return object with BatchImproveSectionOutputSchema
+        const validatedSection = AIBridgedSectionSchema.parse(parsedSection);
+        
+        return {
+          improvedSection: validatedSection,
+          improvementSummary: wrappedOutput.improvementSummary,
+        };
+      } catch (error) {
+        console.error('Failed to parse or validate improved section:', error);
+        throw new Error('Failed to parse AI-generated improvements. Please try again.');
+      }
+    }
+  );
+
   return batchImproveSectionFlow(input);
 }
-
-const batchImproveSectionFlow = ai.defineFlow(
-  {
-    name: 'batchImproveSectionFlow',
-    inputSchema: BatchImproveSectionInputSchema,
-    outputSchema: BatchImproveSectionOutputSchema,
-  },
-  async input => {
-    // Call the prompt expecting the wrapper schema
-    const prompt = ai.prompt<
-      typeof BatchImproveSectionInputSchema,
-      typeof BatchImproveSectionOutputWrapperSchema
-    >('batchImproveSection');
-    
-    const { output: wrappedOutput } = await prompt(input);
-    
-    if (!wrappedOutput?.improvedSectionJson) {
-      throw new Error('Batch Improve Section failed to produce an output.');
-    }
-    
-    try {
-      // Parse the JSON string from the wrapper
-      const parsedSection = JSON.parse(wrappedOutput.improvedSectionJson);
-      
-      // Validate the parsed object against our internal schema
-      const validatedSection = AIBridgedSectionSchema.parse(parsedSection);
-      
-      // Return the final output matching the flow's expected schema
-      return {
-        improvedSection: validatedSection,
-        improvementSummary: wrappedOutput.improvementSummary,
-      };
-    } catch (error) {
-      console.error('Failed to parse or validate improved section:', error);
-      throw new Error('Failed to parse AI-generated improvements. Please try again.');
-    }
-  }
-);
 
 // Enhanced AI Flow for comprehensive resume analysis and improvement
 export type ComprehensiveResumeAnalysisInput = z.infer<
@@ -101,26 +84,28 @@ export type ComprehensiveResumeAnalysisOutput = z.infer<
 export async function comprehensiveResumeAnalysis(
   input: ComprehensiveResumeAnalysisInput
 ): Promise<ComprehensiveResumeAnalysisOutput> {
-  return comprehensiveResumeAnalysisFlow(input);
-}
+  const ai = aiManager.getGenkit(input.aiConfig);
 
-const comprehensiveResumeAnalysisFlow = ai.defineFlow(
-  {
-    name: 'comprehensiveResumeAnalysisFlow',
-    inputSchema: ComprehensiveResumeAnalysisInputSchema,
-    outputSchema: ComprehensiveResumeAnalysisOutputSchema,
-  },
-  async input => {
-    const prompt = ai.prompt<
-      typeof ComprehensiveResumeAnalysisInputSchema,
-      typeof ComprehensiveResumeAnalysisOutputSchema
-    >('comprehensiveResumeAnalysis');
-    const { output } = await prompt(input);
-    if (!output) {
-      throw new Error(
-        'Comprehensive Resume Analysis failed to produce an output.'
-      );
+  const comprehensiveResumeAnalysisFlow = ai.defineFlow(
+    {
+      name: 'comprehensiveResumeAnalysisFlow',
+      inputSchema: ComprehensiveResumeAnalysisInputSchema,
+      outputSchema: ComprehensiveResumeAnalysisOutputSchema,
+    },
+    async (flowInput) => {
+      const prompt = ai.prompt<
+        typeof ComprehensiveResumeAnalysisInputSchema,
+        typeof ComprehensiveResumeAnalysisOutputSchema
+      >('comprehensiveResumeAnalysis');
+      const { output } = await prompt(flowInput);
+      if (!output) {
+        throw new Error(
+          'Comprehensive Resume Analysis failed to produce an output.'
+        );
+      }
+      return output;
     }
-    return output;
-  }
-); 
+  );
+  
+  return comprehensiveResumeAnalysisFlow(input);
+} 
