@@ -74,11 +74,12 @@ App
 ├── SidebarNavigator (两阶段侧边栏)
 │   ├── Structure View (结构视图)
 │   │   ├── TemplateSelector (模板选择)
-│   │   └── SectionManager (章节管理)
+│   │   └── SectionManager (章节管理, 支持拖拽排序)
 │   └── Content View (内容视图)
 │       └── SectionEditor (Schema驱动编辑器)
-│           └── DynamicFieldRenderer (通用字段渲染)
-│               └── AutocompleteTextarea (AI 补全)
+│           └── SectionItemEditor (可拖拽、可折叠的Accordion UI)
+│               └── DynamicFieldRenderer (通用字段渲染)
+│                   └── AutocompleteTextarea (AI 补全)
 ├── ResumeCanvas (简历渲染)
 │   └── Template Components (模板组件)
 └── AIReviewDialog (AI 评审)
@@ -139,7 +140,7 @@ this.registerSectionSchema({
 ### 主要组件
 - `ResumeCanvas` - 简历渲染容器
 - `SidebarNavigator` - 两阶段侧边栏导航器
-- `SectionEditor` - Schema驱动章节编辑器
+- `SectionEditor` - Schema驱动章节编辑器，支持拖拽排序和Accordion UI
 - `DynamicFieldRenderer` - 通用字段渲染器
 - `AutocompleteTextarea` - AI 补全输入框
 - `AIReviewDialog` - AI 评审对话框
@@ -149,8 +150,6 @@ this.registerSectionSchema({
 ### 环境变量
 ```bash
 GOOGLE_AI_API_KEY=your_api_key_here
-AI_MODEL=googleai/gemini-2.0-flash-lite
-AI_MAX_TOKENS=1000
 ```
 
 ### 构建和部署
@@ -199,5 +198,5 @@ firebase deploy
 
 ---
 
-**最后更新**: 2025年1月6日
-**文档版本**: v2.0.0 - Schema驱动架构重构完成 
+**最后更新**: 2025年7月4日
+**文档版本**: v2.1.0 - 编辑器UI/UX增强 

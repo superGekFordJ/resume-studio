@@ -151,7 +151,7 @@ export interface RoleMap {
 在渲染时，模板组件会获取对应章节的 `RoleMap`，并将其传递给原子渲染组件。渲染组件则使用 `pickFieldByRole(item, 'title', roleMap)` 这样的工具函数来安全地获取数据，而无需关心字段名是 `jobTitle` 还是 `position`。
 
 ---
-*最后更新: 2025-06-28*  
-*文档版本: v3.0.0*
+*最后更新: 2025-07-04*  
+*文档版本: v3.1.0*
 
 <!-- 过时内容已移除 --> 
