@@ -10,6 +10,7 @@ export interface DataActions {
   addSectionItem: (sectionId: string) => void;
   removeSectionItem: (payload: { sectionId: string; itemId: string }) => void;
   reorderSectionItems: (payload: { sectionId: string; fromIndex: number; toIndex: number; }) => void;
+  reorderSections: (payload: { fromIndex: number; toIndex: number; }) => void;
 }
 
 export const createDataActions: StateCreator<
@@ -125,6 +126,19 @@ export const createDataActions: StateCreator<
       resumeData: {
         ...state.resumeData,
         sections,
+      },
+    };
+  }),
+  reorderSections: (payload) => set((state) => {
+    const { fromIndex, toIndex } = payload;
+    const newSections = Array.from(state.resumeData.sections);
+    const [movedItem] = newSections.splice(fromIndex, 1);
+    newSections.splice(toIndex, 0, movedItem);
+
+    return {
+      resumeData: {
+        ...state.resumeData,
+        sections: newSections,
       },
     };
   }),

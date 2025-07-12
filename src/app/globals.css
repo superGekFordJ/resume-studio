@@ -124,7 +124,7 @@
 .a4-canvas {
   width: 210mm;
   height: 297mm; /* Changed from min-height to height for consistent footer positioning */
-  padding: 20mm 25mm; /* Consistent margins: top/bottom 20mm, left/right 25mm */
+  padding: 12mm 15mm; /* Consistent margins: top/bottom 20mm, left/right 25mm */
   @apply bg-card shadow-lg transition-all duration-300 ease-in-out;
   transform-origin: top center;
   
