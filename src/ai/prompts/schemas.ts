@@ -256,6 +256,22 @@ export const GeneratedResumeAsStringSchema = ai.defineSchema(
   })
 );
 
+export const ReviewResumeInputSchema = ai.defineSchema(
+  'ReviewResumeInputSchema',
+  z.object({
+    resumeText: z.string().describe('The complete text content of the resume to be reviewed.'),
+  })
+);
+
+export const ReviewResumeOutputSchema = ai.defineSchema(
+  'ReviewResumeOutputSchema',
+  z.object({
+  overallQuality: z.string().describe('An overall assessment of the resume quality.'),
+  suggestions: z
+    .string()
+    .describe('Specific, actionable suggestions for improving the resume.'),
+  })
+);
 
 // --- COVER LETTER GENERATION SCHEMAS ---
 

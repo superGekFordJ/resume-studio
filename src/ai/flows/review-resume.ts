@@ -10,40 +10,15 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import {ReviewResumeInputSchema, ReviewResumeOutputSchema} from '../prompts/schemas';
 
-const ReviewResumeInputSchema = z.object({
-  resumeText: z.string().describe('The complete text content of the resume to be reviewed.'),
-});
 export type ReviewResumeInput = z.infer<typeof ReviewResumeInputSchema>;
-
-const ReviewResumeOutputSchema = z.object({
-  overallQuality: z.string().describe('An overall assessment of the resume quality.'),
-  suggestions: z
-    .string()
-    .describe('Specific, actionable suggestions for improving the resume.'),
-});
 export type ReviewResumeOutput = z.infer<typeof ReviewResumeOutputSchema>;
 
 export async function reviewResume(input: ReviewResumeInput): Promise<ReviewResumeOutput> {
   return reviewResumeFlow(input);
 }
 
-const reviewResumePrompt = ai.definePrompt({
-  name: 'reviewResumePrompt',
-  input: {schema: ReviewResumeInputSchema},
-  output: {schema: ReviewResumeOutputSchema},
-  prompt: `You are an expert resume reviewer. Analyze the following resume text and provide an overall quality assessment and specific suggestions for improvement.
-
-Resume Text:
-{{{resumeText}}}
-
-Respond in a professional and helpful tone.`,
-  model: 'googleai/gemini-2.5-pro',
-  config: {
-    temperature: 0.2,
-    topP: 0.9
-  }
-});
 
 const reviewResumeFlow = ai.defineFlow(
   {
@@ -52,7 +27,8 @@ const reviewResumeFlow = ai.defineFlow(
     outputSchema: ReviewResumeOutputSchema,
   },
   async input => {
-    const {output} = await reviewResumePrompt(input);
+    const prompt = ai.prompt<typeof ReviewResumeInputSchema, typeof ReviewResumeOutputSchema>('reviewResume');
+    const {output} = await prompt(input);
     return output!;
   }
 );

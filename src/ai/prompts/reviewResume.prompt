@@ -1,0 +1,21 @@
+---
+model: googleai/gemini-2.5-pro
+config:
+  temperature: 0.2
+  topP: 0.9
+
+# 定义此 prompt 模板所需的输入变量。
+# `schema` 指向一个已注册的 Zod schema 名称。
+input:
+  schema: ReviewResumeInputSchema
+
+# 定义 AI 响应的预期结构。
+# `schema` 指向一个已注册的 Zod schema 名称。
+output:
+  schema: ReviewResumeOutputSchema
+---
+{{role "system"}}
+You are an expert resume reviewer. Analyze the following resume text and provide an overall quality assessment and specific suggestions for improvement.
+
+{{role "user"}}
+{{{resumeText}}}

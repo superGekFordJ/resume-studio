@@ -243,42 +243,6 @@ export class SchemaRegistry implements ISchemaRegistry {
     return result.improvedResumeSection;
   }
 
-  public async getAutocomplete(payload: {
-    resumeData: any;
-    sectionId: string;
-    itemId: string;
-    fieldId: string;
-    inputText: string;
-    aiConfig?: any;
-  }): Promise<string> {
-    // 1. Build context using buildAIContext
-    const context = this.buildAIContext({
-      resumeData: payload.resumeData,
-      task: 'autocomplete',
-      sectionId: payload.sectionId,
-      fieldId: payload.fieldId,
-      itemId: payload.itemId,
-      aiConfig: payload.aiConfig
-    });
-    
-    // 2. Get field schema for additional hints
-    const section = payload.resumeData.sections.find((s: any) => s.id === payload.sectionId);
-    const schemaId = section?.schemaId || section?.type;
-    const schema = this.getSectionSchema(schemaId);
-    const field = schema?.fields.find(f => f.id === payload.fieldId);
-    
-    // 3. Import and call the AI Flow
-    const { autocompleteInput } = await import('@/ai/flows/autocomplete-input');
-    
-    const result = await autocompleteInput({
-      inputText: payload.inputText,
-      context: context,
-      sectionType: schemaId
-    });
-    
-    return result.completion || '';
-  }
-
   public async batchImproveSection(payload: {
     resumeData: any;
     sectionId: string;
