@@ -14,30 +14,10 @@ import {
   ComprehensiveResumeAnalysisInputSchema,
   ComprehensiveResumeAnalysisOutputSchema,
   BatchImproveSectionOutputWrapperSchema,
+  BatchImproveSectionInputSchema,
+  BatchImproveSectionOutputSchema,
 } from '../prompts/schemas';
 
-// Define input and output schemas locally (not exported) to avoid Next.js export restrictions
-const BatchImproveSectionInputSchema = ai.defineSchema(
-  'BatchImproveSectionInputSchemaV2',
-  z.object({
-    section: AIBridgedSectionSchema,
-    improvementGoals: z
-      .array(z.string())
-      .describe('List of improvement goals'),
-    userJobTitle: z.string().optional(),
-    userJobInfo: z.string().optional(),
-    userBio: z.string().optional(),
-    otherSectionsContext: z.string().optional(),
-  })
-);
-
-const BatchImproveSectionOutputSchema = ai.defineSchema(
-  'BatchImproveSectionOutputSchemaV2',
-  z.object({
-    improvedSection: AIBridgedSectionSchema,
-    improvementSummary: z.string(),
-  })
-);
 
 export type BatchImproveSectionInput = z.infer<
   typeof BatchImproveSectionInputSchema

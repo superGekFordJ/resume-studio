@@ -5,7 +5,7 @@ model: googleai/gemini-2.5-pro
 # 定义此 prompt 模板所需的输入变量。
 # `schema` 指向一个已注册的 Zod schema 名称。
 input:
-  schema: BatchImproveSectionInputSchemaV2
+  schema: BatchImproveSectionInputSchema
 
 # 定义 AI 响应的预期结构。
 # `schema` 指向一个已注册的 Zod schema 名称。

@@ -1,4 +1,15 @@
 'use server';
+
+/**
+ * @fileOverview AI-powered job info extraction from image tool.
+ *
+ * This file defines a Genkit flow for extracting job information from an image.
+ * It exports:
+ *   - `getJobInfoFromImage`: An async function to trigger the job info extraction flow.
+ *   - `JobInfoFromImageInput`: The TypeScript interface defining the input schema for the flow.
+ *   - `JobInfoFromImageOutput`: The TypeScript interface defining the output schema for the flow.
+ */
+
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { JobInfoFromImageInputSchema, JobInfoFromImageOutputSchema } from '../prompts/schemas';

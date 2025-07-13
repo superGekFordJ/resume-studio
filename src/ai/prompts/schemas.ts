@@ -63,37 +63,22 @@ export const AutocompleteOutputSchema = ai.defineSchema(
 export const BatchImproveSectionInputSchema = ai.defineSchema(
   'BatchImproveSectionInputSchema',
   z.object({
-    sectionData: z.record(z.any()).describe('The complete section data with all fields'),
-    sectionType: z.string().describe('The type/schema ID of the section being improved'),
+    section: AIBridgedSectionSchema,
     improvementGoals: z
       .array(z.string())
-      .describe('List of improvement goals (e.g., "add quantifiable results", "improve clarity")'),
-    userJobTitle: z.string().optional().describe("The user's target job title"),
-    userJobInfo: z.string().optional().describe("The user's target job info"),
-    userBio: z.string().optional().describe("The user's professional bio"),
-    otherSectionsContext: z.string().optional().describe('Context from other resume sections'),
-    priorityFields: z
-      .array(z.string())
-      .optional()
-      .describe('Fields that should be prioritized for improvement'),
+      .describe('List of improvement goals'),
+    userJobTitle: z.string().optional(),
+    userJobInfo: z.string().optional(),
+    userBio: z.string().optional(),
+    otherSectionsContext: z.string().optional(),
   })
 );
 
 export const BatchImproveSectionOutputSchema = ai.defineSchema(
   'BatchImproveSectionOutputSchema',
   z.object({
-    improvedSectionData: z.record(z.any()).describe('The improved section data with all fields updated'),
-    improvementSummary: z.string().describe('Summary of what improvements were made'),
-    fieldChanges: z
-      .array(
-        z.object({
-          fieldId: z.string(),
-          originalValue: z.string(),
-          improvedValue: z.string(),
-          changeReason: z.string(),
-        })
-      )
-      .describe('Detailed list of changes made to each field'),
+    improvedSection: AIBridgedSectionSchema,
+    improvementSummary: z.string(),
   })
 );
 
@@ -271,43 +256,6 @@ export const GeneratedResumeAsStringSchema = ai.defineSchema(
   })
 );
 
-// @deprecated - Will be removed after migration to AIBridgedResumeSchema
-const GeneratedExperienceItemSchema = z.object({
-  jobTitle: z.string(),
-  company: z.string(),
-  startDate: z.string(),
-  endDate: z.string(),
-  description: z.string().describe("A bulleted or paragraph description of responsibilities and achievements."),
-});
-
-// @deprecated - Will be removed after migration to AIBridgedResumeSchema  
-const GeneratedEducationItemSchema = z.object({
-  degree: z.string(),
-  institution: z.string(),
-  graduationYear: z.string(),
-  details: z.string().optional(),
-});
-
-// @deprecated - Will be removed after migration to AIBridgedResumeSchema
-const GeneratedSkillsItemSchema = z.object({
-  name: z.string().describe("The name of the skill."),
-});
-
-// @deprecated - Will be removed after migration to AIBridgedResumeSchema
-const GeneratedSummaryItemSchema = z.object({
-    content: z.string().describe("The full text of the professional summary."),
-});
-
-// @deprecated - Will be removed after migration to AIBridgedResumeSchema
-export const GeneratedResumeContentSchema = ai.defineSchema(
-  'GeneratedResumeContentSchema',
-  z.object({
-    summary: z.array(GeneratedSummaryItemSchema).describe("The professional summary section. Should contain exactly one item."),
-    experience: z.array(GeneratedExperienceItemSchema).describe("The work experience section."),
-    education: z.array(GeneratedEducationItemSchema).describe("The education section."),
-    skills: z.array(GeneratedSkillsItemSchema).describe("The skills section."),
-  }).describe("A structured representation of the core content of a resume.")
-);
 
 // --- COVER LETTER GENERATION SCHEMAS ---
 

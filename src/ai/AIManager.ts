@@ -1,7 +1,7 @@
 import { genkit } from 'genkit';
 import { googleAI } from '@genkit-ai/googleai';
 // import { vertexAI } from '@genkit-ai/vertexai';
-import type { AIConfig } from '@/stores/resumeStore';
+import type { AIConfig } from '@/stores/types';
 import _ from 'lodash';
 
 // Placeholder for ollama plugin - to be installed if needed
