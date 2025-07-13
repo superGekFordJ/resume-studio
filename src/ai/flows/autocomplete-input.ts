@@ -8,7 +8,7 @@
  * - AutocompleteInputOutput - The return type for the autocompleteInput function.
  */
 
-import { aiManager } from '@/ai/AIManager';
+import { aiManager} from '@/ai/AIManager';
 import { z } from 'genkit';
 import {
   AutocompleteInputSchema,

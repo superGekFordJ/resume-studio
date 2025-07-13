@@ -67,13 +67,6 @@ class AIManager {
     // I will add all schemas I have identified.
     ai.defineSchema('AIBridgedSectionSchema', schemas.AIBridgedSectionSchema);
     ai.defineSchema('AIBridgedResumeSchema', schemas.AIBridgedResumeSchema);
-    // ai.defineSchema('AIConfigSchema', schemas.AIConfigSchema); // This schema doesn't seem to exist as a standalone export
-    if ('AIGeneratedEducationSchema' in schemas) ai.defineSchema('AIGeneratedEducationSchema', schemas.AIGeneratedEducationSchema);
-    if ('AIGeneratedExperienceSchema' in schemas) ai.defineSchema('AIGeneratedExperienceSchema', schemas.AIGeneratedExperienceSchema);
-    if ('AIGeneratedResumeDataSchema' in schemas) ai.defineSchema('AIGeneratedResumeDataSchema', schemas.AIGeneratedResumeDataSchema);
-    if ('AIGeneratedSkillSchema' in schemas) ai.defineSchema('AIGeneratedSkillSchema', schemas.AIGeneratedSkillSchema);
-    if ('GeneratedResumeContentSchema' in schemas) ai.defineSchema('GeneratedResumeContentSchema', schemas.GeneratedResumeContentSchema);
-    if ('GeneratedResumeAsStringSchema' in schemas) ai.defineSchema('GeneratedResumeAsStringSchema', schemas.GeneratedResumeAsStringSchema);
     ai.defineSchema('AutocompleteInputSchema', schemas.AutocompleteInputSchema);
     ai.defineSchema('AutocompleteOutputSchema', schemas.AutocompleteOutputSchema);
     ai.defineSchema('BatchImproveSectionInputSchema', schemas.BatchImproveSectionInputSchema);
@@ -88,8 +81,6 @@ class AIManager {
     ai.defineSchema('ImproveResumeSectionOutputSchema', schemas.ImproveResumeSectionOutputSchema);
     ai.defineSchema('JobInfoFromImageInputSchema', schemas.JobInfoFromImageInputSchema);
     ai.defineSchema('JobInfoFromImageOutputSchema', schemas.JobInfoFromImageOutputSchema);
-    // The spec mentions review-resume, but the schemas were not in the user-provided file.
-    // I will skip them for now to avoid errors.
     ai.defineSchema('ResumeReviewInputSchema', schemas.ResumeReviewInputSchema);
     ai.defineSchema('ResumeReviewOutputSchema', schemas.ResumeReviewOutputSchema);
   }
