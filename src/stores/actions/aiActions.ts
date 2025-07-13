@@ -400,7 +400,8 @@ export const createAIActions: StateCreator<
             userJobTitle: state.resumeData.personalDetails?.jobTitle,
             userJobInfo: state.aiConfig.targetJobInfo,
             userBio: state.aiConfig.userBio,
-            otherSectionsContext: schemaRegistry.stringifyResumeForReview(state.resumeData)
+            otherSectionsContext: schemaRegistry.stringifyResumeForReview(state.resumeData),
+            aiConfig: state.aiConfig
           });
           
           if (result && result.improvedSection) {
@@ -435,7 +436,10 @@ export const createAIActions: StateCreator<
         try {
           const dataUri = await fileToBase64(file);
           const { getJobInfoFromImage } = await import('@/ai/flows/getJobInfoFromImage');
-          const extractedText = await getJobInfoFromImage({ dataUri });
+          const extractedText = await getJobInfoFromImage({ 
+            dataUri,
+            aiConfig: get().aiConfig
+          });
           
           if (extractedText) {
             get().updateAIConfig({ targetJobInfo: extractedText });
@@ -503,6 +507,7 @@ export const createAIActions: StateCreator<
           const aiResult = await generateResumeFromContext({
             bio: userBio,
             jobDescription: targetJobInfo,
+            aiConfig: get().aiConfig,
           });
 
           if (aiResult) {
@@ -574,7 +579,8 @@ export const createAIActions: StateCreator<
             context: {
               userJobTitle: state.resumeData.personalDetails?.jobTitle,
               userBio: state.aiConfig.userBio,
-            }
+            },
+            aiConfig: state.aiConfig
           };
           
           // Generate cover letter content

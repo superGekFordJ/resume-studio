@@ -104,6 +104,7 @@ class AIManager {
               month: 'long', 
               day: 'numeric' 
             };
+            console.log('formatCurrentDate', now.toLocaleDateString('en-US', options));
             return now.toLocaleDateString('en-US', options);
         }
     );

@@ -41,7 +41,7 @@ export default function Header({ onExportPdf, onPrint }: HeaderProps) {
         aiConfig: aiConfig,
       };
       const resumeText = schemaRegistry.stringifyResumeForReview(dataForReview);
-      const result = await reviewResume({ resumeText });
+      const result = await reviewResume({ resumeText, aiConfig });
       setReviewContent(result);
     } catch (error) {
       console.error("AI Review error:", error);
