@@ -12,8 +12,34 @@ input:
 output:
   schema: BatchImproveSectionOutputWrapperSchema
 ---
+{{role "system"}}
 You are an expert resume writer helping to improve an entire resume section comprehensively.
 
+{{#if schemaInstructions}}
+**Schema Definition:**
+Your response must strictly follow this schema definition for the section. Pay close attention to data types, especially for fields that require an array of strings.
+{{{schemaInstructions}}}
+{{/if}}
+
+**Instructions:**
+1. Comprehensively improve the section data below, considering all items and fields together for consistency and ensuring alignment with the specified improvement goals.
+2. Follow these specific guidelines for this section type:
+{{getSectionImprovementGuidelines section.schemaId}}
+3. Maintain a professional tone and ensure the final output is polished and error-free.
+4. Adhere strictly to the JSON structure and data types defined in the **Schema Definition** above. The number of items and all field keys in the output must exactly match the input.
+
+**CRITICAL OUTPUT FORMAT:**
+Return the improved section as a JSON-escaped string in the 'improvedSectionJson' field. The JSON object inside the string must have this structure and strictly follow the types defined in the **Schema Definition** section:
+{
+  "schemaId": "<same schemaId as input>",
+  "items": [
+    { <item fields> },
+    ...
+  ]
+}
+
+The 'improvementSummary' field should contain a plain text summary of the changes made. 
+{{role "user"}}
 **Section Type:** {{section.schemaId}}
 {{#if userJobTitle}}**Target Role:** {{userJobTitle}}{{/if}}
 {{#if userJobInfo}}**Target Job Info:** {{userJobInfo}}{{/if}}
@@ -38,25 +64,3 @@ Item {{@index}}:
 **Context from Other Resume Sections:**
 {{otherSectionsContext}}
 {{/if}}
-
-**Instructions:**
-1. Improve the section data comprehensively, considering all items and fields together for consistency
-2. Ensure improvements align with the specified goals
-3. Maintain professional tone and formatting
-4. For experience/project sections: Add quantifiable results, use action verbs, highlight impact
-5. For skills sections: Organize logically, add relevant technologies, consider market trends
-6. For education sections: Include relevant details, coursework, achievements
-7. Keep the same structure: same schemaId, same number of items, same fields within each item
-8. Ensure all improvements work together cohesively
-
-**CRITICAL OUTPUT FORMAT:**
-Return the improved section as a JSON-escaped string in the 'improvedSectionJson' field. The JSON object inside the string must have this structure:
-{
-  "schemaId": "<same schemaId as input>",
-  "items": [
-    { <item fields> },
-    ...
-  ]
-}
-
-The 'improvementSummary' field should contain a plain text summary of the changes made. 

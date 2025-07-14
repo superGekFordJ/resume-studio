@@ -39,13 +39,22 @@ const batchImproveSectionFlow = ai.defineFlow(
     outputSchema: BatchImproveSectionOutputSchema,
   },
   async input => {
+    const { SchemaRegistry } = await import('@/lib/schemaRegistry');
+    const { AIDataBridge } = await import('@/lib/aiDataBridge');
+    
+    const schemaRegistry = SchemaRegistry.getInstance();
+    const schemaInstructions = AIDataBridge.buildSchemaInstruction(schemaRegistry, input.section.schemaId);
+    
     // Call the prompt expecting the wrapper schema
     const prompt = ai.prompt<
       typeof BatchImproveSectionInputSchema,
       typeof BatchImproveSectionOutputWrapperSchema
     >('batchImproveSection');
     
-    const { output: wrappedOutput } = await prompt(input);
+    const { output: wrappedOutput } = await prompt({
+      ...input,
+      schemaInstructions,
+    });
     
     if (!wrappedOutput?.improvedSectionJson) {
       throw new Error('Batch Improve Section failed to produce an output.');
