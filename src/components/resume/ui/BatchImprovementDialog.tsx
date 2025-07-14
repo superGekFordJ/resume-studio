@@ -218,6 +218,19 @@ export default function BatchImprovementDialog() {
   const getChangedItems = React.useCallback(() => {
     if (!batchReview) return [];
     const { originalItems, improvedItems } = batchReview;
+
+    if (originalItems.length !== improvedItems.length) {
+      console.warn(
+        'Batch improvement returned a different number of items than the original.',
+        {
+          originalCount: originalItems.length,
+          improvedCount: improvedItems.length,
+        }
+      );
+      // Return empty array to prevent crash
+      return [];
+    }
+
     return improvedItems.map((improvedData, index) => ({
         id: originalItems[index].id,
         data: improvedData
@@ -236,7 +249,7 @@ export default function BatchImprovementDialog() {
   
   if (!batchReview) return null;
 
-  const { sectionTitle, prompt, originalItems, improvedItems, isLoading } = batchReview;
+  const { sectionTitle, prompt, originalItems, improvedItems, isLoading, improvementSummary } = batchReview;
 
   const handleToggleStagedItem = (item: {id: string, data: any}, isChecked: boolean) => {
     setStagedItems(prev => 
@@ -272,6 +285,12 @@ export default function BatchImprovementDialog() {
               Prompt: "{prompt}"
             </span>}
           </DialogDescription>
+          {improvementSummary && (
+            <div className="flex items-start gap-2 p-3 mt-2 text-sm text-blue-800 rounded-lg bg-blue-50 border border-blue-200">
+              <Sparkles className="h-4 w-4 mt-0.5 flex-shrink-0" />
+              <p className="flex-grow"><span className="font-semibold">AI Summary:</span> {improvementSummary}</p>
+            </div>
+          )}
         </DialogHeader>
 
         <div className="flex-1 min-h-0">

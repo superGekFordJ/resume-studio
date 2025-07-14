@@ -114,11 +114,24 @@ export default function SectionEditor({}: SectionEditorProps) {
 
   const handleGenerateCoverLetter = async () => {
     try {
-      await generateCoverLetter();
-      toast({ 
-        title: "Cover Letter Generated", 
-        description: "Your cover letter has been generated successfully." 
-      });
+      const generationSummary = await generateCoverLetter();
+      if (generationSummary) {
+        toast({
+          variant: "ai",
+          title: "Cover Letter Generated",
+          description: (
+            <div className="flex items-start gap-2">
+              <Sparkles className="h-4 w-4 mt-0.5 flex-shrink-0" />
+              <p>{generationSummary}</p>
+            </div>
+          ),
+        });
+      } else {
+        toast({ 
+          title: "Cover Letter Generated", 
+          description: "Your cover letter has been generated successfully." 
+        });
+      }
     } catch (error) {
       toast({ 
         variant: "destructive", 

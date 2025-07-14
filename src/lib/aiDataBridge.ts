@@ -48,10 +48,14 @@ export class AIDataBridge {
             fieldType = 'string (e.g., YYYY-MM or Month YYYY)';
             break;
           case 'select':
+            fieldType = field.uiProps?.options 
+              ? `string (must be one of: ${field.uiProps.options.join(', ')})` 
+              : 'string';
+            break;
           case 'combobox':
-            fieldType = field.uiProps?.options ? 
-              `string (one of: ${field.uiProps.options.join(', ')})` : 
-              'string';
+            fieldType = field.uiProps?.options
+              ? `string (you can use a suggested value from this list: [${field.uiProps.options.join(', ')}], or you can provide your own custom value)`
+              : 'string';
             break;
           case 'multiselect':
           case 'array':
@@ -81,6 +85,66 @@ ${fieldDefinitions.join(',\n')}
     }
     
     return instructions.join('\n');
+  }
+
+  static buildSchemaInstruction(registry: SchemaRegistry, schemaId: string): string {
+    const schema = registry.getSectionSchema(schemaId);
+    if (!schema) {
+      return '';
+    }
+  
+    const fieldDefinitions: string[] = [];
+  
+    for (const field of schema.fields) {
+      let fieldType: string;
+      let fieldDescription = field.uiProps?.placeholder || `The ${field.label} for an item`;
+  
+      switch (field.type) {
+        case 'text':
+        case 'textarea':
+        case 'email':
+        case 'phone':
+        case 'url':
+          fieldType = 'string';
+          break;
+        case 'date':
+          fieldType = 'string (e.g., YYYY-MM or Month YYYY)';
+          break;
+        case 'select':
+          fieldType = field.uiProps?.options
+            ? `string (must be one of: ${field.uiProps.options.join(', ')})`
+            : 'string';
+          break;
+        case 'combobox':
+          fieldType = field.uiProps?.options
+            ? `string (you can use a suggested value from this list: [${field.uiProps.options.join(', ')}], or you can provide your own custom value)`
+            : 'string';
+          break;
+        case 'multiselect':
+        case 'array':
+          fieldType = 'array of strings';
+          break;
+        case 'object':
+          fieldType = 'object';
+          break;
+        default:
+          fieldType = 'string';
+      }
+  
+      if (field.type === 'textarea' && field.id.includes('description')) {
+        fieldDescription += ' (use bullet points with \\n- )';
+      }
+  
+      fieldDefinitions.push(`    "${field.id}": "${fieldType}" // ${fieldDescription}`);
+    }
+  
+    const sectionInstruction = `
+- For a section with "schemaId": "${schema.id}", each object in its "items" array must have the following keys:
+  {
+${fieldDefinitions.join(',\\n')}
+  }`;
+  
+    return sectionInstruction;
   }
 
   /**

@@ -27,6 +27,7 @@ export interface BatchImprovementReview {
   prompt: string;
   originalItems: any[];
   improvedItems: any[];
+  improvementSummary: string;
   isLoading: boolean;
 }
 
@@ -138,5 +139,5 @@ export interface ResumeActions {
   // NEW: Export current schema for development/debugging
   exportCurrentSchema: () => void;
   // NEW: Cover letter generation
-  generateCoverLetter: () => Promise<void>;
+  generateCoverLetter: () => Promise<string | null>;
 } 

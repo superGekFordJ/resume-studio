@@ -71,6 +71,7 @@ export const BatchImproveSectionInputSchema = ai.defineSchema(
     userJobInfo: z.string().optional(),
     userBio: z.string().optional(),
     otherSectionsContext: z.string().optional(),
+    schemaInstructions: z.string().optional().describe('Dynamic schema instructions built from SchemaRegistry'),
   })
 );
 
@@ -137,48 +138,6 @@ export const ComprehensiveResumeAnalysisOutputSchema = ai.defineSchema(
       })
       .describe('Content quality analysis'),
     nextSteps: z.array(z.string()).describe('Recommended next steps for improvement'),
-  })
-);
-
-// DEPRECATED: Old schemas for generateResumeFromContext - will be removed after migration
-export const AIGeneratedExperienceSchema = ai.defineSchema(
-  'AIGeneratedExperienceSchema',
-  z.object({
-    jobTitle: z.string(),
-    company: z.string(),
-    startDate: z.string().describe("Start date, e.g., 'YYYY-MM' or 'Month YYYY'."),
-    endDate: z.string().describe("End date, can be 'Present'."),
-    description: z
-      .string()
-      .describe('A bulleted list of achievements and responsibilities, formatted as a single string with newlines.'),
-  })
-);
-
-export const AIGeneratedEducationSchema = ai.defineSchema(
-  'AIGeneratedEducationSchema',
-  z.object({
-    degree: z.string(),
-    institution: z.string(),
-    graduationYear: z.string(),
-    details: z.string().optional().describe('Optional details like GPA or honors.'),
-  })
-);
-
-export const AIGeneratedSkillSchema = ai.defineSchema(
-  'AIGeneratedSkillSchema',
-  z.object({
-    name: z.string(),
-    category: z.string().describe("e.g., 'Programming Languages', 'Tools', 'Soft Skills'"),
-  })
-);
-
-export const AIGeneratedResumeDataSchema = ai.defineSchema(
-  'AIGeneratedResumeDataSchema',
-  z.object({
-    summary: z.string().describe('A 2-4 sentence professional summary tailored to the job description.'),
-    experience: z.array(AIGeneratedExperienceSchema).describe('Professional work experience.'),
-    education: z.array(AIGeneratedEducationSchema).describe('Educational background.'),
-    skills: z.array(AIGeneratedSkillSchema).describe('A list of relevant skills with categories.'),
   })
 );
 

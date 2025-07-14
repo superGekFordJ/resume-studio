@@ -34,7 +34,7 @@ export interface AIActions {
   extractJobInfoFromImage: (file: File) => Promise<void>;
   updateUserBioFromFile: (file: File) => Promise<void>;
   generateResumeSnapshotFromBio: () => Promise<void>;
-  generateCoverLetter: () => Promise<void>;
+  generateCoverLetter: () => Promise<string | null>;
 }
 
 export const createAIActions: StateCreator<
@@ -171,6 +171,7 @@ export const createAIActions: StateCreator<
             prompt,
             originalItems: section.items.map(item => ({ ...item })),
             improvedItems: [],
+            improvementSummary: '',
             isLoading: true
           }
         });
@@ -211,6 +212,7 @@ export const createAIActions: StateCreator<
                 batchImprovementReview: {
                   ...currentState.batchImprovementReview,
                   improvedItems: result.improvedSection.items,
+                  improvementSummary: result.improvementSummary,
                   isLoading: false
                 }
               };
@@ -609,9 +611,14 @@ export const createAIActions: StateCreator<
                 }
               };
             });
+            
+            return result.generationSummary;
           }
+          
+          return null;
         } catch (error) {
           console.error('Error generating cover letter:', error);
+          return null;
         } finally {
           set({ isGeneratingCoverLetter: false });
         }
