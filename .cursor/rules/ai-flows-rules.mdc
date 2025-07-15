@@ -1,0 +1,82 @@
+---
+description: 
+globs: src/ai/flows/*.ts
+alwaysApply: false
+---
+# ai-flows-rules (Updated 2025-07-01)
+
+## 1. 纯粹的 Flow 职责
+* Flow **只做一件事**：接收 *结构化* `inputSchema`，调用 AI 模型完成任务，然后返回 `outputSchema`。
+* Flow **禁止**：
+  * 在代码中写 Prompt 文本。
+  * 手动构建上下文字符串。
+  * 直接操作模型字符串或 `temperature` 等配置。
+
+## 2. Dotprompt 规则
+* 所有 Prompt 均存放于 `src/ai/prompts/`，文件扩展名 `.prompt`。
+* YAML Front-matter 必须包含：
+  * `model`  
+  * `config` (可选) – 仅写与默认值不同的参数。
+  * `input.schema` / `output.schema` – **必须**引用已注册的 schema 名称。
+* 行尾序列必须为 **LF**（当前处于vscode环境）。
+
+## 3. Schema 注册
+* 所有 Zod Schema 必须在 `src/ai/prompts/schemas.ts` 通过
+  ```ts
+  ai.defineSchema('SchemaName', z.object({ … }))
+  ```
+  显式注册。
+* Flow 和 Prompt 只能通过 *名称* 引用 Schema。
+
+## 4. Flow 实现示例
+```ts
+const myFlow = ai.defineFlow(
+  {
+    name: 'myFlow',
+    inputSchema: MyInputSchema,
+    outputSchema: MyOutputSchema,
+  },
+  async (input) => {
+    const prompt = ai.prompt<typeof MyInputSchema, typeof MyOutputSchema>('myPrompt');
+    const { output } = await prompt(input);
+    return output!;
+  },
+);
+```
+
+## 5. 自定义助手与多模态
+* 若需在 Handlebars 中拼接复杂字符串，必须先用 `ai.defineHelper()` 注册助手，然后在 `.prompt` 中使用：
+  ```hbs
+  {{media url=(buildDataUri contentType imageBase64)}}
+  ```
+
+## 6. UI & 服务层
+* Flow **不得**被 UI 直接导入。UI 只能通过 `SchemaRegistry` 或 Store Action 触发 AI 调用。
+* 数据转换、上下文构建逻辑统一放在 `SchemaRegistry` 和 `AIDataBridge` 中。
+
+## 7. 【重要】处理动态嵌套对象的 "JSON 字符串包装器" 模式
+* **问题**: 直接要求 AI 返回包含动态对象数组（如 `z.record(z.any())`）的复杂 JSON 结构，会因平台对 schema 的验证限制而导致 `400 Bad Request` 错误。
+* **解决方案**: 采用 "JSON String Wrapper" 模式。
+  1.  **AI 输出 Schema**: 定义一个只包含单个字符串字段的简单 Schema，例如：`{ resumeJson: z.string() }`。
+  2.  **Prompt 指令**: 明确指示 AI 将其生成的复杂 JSON 结构作为一个 **JSON-escaped 字符串** 放入该字段。
+  3.  **Flow 内部处理**: Flow 接收到包含字符串的对象后，在内部 `JSON.parse()` 该字符串，并使用更严格的内部 Schema (`AIBridgedResumeSchema`) 对其进行验证，最后返回这个被解析和验证过的对象。
+* **参考实现**: `generateResumeFromContext` Flow 和 `docs/ai/02-dynamic-content-generation.md`。
+
+---
+请在提交新 Flow 或 Prompt 时遵循以上规则；CI 会对 `.prompt` 文件行尾、未注册 schema 名称等问题执行自动检查。
+
+参考架构文档: [architecture.md](mdc:docs/architecture.md)
+
+1.  **纯粹的AI任务执行者**:
+    -   Flow 文件是 Genkit 的一部分，其**唯一职责**是接收一个**结构化的上下文对象**和用户输入，然后调用 AI 模型执行特定任务（如`improve`、`autocomplete`）。
+    -   严禁在此进行任何数据转换、验证或上下文构建逻辑。
+
+2.  **依赖结构化输入 (`StructuredAIContext`)**:
+    -   Flow 的 `inputSchema` **必须**定义为接收一个由 `SchemaRegistry` 精心构建的、类型安全的 `StructuredAIContext` 对象。
+    -   严禁接受或处理非结构化的字符串 "context blob"。这确保了 Prompt 的稳定性和可维护性。
+
+3.  **由服务层调用**:
+    -   这些 Flow 不能被任何 UI 组件直接 `import`。它们是 `SchemaRegistry` 服务层方法的内部实现细节。UI 组件通过调用 `SchemaRegistry` 的高级服务来间接触发这些 Flow。
+
+
+

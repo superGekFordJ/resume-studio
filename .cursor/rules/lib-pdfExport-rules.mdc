@@ -1,0 +1,24 @@
+---
+description: 
+globs: src/lib/pdfExport.ts
+alwaysApply: false
+---
+# /src/lib/pdfExport.ts 规则
+
+参考架构文档: [architecture.md](mdc:docs/architecture.md)
+
+该文件在新的**所见即所得 (WYSIWYG)** 架构下职责已大幅简化。
+
+## 核心原则
+
+1.  **纯粹的工具函数**:
+    -   此文件现在**只应包含**触发打印操作的辅助函数。
+    -   它利用 `react-to-print` 库来捕获 `PrintableResume` 组件的 DOM 内容并发送到打印机。
+
+2.  **不包含渲染逻辑**:
+    -   **严禁**在此文件中添加任何独立的 PDF 渲染逻辑、样式或布局代码。
+    -   所有的渲染和样式都由 React 组件 (`components/resume/canvas`, `components/resume/templates` 等) 和 CSS (`globals.css`) 负责。PDF 的外观 **100%** 由屏幕上的 `ResumeCanvas` 的所见内容决定。
+
+3.  **无数据处理**:
+    -   此文件不应涉及任何数据转换或处理。它只与 DOM 交互。
+

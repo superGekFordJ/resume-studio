@@ -1,0 +1,25 @@
+---
+description: 
+globs: src/lib/schemaRegistry.ts
+alwaysApply: false
+---
+参考架构文档: [architecture.md](mdc:docs/architecture.md)
+
+1.  **唯一的逻辑中心 (The Brain)**:
+    -   这是应用的"大脑"。所有**数据验证**、**AI上下文构建**、以及**AI服务调用**都必须在此实现。
+    -   它对外提供高级、意图明确的服务接口（如 `improveField`, `buildAIContext`），隐藏内部复杂的实现逻辑。
+
+2.  **Schema是唯一标准**:
+    -   所有方法的实现都必须严格依赖于传入的 `schemaId` 查找到的 `SectionSchema` 和 `FieldSchema`。严禁硬编码逻辑。
+
+3.  **渲染建议的来源**:
+    -   作为解耦渲染架构的一部分，`SectionSchema` 中必须包含 `defaultRenderType` 字段。
+    -   `DataTransformer` 在构建 `RenderableResume` 时会从此查询该信息，为模板提供默认的渲染建议。
+
+4.  **注册与初始化**:
+    -   `SchemaRegistry` 的构造函数负责调用外部的注册函数，来初始化所有默认的 Schemas 和上下文构建器。
+    -   任何新的章节或字段类型，其定义应添加到 `src/lib/schemas/defaultSchemas.ts` 中。
+    -   任何新的AI上下文构建器，其定义应添加到 `src/lib/schemas/defaultContextBuilders.ts` 中。
+
+
+

@@ -1,0 +1,36 @@
+---
+description: 
+globs: src/lib/dataTransformer.ts
+alwaysApply: false
+---
+# /src/lib/dataTransformer.ts 规则
+
+参考架构文档: [architecture.md](mdc:docs/architecture.md)
+
+`dataTransformer.ts` 是连接**原始简历数据 (`ResumeData`)** 和 **渲染层 (`ResumeCanvas`)** 的桥梁。它的存在是为了实现**渲染架构的解耦**。
+
+## 核心职责
+
+1.  **生成视图模型 (`View Model`)**:
+    -   此文件的**唯一职责**是将原始的、以编辑为中心的 `ResumeData` 对象，转换为一个专门用于渲染的、扁平化的视图模型——`RenderableResume`。
+    -   `transformToRenderableView` 是其核心且**唯一**的导出函数。
+
+2.  **注入渲染提示 (`defaultRenderType`)**:
+    -   在转换过程中，它会查询 `SchemaRegistry`，并将每个章节 Schema 中定义的 `defaultRenderType` 注入到 `RenderableSection` 对象中。
+    -   这个 `defaultRenderType` 为模板组件提供了渲染建议，是实现**混合渲染模型**的关键一环。
+
+3.  **数据扁平化和预处理**:
+    -   它可以执行一些轻量级的数据预处理和扁平化操作，使数据结构更易于模板和渲染组件使用。
+    -   例如，将嵌套的数据结构转换为简单的数组。
+
+## 禁止事项
+
+1.  **禁止业务逻辑**:
+    -   严禁在此文件中包含任何**业务逻辑**或**数据验证**。这些是 `SchemaRegistry` 的职责。
+
+2.  **禁止直接修改原始数据**:
+    -   转换过程必须是**纯粹**的。它接收 `ResumeData`，返回一个新的 `RenderableResume` 对象，绝不能修改传入的原始 `ResumeData`。
+
+3.  **禁止依赖 UI 组件**:
+    -   此文件是纯粹的数据转换层，不能 `import`任何 `components/` 目录下的 UI 或渲染组件。它对渲染方式一无所知。
+

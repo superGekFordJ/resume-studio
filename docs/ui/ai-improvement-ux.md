@@ -27,8 +27,7 @@
     -   **上下文提示**: 卡片会显示用户输入的 `prompt`，提醒用户这次改进的目标。
     -   **明确的操作**: 提供清晰的 "Apply" 和 "Dismiss" 按钮。
 
-![Inline Suggestion Card](https://example.com/example-suggestion-card.png)
-*(示例图片链接，实际项目中应替换为真实截图)*
+
 
 ### 2. 章节批量改进: 可折叠评审对话框 (`BatchImprovementDialog`)
 
@@ -48,8 +47,7 @@
     -   **动态计数**: 对话框的页脚和标题部分会动态显示已选择待应用的改进数量 (e.g., `Accept Improvements (2)`)。
     -   **健壮的滚动**: 对话框内容区 (`ScrollArea`) 确保在条目过多时能够流畅地垂直滚动，同时解决了横向内容溢出的问题。
 
-![Batch Improvement Dialog](https://example.com/example-batch-dialog.png)
-*(示例图片链接，实际项目中应替换为真实截图)*
+
 
 ## 组件实现
 

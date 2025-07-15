@@ -147,7 +147,7 @@ export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
                   <Alert>
                     <Info className="h-4 w-4" />
                     <AlertDescription>
-                      In development, the system will use API keys from .env.local if available.
+                      Currently, API keys must be configured through environment files (.env.local or .env.production). UI-based configuration is temporarily disabled due to Genkit lifecycle constraints.
                     </AlertDescription>
                   </Alert>
                 )}

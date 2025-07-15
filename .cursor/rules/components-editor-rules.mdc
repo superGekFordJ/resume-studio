@@ -1,0 +1,19 @@
+---
+globs: src/components/resume/editor/**
+alwaysApply: false
+---
+# src/components/resume/editor/ 目录规则
+
+参考架构文档: [architecture.md](mdc:docs/architecture.md)
+
+`src/components/resume/editor/` 目录下的所有组件服务于简历数据的**修改和交互**。
+
+1.  **Schema 驱动**: 编辑器组件必须严格遵循 **Schema 驱动架构**。所有UI行为（如字段标签、占位符、图标、AI功能可用性）都必须由从 `SchemaRegistry` 获取的 Schema 定义来驱动。
+
+2.  **单一数据源**: 所有状态都必须通过 `useResumeStore` hook 从 **Zustand store** 获取。严禁使用 `useState` 来管理应存放在全局 store 中的业务数据。
+
+3.  **Action 调用**: 所有对数据的修改都必须通过调用 `useResumeStore` 提供的 **actions** 来完成。组件本身不应包含数据处理逻辑。
+
+4.  **禁止硬编码**: 严禁在组件中使用 `if/switch` 语句对 `section.id` 或 `section.schemaId` 进行硬编码判断。组件的渲染逻辑应保持通用，由传入的 props（源于 Schema）和数据决定。
+
+5.  **AI 交互封装**: 与 AI 功能相关的复杂交互逻辑应被封装在专门的组件中（如 `AIFieldWrapper`），或由 Store 中的 `aiActions` 统一处理，以保持编辑器组件的简洁性。

@@ -1,4 +1,4 @@
-# A4 Resume Studio - 组件 API 参考 (Zustand 集成版)
+# Resume Studio - 组件 API 参考 (Zustand 集成版)
 
 本参考文档描述了在深度集成 Zustand 状态管理之后，核心组件的API和使用模式。
 

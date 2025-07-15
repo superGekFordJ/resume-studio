@@ -1,0 +1,15 @@
+---
+description: 
+globs: src\components\resume\ui\*
+alwaysApply: false
+---
+参考架构文档: [architecture.md](mdc:docs/architecture.md)
+
+1.  **UI只负责渲染**: 严禁在UI组件中添加任何业务逻辑（如数据转换、验证、上下文构建）。UI组件是"无知"的。
+2.  **禁止类型判断**: 严禁使用 `if/switch` 硬编码判断 `section.type` 或 `schema.id`。所有渲染差异必须由传入的 `props`（其来源是Schema）决定。
+3.  **禁止直接调用AI**: 必须通过 `SchemaRegistry` 提供的服务层接口调用AI功能，禁止直接 `import` 和使用 `ai/flows`。
+4.  **数据单向流动**: 组件接收 `props` 并渲染，通过 `onChange` 等回调函数派发用户事件。
+5.  **明确组件职责**: 遵循 `src/components` 下的目录结构划分。通用的、无业务逻辑的UI控件应放在 `src/components/ui`，应用级布局组件在 `src/components/layout`，简历相关的组件则在 `src/components/resume` 的特定子目录中。
+
+
+

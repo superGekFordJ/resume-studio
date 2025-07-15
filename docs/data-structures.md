@@ -1,4 +1,4 @@
-# A4 Resume Studio - 数据结构文档
+# Resume Studio - 数据结构文档
 
 ## 核心数据模型
 

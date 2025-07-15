@@ -1,0 +1,120 @@
+---
+description: 
+globs: src/components/resume/templates/**
+alwaysApply: false
+---
+# /src/components/resume/templates/ 规则
+
+参考架构文档: [architecture.md](mdc:docs/architecture.md)
+父级规则: [components-resume-rules.mdc](mdc:.cursor/rules/components-resume-rules.mdc)
+
+此目录存放简历模板组件，它们是**纯粹的布局与角色映射调度器 (Layout & Role-Map Dispatchers)**。
+
+## 核心原则
+
+1.  **只关心"在哪里"，不关心"是什么"**:
+    -   模板的**唯一职责**是定义**布局结构**（例如，单栏、双栏、侧边栏），以及决定**哪个简历章节 (`section`) 该被放置在哪个区域**。
+    -   模板**绝对不能**直接渲染章节的具体内容（如 `item.title`, `item.description`）。内容的渲染工作必须委托给 `rendering/` 目录下的**原子渲染组件**。
+
+2.  **获取并传递角色映射 (Role-Map)**:
+    -   模板**必须**从 `SchemaRegistry` 中为每个渲染的章节获取其对应的 `RoleMap`。
+    -   获取到的 `roleMap` **必须**作为 `prop` 传递给它所调度的原子渲染组件。这是实现渲染解耦的关键数据流。
+
+3.  **遵循混合渲染模型 ("Default + Override")**:
+    -   模板接收的数据是 `RenderableResume`，其中的每个 `section` 都包含一个由 `SchemaRegistry` 建议的 `defaultRenderType`。
+    -   模板**可以接受**这个默认建议，直接将其传递给渲染引擎。
+    -   模板也**可以覆写**这个建议。通过定义一个 `templateLayoutMap`，模板可以为特定的章节（通过 `schemaId` 识别）指定一个不同的 `renderType`，以实现独特的视觉风格。
+
+4.  **数据源唯一且只读**:
+    -   模板接收的 `RenderableResume` prop 是**唯一的数据源**。
+    -   此数据是**只读**的。模板不能以任何方式修改它。
+
+5.  **无业务逻辑**:
+    -   模板中不能包含任何数据转换、过滤或处理逻辑。所有的数据准备工作都应在 `dataTransformer.ts` 中完成。
+
+6.  **声明画布边距行为 (Full Bleed)**
+
+    自 2025-06-25 起，`fullBleed` 已被 **弃用**，改为使用 **CSS 属性选择器** 实现。
+
+    -   如果模板需要完全控制渲染区域（即移除 `ResumeCanvas` 默认的标准 A4 边距），请在 **模板注册时无需任何额外字段**。只要保证模板的 `id` 与 `ResumeCanvas` 根节点上的 `data-template-id` 匹配即可。
+    -   在 `src/app/globals.css` 中，为需要全幅渲染的模板添加如下规则（示例）：
+
+      ```css
+      /* 全幅渲染 - 屏幕与打印通用 */
+      .a4-canvas[data-template-id='continuous-narrative'],
+      .a4-canvas[data-template-id='parallel-modular'] {
+        padding: 0 !important;
+      }
+
+      @media print {
+        .printable-area[data-template-id='continuous-narrative'],
+        .printable-area[data-template-id='parallel-modular'] {
+          padding: 0 !important;
+        }
+      }
+      ```
+
+    -   这样即可在不修改 TypeScript 数据结构的情况下，为特定模板启用无边距打印。
+    -   **切勿** 再向 `TemplateInfo` 添加 `fullBleed` 或其它布尔标志；表现层逻辑应完全由 CSS 控制。
+
+## 示例: 覆写渲染类型
+
+```typescript
+// 在 ParallelModularTemplate.tsx 中
+const ParallelModularTemplate = ({ resume }: TemplateProps) => {
+  // 定义此模板的特定布局规则
+  const templateLayoutMap: TemplateLayoutMap = {
+    // 将 'skills' 章节的渲染方式强制覆写为 'badge-list'
+    skills: 'badge-list', 
+  };
+
+  // ... 布局代码 ...
+  // 当渲染技能区时，会使用 templateLayoutMap 中的 'badge-list' 
+  // 而不是 Schema 中建议的默认类型
+};
+```
+
+## 7. 特殊章节处理: 求职信 (Special Section Handling: Cover Letter)
+
+自 2025-07-05 起，模板必须支持 `cover-letter` 章节类型。
+
+-   **多栏模板 (Multi-Column Templates)**:
+    -   **必须** 实现单栏回退逻辑。当 `resume.sections` 数组中存在 `schemaId` 为 `'cover-letter'` 的章节时，模板 **必须** 放弃其标准的多栏布局。
+    -   在回退模式下，模板应只渲染一个标准的、单栏的页面，通常包含共享的页眉（`PersonalDetails`）和 `CoverLetterComponent`。所有其他的简历章节都应被忽略。
+    -   这是为了确保求职信作为一个独立的、格式正确的文档页面进行渲染。
+
+-   **单栏模板 (Single-Column Templates)**:
+    -   在其渲染调度函数（如 `renderSectionByRenderType`）中，只需为 `renderType` 为 `'cover-letter'` 的情况添加一个 `case`，并返回 `<CoverLetterComponent />` 即可。
+
+### 示例: 多栏模板的回退逻辑
+
+```typescript
+// 在 CreativeTemplate.tsx 或其他多栏模板中
+
+const CreativeTemplate = ({ resume }: TemplateProps) => {
+  const { personalDetails, sections } = resume;
+
+  // 检查是否存在 Cover Letter 章节
+  const hasCoverLetter = sections.some(s => s.schemaId === 'cover-letter');
+
+  if (hasCoverLetter) {
+    const coverLetterSection = sections.find(s => s.schemaId === 'cover-letter');
+    
+    // 返回单栏布局，只渲染页眉和求职信
+    return (
+      <div className="single-column-fallback-layout">
+        {/* ... 渲染 personalDetails ... */}
+        {coverLetterSection && renderSectionByRenderType(coverLetterSection)}
+      </div>
+    );
+  }
+
+  // ... 此处为正常的多栏布局代码 ...
+};
+```
+
+
+  // 而不是 Schema 中建议的默认类型
+};
+```
+

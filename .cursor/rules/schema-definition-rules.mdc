@@ -1,0 +1,14 @@
+---
+description: 
+globs: src/types/schema.ts
+alwaysApply: false
+---
+参考架构文档: [architecture.md](mdc:docs/architecture.md)
+
+1.  **Schema先行**: 任何新的UI行为、验证规则或AI交互，都必须先在此处的数据结构 (`FieldSchema`, `SectionSchema`) 中添加对应的配置项。
+2.  **定义驱动实现**: `aiHints` 和 `uiProps` 是驱动UI和AI行为的唯一来源。
+3.  **保持可序列化**: 所有Schema定义必须是纯粹的、可JSON序列化的数据结构，不包含函数或类实例。
+4.  **必须定义角色映射**: 每当创建一个新的 `SectionSchema` 时，**必须**在 `src/lib/schemas/staticRoleMaps.ts` 中为其所有字段定义明确的语义角色 (`FieldRole`)。这是确保渲染组件能够正确解耦和复用的关键。
+
+
+

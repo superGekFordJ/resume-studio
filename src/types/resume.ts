@@ -118,14 +118,14 @@ export interface TemplateInfo {
 }
 
 export const templates: TemplateInfo[] = [
-  { id: 'default', name: 'Classic Professional', imageUrl: 'https://placehold.co/200x283.png', dataAiHint: 'resume template' },
-  { id: 'pro-classic', name: 'Pro Classic (2-Col)', imageUrl: 'https://placehold.co/200x283.png', dataAiHint: 'professional two column resume' },
+  { id: 'default', name: 'Classic Professional', imageUrl: '/images/templates/classic.png', dataAiHint: 'resume template' },
+  { id: 'pro-classic', name: 'Pro Classic (2-Col)', imageUrl: '/images/templates/pro-classic.png', dataAiHint: 'professional two column resume' },
   { id: 'sapphire-sidebar', name: 'Sapphire Sidebar', imageUrl: '/images/templates/sapphire-sidebar.png', dataAiHint: 'elegant two column resume with dark sidebar' },
   { id: 'veridian-sidebar', name: 'Veridian Sidebar', imageUrl: '/images/templates/veridian-sidebar.png', dataAiHint: 'classic two column resume with dark teal sidebar and serif fonts' },
-  { id: 'modern-minimalist', name: 'Modern Minimalist', imageUrl: 'https://placehold.co/200x283.png', dataAiHint: 'modern resume' },
-  { id: 'creative', name: 'Creative Two-Column', imageUrl: 'https://placehold.co/200x283.png', dataAiHint: 'creative design' },
-  { id: 'continuous-narrative', name: 'Continuous Narrative', imageUrl: 'https://placehold.co/200x283.png', dataAiHint: 'continuous flow magazine-style' },
-  { id: 'parallel-modular', name: 'Parallel Modular', imageUrl: 'https://placehold.co/200x283.png', dataAiHint: 'parallel functionally-distinct columns' },
+  { id: 'modern-minimalist', name: 'Modern Minimalist', imageUrl: '/images/templates/minimalist.png', dataAiHint: 'modern resume' },
+  { id: 'creative', name: 'Creative Two-Column', imageUrl: '/images/templates/basic-two-column.png', dataAiHint: 'creative design' },
+  { id: 'continuous-narrative', name: 'Continuous Narrative', imageUrl: '/images/templates/continous-narrative.png', dataAiHint: 'continuous flow magazine-style' },
+  { id: 'parallel-modular', name: 'Parallel Modular', imageUrl: '/images/templates/prallel-module.png', dataAiHint: 'parallel functionally-distinct columns' },
 ];
 
 // Using dynamic imports for Lucide icons to avoid making them server components by default if not necessary.

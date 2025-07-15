@@ -173,7 +173,7 @@ const improved = await schemaRegistry.improveField({
 
 # Known Issues & Future Improvements Summary
 
-This document tracks known issues, limitations, and potential future improvements for the A4 Resume Studio application.
+This document tracks known issues, limitations, and potential future improvements for the Resume Studio application.
 
 *Last Updated: 2025-06-23*
 

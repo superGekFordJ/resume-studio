@@ -1,8 +1,8 @@
-# A4 Resume Studio - 项目架构文档
+# Resume Studio - 项目架构文档
 
 ## 项目概述
 
-A4 Resume Studio 是一个基于 Next.js 的现代化简历构建应用，集成了 AI 功能来提供智能的简历编辑和优化体验。它采用 **Schema 驱动** 的架构，确保了数据的一致性、可扩展性和可维护性。
+Resume Studio 是一个基于 Next.js 的现代化简历构建应用，集成了 AI 功能来提供智能的简历编辑和优化体验。它采用 **Schema 驱动** 的架构，确保了数据的一致性、可扩展性和可维护性。
 
 ## 技术栈
 
@@ -461,13 +461,6 @@ interface ResumeActions {
 - 预留了多语言支持的架构
 - 使用 TypeScript 确保类型安全
 - 组件化设计便于本地化
-
-## 部署架构
-
-- **平台**: Firebase App Hosting
-- **构建**: Next.js 静态导出 + 服务端功能
-- **AI 服务**: Google Gemini API
-- **CDN**: Firebase CDN 加速
 
 ## 安全考虑
 

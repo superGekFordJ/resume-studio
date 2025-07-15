@@ -38,7 +38,7 @@ yarn-error.log*
 next-env.d.ts
 
 .genkit/*
-.env*
+.env.local
 .augment-guidelines
 .serena
 
@@ -48,9 +48,8 @@ firestore-debug.log
 
 # development
 /docs/plan/*
-.cursor/*
+.cursor/rules/docs-plan.mdc
 .idx/*
-public/*
 template1.html
 TEMPLATE2.html
 template3.html
@@ -60,3 +59,9 @@ resume-schema-export-2025-07-01.json
 ai-generated-export-2025-07-01.json
 docs/FIXES_SUMMARY.md
 docs/blueprint.md
+public/image.jpg
+public/image (4).jpg
+public/image (3).jpg
+public/image (2).jpg
+public/image (1).jpg
+.idx/dev.nix

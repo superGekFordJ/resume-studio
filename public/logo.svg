@@ -1,0 +1,23 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景圆形 -->
+  <circle cx="100" cy="100" r="90" fill="#3F51B5" />
+  
+  <!-- A4纸张轮廓 -->
+  <rect x="55" y="40" width="70" height="99" rx="3" fill="white" />
+  
+  <!-- 文档线条 -->
+  <rect x="70" y="60" width="40" height="3" fill="#3F51B5" />
+  <rect x="70" y="70" width="40" height="3" fill="#3F51B5" />
+  <rect x="70" y="80" width="30" height="3" fill="#3F51B5" />
+  
+  <!-- AI星火点缀 -->
+  <circle cx="115" cy="50" r="12" fill="#FF9800">
+    <animate attributeName="opacity" values="0.6;1;0.6" dur="2s" repeatCount="indefinite" />
+  </circle>
+  
+  <!-- AI星火内部符号 -->
+  <path d="M115 45 L117 50 L122 50 L118 53 L120 58 L115 55 L110 58 L112 53 L108 50 L113 50 Z" fill="white" />
+  
+  <!-- 文档底部渐变装饰 -->
+  <rect x="70" y="110" width="40" height="20" fill="#FF9800" opacity="0.3" />
+</svg> 

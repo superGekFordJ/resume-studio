@@ -1,4 +1,4 @@
-# **App Name**: A4 Resume Studio
+# **App Name**: Resume Studio
 
 ## Core Features:
 
