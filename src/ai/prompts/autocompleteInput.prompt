@@ -7,8 +7,6 @@ config:
   temperature: 0.1
   maxOutputTokens: 10000
   topP: 0.85
-  thinkingConfig:
-    thinkingBudget: 0
 
 # 定义此 prompt 模板所需的输入变量。
 # `schema` 指向一个已注册的 Zod schema 名称。
@@ -84,3 +82,5 @@ Respond with the insertion text only.
 
 **Here is the text I'm writing:**
 {{{inputText}}}<CURSOR>{{{textAfterCursor}}}
+
+today is {{formatCurrentDate}}

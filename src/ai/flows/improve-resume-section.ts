@@ -17,6 +17,7 @@ import {
   ImproveResumeSectionInputSchema,
   ImproveResumeSectionOutputSchema,
 } from '../prompts/schemas';
+import _ from 'lodash';
 
 export type ImproveResumeSectionInput = z.infer<
   typeof ImproveResumeSectionInputSchema
@@ -26,31 +27,37 @@ export type ImproveResumeSectionOutput = z.infer<
   typeof ImproveResumeSectionOutputSchema
 >;
 
+const flowCache = new Map<string, any>();
+
 // Exported function to call the flow.
 export async function improveResumeSection(
   input: ImproveResumeSectionInput
 ): Promise<ImproveResumeSectionOutput> {
-  const ai = aiManager.getGenkit(input.aiConfig);
+  const cacheKey = JSON.stringify(_.pick(input.aiConfig, ['provider', 'apiKey']));
+  let improveResumeSectionFlow = flowCache.get(cacheKey);
   
-  // Define the Genkit flow for improving a resume section.
-  const improveResumeSectionFlow = ai.defineFlow(
-    {
-      name: 'improveResumeSectionFlow',
-      inputSchema: ImproveResumeSectionInputSchema,
-      outputSchema: ImproveResumeSectionOutputSchema,
-    },
-    async (flowInput) => {
-      const prompt = ai.prompt<
-        typeof ImproveResumeSectionInputSchema,
-        typeof ImproveResumeSectionOutputSchema
-      >('improveResumeSection');
-      const { output } = await prompt(flowInput);
-      if (!output) {
-        throw new Error('Improve resume section failed to produce an output.');
+  if (!improveResumeSectionFlow) {
+    const ai = aiManager.getGenkit(input.aiConfig);
+    improveResumeSectionFlow = ai.defineFlow(
+      {
+        name: `improveResumeSectionFlow_${flowCache.size}`,
+        inputSchema: ImproveResumeSectionInputSchema,
+        outputSchema: ImproveResumeSectionOutputSchema,
+      },
+      async (flowInput) => {
+        const prompt = ai.prompt<
+          typeof ImproveResumeSectionInputSchema,
+          typeof ImproveResumeSectionOutputSchema
+        >('improveResumeSection');
+        const { output } = await prompt(flowInput);
+        if (!output) {
+          throw new Error('Improve resume section failed to produce an output.');
+        }
+        return output;
       }
-      return output;
-    }
-  );
+    );
+    flowCache.set(cacheKey, improveResumeSectionFlow);
+  }
 
   return improveResumeSectionFlow(input);
 }

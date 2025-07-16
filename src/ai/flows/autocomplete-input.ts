@@ -24,7 +24,7 @@ const flowCache = new Map<string, any>();
 export async function autocompleteInput(
   input: AutocompleteInput
 ): Promise<AutocompleteOutput> {
-  const cacheKey = JSON.stringify(_.pick(input.aiConfig, ['provider', 'model', 'apiKey']));
+  const cacheKey = JSON.stringify(_.pick(input.aiConfig, ['provider', 'apiKey']));
 
   let autocompleteInputFlow = flowCache.get(cacheKey);
 

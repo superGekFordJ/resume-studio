@@ -76,9 +76,10 @@ class AIManager {
     ai.defineSchema('ComprehensiveResumeAnalysisOutputSchema', schemas.ComprehensiveResumeAnalysisOutputSchema);
     ai.defineSchema('GenerateCoverLetterInputSchema', schemas.GenerateCoverLetterInputSchema);
     ai.defineSchema('GenerateCoverLetterOutputSchema', schemas.GenerateCoverLetterOutputSchema);
-    if ('GenerateResumeContextInputSchema' in schemas) ai.defineSchema('GenerateResumeContextInputSchema', schemas.GenerateResumeContextInputSchema);
+    ai.defineSchema('GenerateResumeContextInputSchema', schemas.GenerateResumeContextInputSchema);
     ai.defineSchema('ImproveResumeSectionInputSchema', schemas.ImproveResumeSectionInputSchema);
     ai.defineSchema('ImproveResumeSectionOutputSchema', schemas.ImproveResumeSectionOutputSchema);
+    ai.defineSchema('GeneratedResumeAsStringSchema', schemas.GeneratedResumeAsStringSchema);
     ai.defineSchema('JobInfoFromImageInputSchema', schemas.JobInfoFromImageInputSchema);
     ai.defineSchema('JobInfoFromImageOutputSchema', schemas.JobInfoFromImageOutputSchema);
     ai.defineSchema('ResumeReviewInputSchema', schemas.ResumeReviewInputSchema);

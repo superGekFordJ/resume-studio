@@ -14,33 +14,41 @@ import {
   ResumeReviewInputSchema, 
   ResumeReviewOutputSchema 
 } from '../prompts/schemas';
+import _ from 'lodash';
 
 export type ReviewResumeInput = z.infer<typeof ResumeReviewInputSchema>;
 export type ReviewResumeOutput = z.infer<typeof ResumeReviewOutputSchema>;
 
+const flowCache = new Map<string, any>();
+
 export async function reviewResume(input: ReviewResumeInput): Promise<ReviewResumeOutput> {
-  const ai = aiManager.getGenkit(input.aiConfig);
+  const cacheKey = JSON.stringify(_.pick(input.aiConfig, ['provider', 'apiKey']));
+  let reviewResumeFlow = flowCache.get(cacheKey);
 
-  const reviewResumeFlow = ai.defineFlow(
-    {
-      name: 'reviewResumeFlow',
-      inputSchema: ResumeReviewInputSchema,
-      outputSchema: ResumeReviewOutputSchema,
-    },
-    async (flowInput) => {
-      const prompt = ai.prompt<
-        typeof ResumeReviewInputSchema,
-        typeof ResumeReviewOutputSchema
-      >('reviewResume');
+  if (!reviewResumeFlow) {
+    const ai = aiManager.getGenkit(input.aiConfig);
+    reviewResumeFlow = ai.defineFlow(
+      {
+        name: `reviewResumeFlow_${flowCache.size}`,
+        inputSchema: ResumeReviewInputSchema,
+        outputSchema: ResumeReviewOutputSchema,
+      },
+      async (flowInput) => {
+        const prompt = ai.prompt<
+          typeof ResumeReviewInputSchema,
+          typeof ResumeReviewOutputSchema
+        >('reviewResume');
 
-      const { output } = await prompt(flowInput);
-      
-      if (!output) {
-        throw new Error('Resume review failed to produce an output.');
+        const { output } = await prompt(flowInput);
+        
+        if (!output) {
+          throw new Error('Resume review failed to produce an output.');
+        }
+        return output;
       }
-      return output;
-    }
-  );
+    );
+    flowCache.set(cacheKey, reviewResumeFlow);
+  }
   
   return reviewResumeFlow(input);
 }

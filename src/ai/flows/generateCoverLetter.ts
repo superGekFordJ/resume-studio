@@ -16,6 +16,7 @@ import {
   GenerateCoverLetterInputSchema,
   GenerateCoverLetterOutputSchema,
 } from '../prompts/schemas';
+import _ from 'lodash';
 
 export type GenerateCoverLetterInput = z.infer<
   typeof GenerateCoverLetterInputSchema
@@ -25,31 +26,37 @@ export type GenerateCoverLetterOutput = z.infer<
   typeof GenerateCoverLetterOutputSchema
 >;
 
+const flowCache = new Map<string, any>();
+
 // Exported function to call the flow.
 export async function generateCoverLetter(
   input: GenerateCoverLetterInput
 ): Promise<GenerateCoverLetterOutput> {
-  const ai = aiManager.getGenkit(input.aiConfig);
+  const cacheKey = JSON.stringify(_.pick(input.aiConfig, ['provider', 'apiKey']));
+  let generateCoverLetterFlow = flowCache.get(cacheKey);
 
-  // Define the Genkit flow for generating a cover letter.
-  const generateCoverLetterFlow = ai.defineFlow(
-    {
-      name: 'generateCoverLetterFlow',
-      inputSchema: GenerateCoverLetterInputSchema,
-      outputSchema: GenerateCoverLetterOutputSchema,
-    },
-    async (flowInput) => {
-      const prompt = ai.prompt<
-        typeof GenerateCoverLetterInputSchema,
-        typeof GenerateCoverLetterOutputSchema
-      >('generate-cover-letter');
-      const { output } = await prompt(flowInput);
-      if (!output) {
-        throw new Error('Cover letter generation failed to produce an output.');
+  if (!generateCoverLetterFlow) {
+    const ai = aiManager.getGenkit(input.aiConfig);
+    generateCoverLetterFlow = ai.defineFlow(
+      {
+        name: `generateCoverLetterFlow_${flowCache.size}`,
+        inputSchema: GenerateCoverLetterInputSchema,
+        outputSchema: GenerateCoverLetterOutputSchema,
+      },
+      async (flowInput) => {
+        const prompt = ai.prompt<
+          typeof GenerateCoverLetterInputSchema,
+          typeof GenerateCoverLetterOutputSchema
+        >('generate-cover-letter');
+        const { output } = await prompt(flowInput);
+        if (!output) {
+          throw new Error('Cover letter generation failed to produce an output.');
+        }
+        return output;
       }
-      return output;
-    }
-  );
+    );
+    flowCache.set(cacheKey, generateCoverLetterFlow);
+  }
   
   return generateCoverLetterFlow(input);
-} 
+}
