@@ -17,4 +17,4 @@ export const indexedDbStorage: StateStorage = {
     // console.log(`(IndexedDB) Removing item: ${name}`);
     await del(name);
   },
-}; 
+};

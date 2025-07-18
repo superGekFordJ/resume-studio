@@ -1,4 +1,5 @@
-import type {Config} from 'tailwindcss';
+import type { Config } from 'tailwindcss';
+import tailwindcssAnimate from 'tailwindcss-animate';
 
 export default {
   darkMode: ['class'],
@@ -93,7 +94,7 @@ export default {
         'pulse-subtle': {
           '0%, 100%': { opacity: '1' },
           '50%': { opacity: '.7' },
-        }
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -102,7 +103,5 @@ export default {
       },
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [tailwindcssAnimate],
 } satisfies Config;
-
-    

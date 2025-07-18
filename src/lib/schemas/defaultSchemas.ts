@@ -1,6 +1,5 @@
 import type { SectionSchema, ISchemaRegistry } from '@/types/schema';
 
-
 // Helper function to create the legacy summary schema
 export const SUMMARY_SCHEMA: SectionSchema = {
   id: 'summary',
@@ -15,33 +14,33 @@ export const SUMMARY_SCHEMA: SectionSchema = {
       uiProps: {
         rows: 4,
         placeholder: 'A brief summary about your professional background...',
-        markdownEnabled: true
+        markdownEnabled: true,
       },
       aiHints: {
         contextBuilders: {
           improve: 'summary-content',
-          autocomplete: 'summary-content'
+          autocomplete: 'summary-content',
         },
         improvementPrompts: [
           'Make it more concise',
           'Add quantifiable achievements',
           'Highlight key skills',
-          'Tailor to target role'
+          'Tailor to target role',
         ],
         autocompleteEnabled: true,
-        priority: 'high'
-      }
-    }
+        priority: 'high',
+      },
+    },
   ],
   aiContext: {
     sectionSummaryBuilder: 'summary-section',
-    itemSummaryBuilder: 'summary-content'
+    itemSummaryBuilder: 'summary-content',
   },
   uiConfig: {
     icon: 'FileText',
     defaultRenderType: 'single-text',
-    addButtonText: 'Add Summary'
-  }
+    addButtonText: 'Add Summary',
+  },
 };
 
 // Helper function to create the legacy experience schema
@@ -58,11 +57,11 @@ export const EXPERIENCE_SCHEMA: SectionSchema = {
       aiHints: {
         contextBuilders: {
           improve: 'job-title',
-          autocomplete: 'job-title'
+          autocomplete: 'job-title',
         },
         autocompleteEnabled: true,
-        priority: 'high'
-      }
+        priority: 'high',
+      },
     },
     {
       id: 'company',
@@ -72,23 +71,23 @@ export const EXPERIENCE_SCHEMA: SectionSchema = {
       aiHints: {
         contextBuilders: {
           improve: 'company-name',
-          autocomplete: 'company-name'
+          autocomplete: 'company-name',
         },
         autocompleteEnabled: true,
-        priority: 'high'
-      }
+        priority: 'high',
+      },
     },
     {
       id: 'startDate',
       type: 'text',
       label: 'Start Date',
-      required: true
+      required: true,
     },
     {
       id: 'endDate',
       type: 'text',
       label: 'End Date',
-      required: true
+      required: true,
     },
     {
       id: 'description',
@@ -98,36 +97,36 @@ export const EXPERIENCE_SCHEMA: SectionSchema = {
       uiProps: {
         rows: 4,
         placeholder: 'Describe your responsibilities and achievements...',
-        markdownEnabled: true
+        markdownEnabled: true,
       },
       aiHints: {
         contextBuilders: {
           improve: 'job-description',
-          autocomplete: 'job-description'
+          autocomplete: 'job-description',
         },
         improvementPrompts: [
           'Add quantifiable results',
           'Use action verbs',
           'Highlight achievements',
-          'Include relevant keywords'
+          'Include relevant keywords',
         ],
         autocompleteEnabled: true,
-        priority: 'high'
-      }
-    }
+        priority: 'high',
+      },
+    },
   ],
   aiContext: {
     sectionSummaryBuilder: 'experience-summary',
     itemSummaryBuilder: 'experience-item',
-    batchImprovementSupported: true
+    batchImprovementSupported: true,
   },
   uiConfig: {
     icon: 'Briefcase',
     defaultRenderType: 'timeline',
     addButtonText: 'Add Experience',
     itemDisplayTemplate: '{jobTitle} at {company}',
-    sortable: true
-  }
+    sortable: true,
+  },
 };
 
 // Helper function to create the legacy education schema
@@ -144,11 +143,11 @@ export const EDUCATION_SCHEMA: SectionSchema = {
       aiHints: {
         contextBuilders: {
           improve: 'degree-name',
-          autocomplete: 'degree-name'
+          autocomplete: 'degree-name',
         },
         autocompleteEnabled: true,
-        priority: 'high'
-      }
+        priority: 'high',
+      },
     },
     {
       id: 'institution',
@@ -158,17 +157,17 @@ export const EDUCATION_SCHEMA: SectionSchema = {
       aiHints: {
         contextBuilders: {
           improve: 'institution-name',
-          autocomplete: 'institution-name'
+          autocomplete: 'institution-name',
         },
         autocompleteEnabled: true,
-        priority: 'high'
-      }
+        priority: 'high',
+      },
     },
     {
       id: 'graduationYear',
       type: 'text',
       label: 'Graduation Year',
-      required: true
+      required: true,
     },
     {
       id: 'details',
@@ -177,36 +176,36 @@ export const EDUCATION_SCHEMA: SectionSchema = {
       uiProps: {
         rows: 2,
         placeholder: 'Relevant coursework, projects, achievements...',
-        markdownEnabled: true
+        markdownEnabled: true,
       },
       aiHints: {
         contextBuilders: {
           improve: 'education-details',
-          autocomplete: 'education-details'
+          autocomplete: 'education-details',
         },
         improvementPrompts: [
           'Add relevant coursework',
           'Include academic achievements',
           'Mention projects or thesis',
-          'Add GPA if impressive'
+          'Add GPA if impressive',
         ],
         autocompleteEnabled: true,
-        priority: 'medium'
-      }
-    }
+        priority: 'medium',
+      },
+    },
   ],
   aiContext: {
     sectionSummaryBuilder: 'education-summary',
     itemSummaryBuilder: 'education-item',
-    batchImprovementSupported: true
+    batchImprovementSupported: true,
   },
   uiConfig: {
     icon: 'GraduationCap',
     defaultRenderType: 'timeline',
     addButtonText: 'Add Education',
     itemDisplayTemplate: '{degree} from {institution}',
-    sortable: true
-  }
+    sortable: true,
+  },
 };
 
 // Helper function to create the legacy skills schema
@@ -223,31 +222,31 @@ export const SKILLS_SCHEMA: SectionSchema = {
       aiHints: {
         contextBuilders: {
           improve: 'skill-name',
-          autocomplete: 'skill-name'
+          autocomplete: 'skill-name',
         },
         improvementPrompts: [
           'Add specific technologies',
           'Include proficiency levels',
           'Group related skills',
-          'Add trending skills'
+          'Add trending skills',
         ],
         autocompleteEnabled: true,
-        priority: 'high'
-      }
-    }
+        priority: 'high',
+      },
+    },
   ],
   aiContext: {
     sectionSummaryBuilder: 'skills-summary',
     itemSummaryBuilder: 'skill-item',
-    batchImprovementSupported: true
+    batchImprovementSupported: true,
   },
   uiConfig: {
     icon: 'Wand2',
     defaultRenderType: 'badge-list',
     addButtonText: 'Add Skill',
     itemDisplayTemplate: '{name}',
-    sortable: true
-  }
+    sortable: true,
+  },
 };
 
 // Helper function to create the legacy custom text schema
@@ -264,33 +263,33 @@ export const CUSTOM_TEXT_SCHEMA: SectionSchema = {
       uiProps: {
         rows: 3,
         placeholder: 'Enter your custom content...',
-        markdownEnabled: true
+        markdownEnabled: true,
       },
       aiHints: {
         contextBuilders: {
           improve: 'custom-content',
-          autocomplete: 'custom-content'
+          autocomplete: 'custom-content',
         },
         improvementPrompts: [
           'Improve clarity',
           'Make it more professional',
           'Add specific examples',
-          'Optimize formatting'
+          'Optimize formatting',
         ],
         autocompleteEnabled: true,
-        priority: 'medium'
-      }
-    }
+        priority: 'medium',
+      },
+    },
   ],
   aiContext: {
     sectionSummaryBuilder: 'custom-summary',
-    itemSummaryBuilder: 'custom-content'
+    itemSummaryBuilder: 'custom-content',
   },
   uiConfig: {
     icon: 'FilePlus2',
     defaultRenderType: 'single-text',
-    addButtonText: 'Add Content'
-  }
+    addButtonText: 'Add Content',
+  },
 };
 
 // Test schema for certifications
@@ -307,11 +306,11 @@ const CERTIFICATIONS_SCHEMA: SectionSchema = {
       aiHints: {
         contextBuilders: {
           improve: 'certification-name',
-          autocomplete: 'certification-name'
+          autocomplete: 'certification-name',
         },
         autocompleteEnabled: true,
-        priority: 'high'
-      }
+        priority: 'high',
+      },
     },
     {
       id: 'issuer',
@@ -321,29 +320,29 @@ const CERTIFICATIONS_SCHEMA: SectionSchema = {
       aiHints: {
         contextBuilders: {
           improve: 'certification-issuer',
-          autocomplete: 'certification-issuer'
+          autocomplete: 'certification-issuer',
         },
         autocompleteEnabled: true,
-        priority: 'medium'
-      }
+        priority: 'medium',
+      },
     },
     {
       id: 'date',
       type: 'date',
       label: 'Date Obtained',
-      required: true
+      required: true,
     },
     {
       id: 'expiryDate',
       type: 'date',
       label: 'Expiry Date (if applicable)',
-      required: false
+      required: false,
     },
     {
       id: 'credentialId',
       type: 'text',
       label: 'Credential ID',
-      required: false
+      required: false,
     },
     {
       id: 'description',
@@ -351,37 +350,38 @@ const CERTIFICATIONS_SCHEMA: SectionSchema = {
       label: 'Description',
       uiProps: {
         rows: 2,
-        placeholder: 'Brief description of the certification and its relevance...',
-        markdownEnabled: true
+        placeholder:
+          'Brief description of the certification and its relevance...',
+        markdownEnabled: true,
       },
       aiHints: {
         contextBuilders: {
           improve: 'certification-description',
-          autocomplete: 'certification-description'
+          autocomplete: 'certification-description',
         },
         improvementPrompts: [
           'Highlight relevance to target role',
           'Add key skills covered',
-          'Mention if it\'s industry-recognized',
-          'Include renewal status'
+          "Mention if it's industry-recognized",
+          'Include renewal status',
         ],
         autocompleteEnabled: true,
-        priority: 'medium'
-      }
-    }
+        priority: 'medium',
+      },
+    },
   ],
   aiContext: {
     sectionSummaryBuilder: 'certifications-summary',
     itemSummaryBuilder: 'certifications-item',
-    batchImprovementSupported: true
+    batchImprovementSupported: true,
   },
   uiConfig: {
     icon: 'Award',
     defaultRenderType: 'timeline',
     addButtonText: 'Add Certification',
     itemDisplayTemplate: '{name} - {issuer}',
-    sortable: true
-  }
+    sortable: true,
+  },
 };
 
 // Experimental schema with different field names to test Role-Map
@@ -398,11 +398,11 @@ const VOLUNTEER_EXPERIENCE_SCHEMA: SectionSchema = {
       aiHints: {
         contextBuilders: {
           improve: 'volunteer-position',
-          autocomplete: 'volunteer-position'
+          autocomplete: 'volunteer-position',
         },
         autocompleteEnabled: true,
-        priority: 'high'
-      }
+        priority: 'high',
+      },
     },
     {
       id: 'organization', // Using 'organization' instead of 'company'
@@ -412,23 +412,23 @@ const VOLUNTEER_EXPERIENCE_SCHEMA: SectionSchema = {
       aiHints: {
         contextBuilders: {
           improve: 'volunteer-org',
-          autocomplete: 'volunteer-org'
+          autocomplete: 'volunteer-org',
         },
         autocompleteEnabled: true,
-        priority: 'high'
-      }
+        priority: 'high',
+      },
     },
     {
       id: 'startDate',
       type: 'text',
       label: 'Start Date',
-      required: true
+      required: true,
     },
     {
       id: 'endDate',
       type: 'text',
       label: 'End Date',
-      required: true
+      required: true,
     },
     {
       id: 'impact', // Using 'impact' instead of 'description'
@@ -438,36 +438,36 @@ const VOLUNTEER_EXPERIENCE_SCHEMA: SectionSchema = {
       uiProps: {
         rows: 3,
         placeholder: 'Describe your volunteer work and impact...',
-        markdownEnabled: true
+        markdownEnabled: true,
       },
       aiHints: {
         contextBuilders: {
           improve: 'volunteer-impact',
-          autocomplete: 'volunteer-impact'
+          autocomplete: 'volunteer-impact',
         },
         improvementPrompts: [
           'Highlight community impact',
           'Add volunteer hours',
           'Mention skills developed',
-          'Include recognition received'
+          'Include recognition received',
         ],
         autocompleteEnabled: true,
-        priority: 'high'
-      }
-    }
+        priority: 'high',
+      },
+    },
   ],
   aiContext: {
     sectionSummaryBuilder: 'volunteer-summary',
     itemSummaryBuilder: 'volunteer-item',
-    batchImprovementSupported: true
+    batchImprovementSupported: true,
   },
   uiConfig: {
     icon: 'Heart',
     defaultRenderType: 'timeline',
     addButtonText: 'Add Volunteer Experience',
     itemDisplayTemplate: '{position} at {organization}',
-    sortable: true
-  }
+    sortable: true,
+  },
 };
 
 const PROJECTS_SCHEMA: SectionSchema = {
@@ -483,11 +483,11 @@ const PROJECTS_SCHEMA: SectionSchema = {
       aiHints: {
         contextBuilders: {
           improve: 'project-name',
-          autocomplete: 'project-name'
+          autocomplete: 'project-name',
         },
         autocompleteEnabled: true,
-        priority: 'high'
-      }
+        priority: 'high',
+      },
     },
     {
       id: 'description',
@@ -497,22 +497,22 @@ const PROJECTS_SCHEMA: SectionSchema = {
       uiProps: {
         rows: 3,
         placeholder: 'Describe the project, your role, and key achievements...',
-        markdownEnabled: true
+        markdownEnabled: true,
       },
       aiHints: {
         contextBuilders: {
           improve: 'project-description',
-          autocomplete: 'project-description'
+          autocomplete: 'project-description',
         },
         improvementPrompts: [
           'Add quantifiable results',
           'Highlight technical challenges solved',
           'Emphasize business impact',
-          'Include technologies used'
+          'Include technologies used',
         ],
         autocompleteEnabled: true,
-        priority: 'high'
-      }
+        priority: 'high',
+      },
     },
     {
       id: 'technologies',
@@ -521,44 +521,48 @@ const PROJECTS_SCHEMA: SectionSchema = {
       aiHints: {
         contextBuilders: {
           improve: 'project-technologies',
-          autocomplete: 'project-technologies'
+          autocomplete: 'project-technologies',
         },
         autocompleteEnabled: true,
-        priority: 'medium'
-      }
+        priority: 'medium',
+      },
     },
     {
       id: 'url',
       type: 'url',
       label: 'Project URL',
       validation: [
-        { type: 'pattern', value: '^https?://', message: 'Must be a valid URL' }
-      ]
+        {
+          type: 'pattern',
+          value: '^https?://',
+          message: 'Must be a valid URL',
+        },
+      ],
     },
     {
       id: 'startDate',
       type: 'date',
-      label: 'Start Date'
+      label: 'Start Date',
     },
     {
       id: 'endDate',
       type: 'date',
-      label: 'End Date'
-    }
+      label: 'End Date',
+    },
   ],
   aiContext: {
     sectionSummaryBuilder: 'projects-summary',
     itemSummaryBuilder: 'projects-item',
-    batchImprovementSupported: true
+    batchImprovementSupported: true,
   },
   uiConfig: {
     icon: 'Code',
     defaultRenderType: 'timeline',
     addButtonText: 'Add Project',
     itemDisplayTemplate: '{name} - {technologies}',
-    sortable: true
-  }
-}; 
+    sortable: true,
+  },
+};
 
 // 预定义的高级Schema示例
 const ADVANCED_SKILLS_SCHEMA: SectionSchema = {
@@ -573,25 +577,26 @@ const ADVANCED_SKILLS_SCHEMA: SectionSchema = {
       required: true,
       uiProps: {
         options: [
-          'Technical Skills', 
-          'Soft Skills', 
-          'Languages', 
-          'Certifications', 
-          'Tools & Platforms', 
-          'Programming Languages', 
-          'Frameworks', 
-          'Databases', 
-          'Cloud Platforms', 
-          'DevOps Tools']
+          'Technical Skills',
+          'Soft Skills',
+          'Languages',
+          'Certifications',
+          'Tools & Platforms',
+          'Programming Languages',
+          'Frameworks',
+          'Databases',
+          'Cloud Platforms',
+          'DevOps Tools',
+        ],
       },
       aiHints: {
         contextBuilders: {
           improve: 'skill-category',
-          autocomplete: 'skill-category'
+          autocomplete: 'skill-category',
         },
         autocompleteEnabled: false,
-        priority: 'high'
-      }
+        priority: 'high',
+      },
     },
     {
       id: 'skills',
@@ -601,53 +606,53 @@ const ADVANCED_SKILLS_SCHEMA: SectionSchema = {
       aiHints: {
         contextBuilders: {
           improve: 'skill-list',
-          autocomplete: 'skill-list'
+          autocomplete: 'skill-list',
         },
         improvementPrompts: [
           'Add industry-relevant skills',
           'Include proficiency levels',
           'Add trending technologies',
-          'Optimize for ATS keywords'
+          'Optimize for ATS keywords',
         ],
         autocompleteEnabled: true,
-        priority: 'high'
-      }
+        priority: 'high',
+      },
     },
     {
       id: 'proficiency',
       type: 'combobox',
       label: 'Proficiency Level',
       uiProps: {
-        options: ['Beginner', 'Intermediate', 'Advanced', 'Expert']
+        options: ['Beginner', 'Intermediate', 'Advanced', 'Expert'],
       },
       aiHints: {
         contextBuilders: {
           improve: 'skill-proficiency',
-          autocomplete: 'skill-proficiency'
+          autocomplete: 'skill-proficiency',
         },
-        priority: 'medium'
-      }
+        priority: 'medium',
+      },
     },
     {
       id: 'yearsOfExperience',
       type: 'text',
       label: 'Years of Experience',
       validation: [
-        { type: 'pattern', value: '^[0-9]+$', message: 'Must be a number' }
+        { type: 'pattern', value: '^[0-9]+$', message: 'Must be a number' },
       ],
       aiHints: {
         contextBuilders: {
           improve: 'skill-experience',
-          autocomplete: 'skill-experience'
+          autocomplete: 'skill-experience',
         },
-        priority: 'low'
-      }
-    }
+        priority: 'low',
+      },
+    },
   ],
   aiContext: {
     sectionSummaryBuilder: 'advanced-skills-summary',
     itemSummaryBuilder: 'advanced-skills-item',
-    batchImprovementSupported: true
+    batchImprovementSupported: true,
   },
   uiConfig: {
     icon: 'Wand2',
@@ -655,8 +660,8 @@ const ADVANCED_SKILLS_SCHEMA: SectionSchema = {
     addButtonText: 'Add Skill Category',
     itemDisplayTemplate: '{category}: {skills}',
     sortable: true,
-    collapsible: true
-  }
+    collapsible: true,
+  },
 };
 
 // Cover Letter Schema
@@ -672,35 +677,36 @@ export const COVER_LETTER_SCHEMA: SectionSchema = {
       required: true,
       uiProps: {
         rows: 12,
-        placeholder: 'Your personalized cover letter content will appear here...',
-        markdownEnabled: true
+        placeholder:
+          'Your personalized cover letter content will appear here...',
+        markdownEnabled: true,
       },
       aiHints: {
         contextBuilders: {
           improve: 'cover-letter-content',
-          autocomplete: 'cover-letter-content'
+          autocomplete: 'cover-letter-content',
         },
         improvementPrompts: [
           'Make it more compelling',
           'Add specific examples',
           'Tailor to company culture',
           'Strengthen value proposition',
-          'Improve flow and readability'
+          'Improve flow and readability',
         ],
         autocompleteEnabled: true,
-        priority: 'high'
-      }
-    }
+        priority: 'high',
+      },
+    },
   ],
   aiContext: {
     sectionSummaryBuilder: 'cover-letter-section',
-    itemSummaryBuilder: 'cover-letter-content'
+    itemSummaryBuilder: 'cover-letter-content',
   },
   uiConfig: {
     icon: 'FileText',
     defaultRenderType: 'cover-letter',
-    addButtonText: 'Add Cover Letter'
-  }
+    addButtonText: 'Add Cover Letter',
+  },
 };
 
 /**
@@ -718,13 +724,13 @@ export function registerDefaultSchemas(registry: ISchemaRegistry) {
   // Register dynamic schemas
   registry.registerSectionSchema(ADVANCED_SKILLS_SCHEMA);
   registry.registerSectionSchema(PROJECTS_SCHEMA);
-  
+
   // Register test schemas
   registry.registerSectionSchema(CERTIFICATIONS_SCHEMA);
-  
+
   // Register experimental schema with different field names
   registry.registerSectionSchema(VOLUNTEER_EXPERIENCE_SCHEMA);
-  
+
   // Register cover letter schema
   registry.registerSectionSchema(COVER_LETTER_SCHEMA);
-} 
+}

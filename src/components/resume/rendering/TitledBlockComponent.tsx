@@ -1,23 +1,29 @@
-"use client";
+'use client';
 
-import { RenderableItem, RoleMap } from "@/types/schema";
-import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
-import { pickFieldByRole, getItemDateRange } from "@/lib/roleMapUtils";
+import { RenderableItem, RoleMap } from '@/types/schema';
+import { MarkdownRenderer } from '@/components/ui/markdown-renderer';
+import { pickFieldByRole, getItemDateRange } from '@/lib/roleMapUtils';
 
 interface TitledBlockComponentProps {
   item: RenderableItem;
   roleMap?: RoleMap;
 }
 
-export const TitledBlockComponent = ({ item, roleMap }: TitledBlockComponentProps) => {
+export const TitledBlockComponent = ({
+  item,
+  roleMap,
+}: TitledBlockComponentProps) => {
   // Use role-based lookup
   const titleField = pickFieldByRole(item, 'title', roleMap);
   const subtitleField = pickFieldByRole(item, 'organization', roleMap);
   const dateField = { value: getItemDateRange(item, roleMap) }; // Wrap in object to match original structure
   const descriptionField = pickFieldByRole(item, 'description', roleMap);
 
-  const descriptionContent = descriptionField?.value ? 
-    (Array.isArray(descriptionField.value) ? descriptionField.value.join(', ') : descriptionField.value) : '';
+  const descriptionContent = descriptionField?.value
+    ? Array.isArray(descriptionField.value)
+      ? descriptionField.value.join(', ')
+      : descriptionField.value
+    : '';
 
   return (
     <div className="mb-3">
@@ -49,4 +55,4 @@ export const TitledBlockComponent = ({ item, roleMap }: TitledBlockComponentProp
       )}
     </div>
   );
-}; 
+};

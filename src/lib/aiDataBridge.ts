@@ -1,12 +1,17 @@
 import { SchemaRegistry } from '@/lib/schemaRegistry';
 import { ResumeData, initialPersonalDetails } from '@/types/resume';
-import { DynamicResumeSection, DynamicSectionItem, SectionSchema, FieldSchema, FieldRole } from '@/types/schema';
-
+import {
+  DynamicResumeSection,
+  DynamicSectionItem,
+  SectionSchema,
+  FieldSchema,
+  FieldRole,
+} from '@/types/schema';
 
 // Interface for AI-friendly section data
 export interface AIBridgedSection {
   schemaId: string;
-  items: Record<string, any>[];
+  items: Record<string, unknown>[];
 }
 
 // Interface for AI-friendly resume data (kept for compatibility with batch improvement)
@@ -28,14 +33,15 @@ export class AIDataBridge {
   static buildSchemaInstructions(registry: SchemaRegistry): string {
     const schemas = registry.getAllSectionSchemas();
     const instructions: string[] = [];
-    
+
     for (const schema of schemas) {
       const fieldDefinitions: string[] = [];
-      
+
       for (const field of schema.fields) {
         let fieldType: string;
-        let fieldDescription = field.uiProps?.placeholder || `The ${field.label} for an item`;
-        
+        let fieldDescription =
+          field.uiProps?.placeholder || `The ${field.label} for an item`;
+
         switch (field.type) {
           case 'text':
           case 'textarea':
@@ -48,8 +54,8 @@ export class AIDataBridge {
             fieldType = 'string (e.g., YYYY-MM or Month YYYY)';
             break;
           case 'select':
-            fieldType = field.uiProps?.options 
-              ? `string (must be one of: ${field.uiProps.options.join(', ')})` 
+            fieldType = field.uiProps?.options
+              ? `string (must be one of: ${field.uiProps.options.join(', ')})`
               : 'string';
             break;
           case 'combobox':
@@ -67,38 +73,44 @@ export class AIDataBridge {
           default:
             fieldType = 'string';
         }
-        
+
         if (field.type === 'textarea' && field.id.includes('description')) {
           fieldDescription += ' (use bullet points with \\n- )';
         }
-        
-        fieldDefinitions.push(`    "${field.id}": "${fieldType}" // ${fieldDescription}`);
+
+        fieldDefinitions.push(
+          `    "${field.id}": "${fieldType}" // ${fieldDescription}`
+        );
       }
-      
+
       const sectionInstruction = `
 - For a section with "schemaId": "${schema.id}", each object in its "items" array must have the following keys:
   {
 ${fieldDefinitions.join(',\n')}
   }`;
-      
+
       instructions.push(sectionInstruction);
     }
-    
+
     return instructions.join('\n');
   }
 
-  static buildSchemaInstruction(registry: SchemaRegistry, schemaId: string): string {
+  static buildSchemaInstruction(
+    registry: SchemaRegistry,
+    schemaId: string
+  ): string {
     const schema = registry.getSectionSchema(schemaId);
     if (!schema) {
       return '';
     }
-  
+
     const fieldDefinitions: string[] = [];
-  
+
     for (const field of schema.fields) {
       let fieldType: string;
-      let fieldDescription = field.uiProps?.placeholder || `The ${field.label} for an item`;
-  
+      let fieldDescription =
+        field.uiProps?.placeholder || `The ${field.label} for an item`;
+
       switch (field.type) {
         case 'text':
         case 'textarea':
@@ -130,20 +142,22 @@ ${fieldDefinitions.join(',\n')}
         default:
           fieldType = 'string';
       }
-  
+
       if (field.type === 'textarea' && field.id.includes('description')) {
         fieldDescription += ' (use bullet points with \\n- )';
       }
-  
-      fieldDefinitions.push(`    "${field.id}": "${fieldType}" // ${fieldDescription}`);
+
+      fieldDefinitions.push(
+        `    "${field.id}": "${fieldType}" // ${fieldDescription}`
+      );
     }
-  
+
     const sectionInstruction = `
 - For a section with "schemaId": "${schema.id}", each object in its "items" array must have the following keys:
   {
 ${fieldDefinitions.join(',\\n')}
   }`;
-  
+
     return sectionInstruction;
   }
 
@@ -160,54 +174,62 @@ ${fieldDefinitions.join(',\\n')}
     // Create empty personal details as per spec
     const personalDetails = { ...initialPersonalDetails };
 
-    const sections: DynamicResumeSection[] = aiResult.sections.map(aiSection => {
-      const sectionSchema = registry.getSectionSchema(aiSection.schemaId);
-      if (!sectionSchema) {
-        return null;
-      }
+    const sections: DynamicResumeSection[] = aiResult.sections
+      .map((aiSection) => {
+        const sectionSchema = registry.getSectionSchema(aiSection.schemaId);
+        if (!sectionSchema) {
+          return null;
+        }
 
-      const validFieldIds = new Set(sectionSchema.fields.map(f => f.id));
+        const validFieldIds = new Set(sectionSchema.fields.map((f) => f.id));
 
-      const newSection: DynamicResumeSection = {
-        id: `${aiSection.schemaId}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-        schemaId: aiSection.schemaId,
-        title: sectionSchema.name,
-        visible: true,
-        items: aiSection.items.map((itemData: any, index: number) => {
-          // Filter out any invalid fields that AI might have hallucinated
-          const validatedData: Record<string, any> = {};
-          for (const [key, value] of Object.entries(itemData)) {
-            if (validFieldIds.has(key) && value !== undefined && value !== '') {
-              validatedData[key] = value;
+        const newSection: DynamicResumeSection = {
+          id: `${aiSection.schemaId}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+          schemaId: aiSection.schemaId,
+          title: sectionSchema.name,
+          visible: true,
+          items: aiSection.items.map(
+            (itemData: Record<string, unknown>, index: number) => {
+              // Filter out any invalid fields that AI might have hallucinated
+              const validatedData: Record<string, unknown> = {};
+              for (const [key, value] of Object.entries(itemData)) {
+                if (
+                  validFieldIds.has(key) &&
+                  value !== undefined &&
+                  value !== ''
+                ) {
+                  validatedData[key] = value;
+                }
+              }
+
+              return {
+                id: `${aiSection.schemaId}_item_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 7)}`,
+                schemaId: aiSection.schemaId,
+                data: validatedData,
+                metadata: {
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                  aiGenerated: true,
+                },
+              };
             }
-          }
+          ),
+        };
 
-          return {
-            id: `${aiSection.schemaId}_item_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 7)}`,
-            schemaId: aiSection.schemaId,
-            data: validatedData,
-            metadata: {
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              aiGenerated: true,
-            },
-          };
-        }),
-      };
-      
-      return newSection;
-    }).filter(Boolean) as DynamicResumeSection[];
-    
+        return newSection;
+      })
+      .filter(Boolean) as DynamicResumeSection[];
+
     const result = {
       personalDetails,
       sections,
       templateId: 'default',
       schemaVersion: '1.0.0',
     };
-    
+
     return result;
   }
-  
+
   /**
    * Convert a DynamicResumeSection to simplified AI format
    * @param section The section to convert
@@ -220,34 +242,39 @@ ${fieldDefinitions.join(',\\n')}
   ): AIBridgedSection {
     const roleMap = registry.getRoleMap(section.schemaId);
     const sectionSchema = registry.getSectionSchema(section.schemaId);
-    
+
     if (!sectionSchema) {
       throw new Error(`No schema found for section: ${section.schemaId}`);
     }
-    
+
     // Extract core fields from each item using role map
-    const simplifiedItems: Record<string, any>[] = [];
-    
+    const simplifiedItems: Record<string, unknown>[] = [];
+
     for (const item of section.items) {
-      const simplifiedItem: Record<string, any> = {};
-      
+      const simplifiedItem: Record<string, unknown> = {};
+
       // Use role map to identify core fields
       if (roleMap) {
         // Extract fields based on their roles
         const coreRoles: FieldRole[] = [
-          'title', 
-          'organization', 
-          'description', 
-          'startDate', 
+          'title',
+          'organization',
+          'description',
+          'startDate',
           'endDate',
           'level',
-          'skills'
+          'skills',
         ];
-        
+
         for (const role of coreRoles) {
           // Find fields mapped to this role
-          for (const [fieldKey, mappedRole] of Object.entries(roleMap.fieldMappings)) {
-            if (mappedRole === role || (Array.isArray(mappedRole) && mappedRole.includes(role))) {
+          for (const [fieldKey, mappedRole] of Object.entries(
+            roleMap.fieldMappings
+          )) {
+            if (
+              mappedRole === role ||
+              (Array.isArray(mappedRole) && mappedRole.includes(role))
+            ) {
               const value = item.data?.[fieldKey];
               if (value !== undefined && value !== '') {
                 simplifiedItem[fieldKey] = value;
@@ -263,18 +290,18 @@ ${fieldDefinitions.join(',\\n')}
           }
         }
       }
-      
+
       if (Object.keys(simplifiedItem).length > 0) {
         simplifiedItems.push(simplifiedItem);
       }
     }
-    
+
     return {
       schemaId: section.schemaId,
-      items: simplifiedItems
+      items: simplifiedItems,
     };
   }
-  
+
   /**
    * Merge an improved section back into the resume data
    * @param originalResume The original resume data
@@ -285,72 +312,67 @@ ${fieldDefinitions.join(',\\n')}
   static mergeImprovedSection(
     originalResume: ResumeData,
     sectionId: string,
-    itemsToMerge: { id: string, data: Record<string, any> }[]
+    itemsToMerge: { id: string; data: Record<string, unknown> }[]
   ): ResumeData {
-    const itemsToMergeMap = new Map(itemsToMerge.map(item => [item.id, item.data]));
+    const itemsToMergeMap = new Map(
+      itemsToMerge.map((item) => [item.id, item.data])
+    );
 
     if (itemsToMergeMap.size === 0) {
       return originalResume; // No changes to apply
     }
 
-    const updatedSections = originalResume.sections.map(section => {
+    const updatedSections = originalResume.sections.map((section) => {
       if (section.id !== sectionId) return section;
-      
+
       const dynamicSection = section as DynamicResumeSection;
-      
+
       // Map improved items back to original items
       const updatedItems = dynamicSection.items.map((originalItem) => {
-        const improvedData = itemsToMergeMap.get(originalItem.id);
-        
-        if (!improvedData) {
-            return originalItem; // This item was not staged for improvement
-        }
-        
-        // Merge improved data with original, preserving metadata
+        const mergedData = itemsToMergeMap.get(originalItem.id);
+        if (!mergedData) return originalItem;
         return {
           ...originalItem,
-          data: {
-            ...originalItem.data,
-            ...improvedData
-          },
+          data: mergedData as Record<string, unknown>,
           metadata: {
             ...originalItem.metadata,
+            createdAt:
+              originalItem.metadata?.createdAt || new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-            aiImproved: true
-          }
+            aiImproved: true,
+          },
         };
       });
-      
+
       return {
         ...section,
         items: updatedItems,
         metadata: {
-            ...section.metadata,
-            aiOptimized: true,
-        }
+          ...section.metadata,
+          aiOptimized: true,
+        },
       };
     });
-    
+
     return {
       ...originalResume,
-      sections: updatedSections
+      sections: updatedSections,
     };
   }
-  
+
   /**
    * Helper method to convert AI item data to DynamicSectionItem
    */
   private static convertAIItemToSectionItem(
-    aiItem: Record<string, any>,
-    sectionSchema: SectionSchema,
-    registry: SchemaRegistry
+    aiItem: Record<string, unknown>,
+    sectionSchema: SectionSchema
   ): DynamicSectionItem | null {
-    const itemData: Record<string, any> = {};
-    
+    const itemData: Record<string, unknown> = {};
+
     // Validate and convert each field
     for (const fieldSchema of sectionSchema.fields) {
       const value = aiItem[fieldSchema.id];
-      
+
       if (value !== undefined) {
         // Validate field type
         const isValid = this.validateFieldValue(value, fieldSchema);
@@ -364,12 +386,12 @@ ${fieldDefinitions.join(',\\n')}
         itemData[fieldSchema.id] = this.getDefaultFieldValue(fieldSchema);
       }
     }
-    
+
     // Only create item if it has data
     if (Object.keys(itemData).length === 0) {
       return null;
     }
-    
+
     return {
       id: `${sectionSchema.id}_item_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       schemaId: sectionSchema.id,
@@ -377,15 +399,21 @@ ${fieldDefinitions.join(',\\n')}
       metadata: {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        aiGenerated: true
-      }
+        aiGenerated: true,
+      },
     };
   }
-  
+
   /**
    * Validate field value against schema
    */
-  private static validateFieldValue(value: any, fieldSchema: FieldSchema): boolean {
+  private static validateFieldValue(
+    value: unknown,
+    fieldSchema: FieldSchema
+  ): boolean {
+    if (value === null || value === undefined) {
+      return !fieldSchema.required;
+    }
     switch (fieldSchema.type) {
       case 'text':
       case 'textarea':
@@ -394,20 +422,20 @@ ${fieldDefinitions.join(',\\n')}
       case 'multiselect':
       case 'combobox':
         if (fieldSchema.uiProps?.options) {
-          return fieldSchema.uiProps.options.includes(value);
+          return fieldSchema.uiProps.options.includes(value as string);
         }
         return typeof value === 'string';
       case 'date':
-        return typeof value === 'string' && !isNaN(Date.parse(value));
+        return typeof value === 'string' && !isNaN(Date.parse(value as string));
       default:
         return true;
     }
   }
-  
+
   /**
    * Get default value for a field type
    */
-  private static getDefaultFieldValue(fieldSchema: FieldSchema): any {
+  private static getDefaultFieldValue(fieldSchema: FieldSchema): unknown {
     switch (fieldSchema.type) {
       case 'text':
       case 'textarea':
@@ -429,4 +457,4 @@ ${fieldDefinitions.join(',\\n')}
         return '';
     }
   }
-} 
+}

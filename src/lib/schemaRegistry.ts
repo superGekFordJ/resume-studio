@@ -1,15 +1,20 @@
-import { 
-  SectionSchema, 
-  FieldSchema, 
-  ISchemaRegistry, 
+import {
+  SectionSchema,
+  FieldSchema,
+  ISchemaRegistry,
   ContextBuilderFunction,
   AIContextPayload,
   StructuredAIContext,
-  RoleMap
+  RoleMap,
+  DynamicResumeSection,
+  type ContextBuilderInput,
 } from '@/types/schema';
+import { type ResumeData } from '@/types/resume';
+import { AIDataBridge } from '@/lib/aiDataBridge';
 import { registerDefaultSchemas } from './schemas/defaultSchemas';
 import { registerDefaultContextBuilders } from './schemas/defaultContextBuilders';
 import { staticRoleMaps } from './schemas/staticRoleMaps'; // Import the static maps
+import { AIConfig } from '@/stores/types';
 
 // Schema注册中心实现
 export class SchemaRegistry implements ISchemaRegistry {
@@ -17,7 +22,7 @@ export class SchemaRegistry implements ISchemaRegistry {
   private sectionSchemas: Map<string, SectionSchema> = new Map();
   private contextBuilders: Map<string, ContextBuilderFunction> = new Map();
   private roleMaps: Record<string, RoleMap> = {}; // Use a simple record/object
-  
+
   // Cache for otherSectionsContext to improve performance.
   // The key is a combination of resume data hash and the excluded section id.
   private otherSectionsContextCache: Map<string, string> = new Map();
@@ -34,35 +39,50 @@ export class SchemaRegistry implements ISchemaRegistry {
     }
     return SchemaRegistry.instance;
   }
-  
+
   private initializeStaticRoleMaps(): void {
     this.roleMaps = staticRoleMaps;
   }
 
   // Hashing function to detect changes in resumeData
-  private generateResumeDataHash(resumeData: any, sectionIdToExclude: string): string {
+  private generateResumeDataHash(
+    resumeData: ResumeData,
+    sectionIdToExclude: string
+  ): string {
     // Create a deep copy to avoid modifying the original data
     const dataToHash = JSON.parse(JSON.stringify(resumeData));
 
     // Exclude the section that is currently being edited from the hash
-    dataToHash.sections = dataToHash.sections.filter((section: any) => section.id !== sectionIdToExclude);
+    dataToHash.sections = dataToHash.sections.filter(
+      (section: DynamicResumeSection) => section.id !== sectionIdToExclude
+    );
 
     // A simple and fast hashing strategy using the filtered data.
     return JSON.stringify(dataToHash);
   }
 
-  private generateOtherSectionsContextKey(resumeDataHash: string, currentSectionId: string): string {
+  private generateOtherSectionsContextKey(
+    resumeDataHash: string,
+    currentSectionId: string
+  ): string {
     return `${resumeDataHash}_${currentSectionId}`;
   }
 
-  private buildOtherSectionsContext(resumeData: any, currentSectionId: string): string {
+  private buildOtherSectionsContext(
+    resumeData: ResumeData,
+    currentSectionId: string
+  ): string {
     const otherSectionsContextParts: string[] = [];
     for (const otherSection of resumeData.sections) {
       if (otherSection.id === currentSectionId) continue;
-      const otherSchemaId = otherSection.schemaId || otherSection.type;
+      const otherSchemaId = otherSection.schemaId;
       const otherSchema = this.getSectionSchema(otherSchemaId);
       if (otherSchema?.aiContext?.sectionSummaryBuilder) {
-        const summary = this.buildContext(otherSchema.aiContext.sectionSummaryBuilder, otherSection, resumeData);
+        const summary = this.buildContext(
+          otherSchema.aiContext.sectionSummaryBuilder,
+          otherSection,
+          resumeData
+        );
         otherSectionsContextParts.push(summary);
       }
     }
@@ -96,11 +116,18 @@ export class SchemaRegistry implements ISchemaRegistry {
     return Array.from(this.sectionSchemas.values());
   }
 
-  public registerContextBuilder(id: string, builder: ContextBuilderFunction): void {
+  public registerContextBuilder(
+    id: string,
+    builder: ContextBuilderFunction
+  ): void {
     this.contextBuilders.set(id, builder);
   }
 
-  public buildContext(builderId: string, data: any, allData: any): string {
+  public buildContext(
+    builderId: string,
+    data: ContextBuilderInput,
+    allData: ResumeData
+  ): string {
     const builder = this.contextBuilders.get(builderId);
     return builder ? builder(data, allData) : '';
   }
@@ -110,19 +137,20 @@ export class SchemaRegistry implements ISchemaRegistry {
     return Array.from(this.sectionSchemas.keys());
   }
 
-  public isLegacySectionType(type: string): boolean {
-    return ['summary', 'experience', 'education', 'skills', 'customText'].includes(type);
-  }
-
-  public getFieldSchema(sectionId: string, fieldId: string): FieldSchema | undefined {
+  public getFieldSchema(
+    sectionId: string,
+    fieldId: string
+  ): FieldSchema | undefined {
     const sectionSchema = this.getSectionSchema(sectionId);
-    return sectionSchema?.fields.find(field => field.id === fieldId);
+    return sectionSchema?.fields.find((field) => field.id === fieldId);
   }
 
   // AI相关工具方法
   public getAIEnabledFields(sectionId: string): FieldSchema[] {
     const schema = this.getSectionSchema(sectionId);
-    return schema?.fields.filter(field => field.aiHints?.autocompleteEnabled) || [];
+    return (
+      schema?.fields.filter((field) => field.aiHints?.autocompleteEnabled) || []
+    );
   }
 
   public getImprovementPrompts(sectionId: string, fieldId: string): string[] {
@@ -136,28 +164,39 @@ export class SchemaRegistry implements ISchemaRegistry {
   }
 
   // NEW: Main AI Context Service - The heart of the centralized logic
-  public buildAIContext(payload: AIContextPayload & { aiConfig?: any }): StructuredAIContext {
-    const { resumeData, task, sectionId, itemId, fieldId, inputText, textAfterCursor, aiConfig } = payload;
-    
-    const section = resumeData.sections.find((s: any) => s.id === sectionId);
+  public buildAIContext(
+    payload: AIContextPayload & { aiConfig?: AIConfig }
+  ): StructuredAIContext {
+    const {
+      resumeData,
+      task,
+      sectionId,
+      itemId,
+      fieldId,
+      inputText,
+      textAfterCursor,
+      aiConfig,
+    } = payload;
+
+    const section = resumeData.sections.find((s) => s.id === sectionId);
     if (!section) {
       return { currentItemContext: '', otherSectionsContext: '' };
     }
-    
-    const schemaId = section.schemaId || section.type;
+
+    const schemaId = section.schemaId;
     const sectionSchema = this.getSectionSchema(schemaId);
-    const fieldSchema = sectionSchema?.fields.find(f => f.id === fieldId);
-    
+    const fieldSchema = sectionSchema?.fields.find((f) => f.id === fieldId);
+
     let currentItemContext = '';
     const builderId = fieldSchema?.aiHints?.contextBuilders?.[task];
 
     if (builderId) {
       // 1. Get the original item data from the store's state
-      const originalItemData = itemId 
-        ? section.items?.find((i: any) => i.id === itemId) 
+      const originalItemData = itemId
+        ? section.items?.find((i) => i.id === itemId)
         : section.items?.[0];
 
-      let itemContent = originalItemData?.data || originalItemData;
+      let itemContent: unknown = originalItemData?.data || originalItemData;
 
       // 2. If we have live input text, create a copy of the item data and update the
       //    field being currently edited. This gives the context builder the most
@@ -170,22 +209,35 @@ export class SchemaRegistry implements ISchemaRegistry {
           [fieldId]: completeInput,
         };
       }
-      
+
       // 3. Build the context using the (potentially updated) item content.
-      currentItemContext = this.buildContext(builderId, itemContent, resumeData);
+      currentItemContext = this.buildContext(
+        builderId,
+        itemContent as ContextBuilderInput,
+        resumeData
+      );
     }
 
     // 2. Build otherSectionsContext (使用缓存)
-    const currentResumeDataHash = this.generateResumeDataHash(resumeData, sectionId);
-    const cacheKey = this.generateOtherSectionsContextKey(currentResumeDataHash, sectionId);
-    
+    const currentResumeDataHash = this.generateResumeDataHash(
+      resumeData,
+      sectionId
+    );
+    const cacheKey = this.generateOtherSectionsContextKey(
+      currentResumeDataHash,
+      sectionId
+    );
+
     let otherSectionsContext = '';
-    
+
     if (this.otherSectionsContextCache.has(cacheKey)) {
       otherSectionsContext = this.otherSectionsContextCache.get(cacheKey)!;
     } else {
       // 缓存未命中，重新构建
-      otherSectionsContext = this.buildOtherSectionsContext(resumeData, sectionId);
+      otherSectionsContext = this.buildOtherSectionsContext(
+        resumeData,
+        sectionId
+      );
       this.otherSectionsContextCache.set(cacheKey, otherSectionsContext);
     }
 
@@ -193,22 +245,22 @@ export class SchemaRegistry implements ISchemaRegistry {
       currentItemContext,
       otherSectionsContext,
       userJobTitle: resumeData.personalDetails?.jobTitle,
-      userJobInfo: aiConfig?.targetJobInfo,
-      userBio: aiConfig?.userBio,
+      userJobInfo: aiConfig?.targetJobInfo as string | undefined,
+      userBio: aiConfig?.userBio as string | undefined,
     };
-    
+
     return result;
   }
 
   // NEW: AI Service Methods - Unified interface for all AI operations
   public async improveField(payload: {
-    resumeData: any;
+    resumeData: ResumeData;
     sectionId: string;
     itemId: string;
     fieldId: string;
     currentValue: string;
     prompt: string;
-    aiConfig?: any;
+    aiConfig?: AIConfig;
   }): Promise<string> {
     // 1. Build context using buildAIContext
     const context = this.buildAIContext({
@@ -217,123 +269,141 @@ export class SchemaRegistry implements ISchemaRegistry {
       sectionId: payload.sectionId,
       fieldId: payload.fieldId,
       itemId: payload.itemId,
-      aiConfig: payload.aiConfig
+      aiConfig: payload.aiConfig,
+      inputText: payload.currentValue,
     });
-    
+
     // 2. Get field schema for additional hints
-    const section = payload.resumeData.sections.find((s: any) => s.id === payload.sectionId);
-    const schemaId = section?.schemaId || section?.type;
-    const schema = this.getSectionSchema(schemaId);
-    const field = schema?.fields.find(f => f.id === payload.fieldId);
-    
+    const section = payload.resumeData.sections.find(
+      (s) => s.id === payload.sectionId
+    );
+    const schemaId = section?.schemaId || '';
+
     // 3. Import and call the AI Flow
-    const { improveResumeSection } = await import('@/ai/flows/improve-resume-section');
-    
+    const { improveResumeSection } = await import(
+      '@/ai/flows/improve-resume-section'
+    );
+
     const result = await improveResumeSection({
       resumeSection: payload.currentValue,
       prompt: payload.prompt,
       context: context,
-      sectionType: schemaId
+      sectionType: schemaId,
     });
-    
+
     if (!result.improvedResumeSection) {
       throw new Error('Failed to get improvement from AI');
     }
-    
+
     return result.improvedResumeSection;
   }
 
   public async batchImproveSection(payload: {
-    resumeData: any;
+    resumeData: ResumeData;
     sectionId: string;
     prompt: string;
-    aiConfig?: any;
-  }): Promise<any[]> {
-    const section = payload.resumeData.sections.find((s: any) => s.id === payload.sectionId);
+    aiConfig?: AIConfig;
+  }): Promise<unknown[]> {
+    const section = payload.resumeData.sections.find(
+      (s: DynamicResumeSection) => s.id === payload.sectionId
+    );
     if (!section) throw new Error('Section not found');
-    
-    const schemaId = section.schemaId || section.type;
+
+    const schemaId = section.schemaId;
     const schema = this.getSectionSchema(schemaId);
-    
+
     if (!schema?.aiContext?.batchImprovementSupported) {
       throw new Error('Batch improvement not supported for this section type');
     }
-    
+
     // Import the new batch improvement flow and AIDataBridge
-    const { batchImproveSection } = await import('@/ai/flows/batch-improve-section');
-    const { AIDataBridge } = await import('@/lib/aiDataBridge');
-    
+    const { batchImproveSection } = await import(
+      '@/ai/flows/batch-improve-section'
+    );
+
     // Convert section to AI-friendly format
     const aiSection = AIDataBridge.fromSection(section, this);
-    
+
     const result = await batchImproveSection({
       section: aiSection,
       improvementGoals: [payload.prompt],
       userJobTitle: payload.resumeData.personalDetails?.jobTitle,
       userJobInfo: payload.aiConfig?.targetJobInfo,
       userBio: payload.aiConfig?.userBio,
-      otherSectionsContext: this.stringifyResumeForReview(payload.resumeData)
+      otherSectionsContext: this.stringifyResumeForReview(payload.resumeData),
     });
-    
+
     // Return the improved items directly from the result
     if (result && result.improvedSection && result.improvedSection.items) {
       return result.improvedSection.items;
     }
-    
+
     return [];
   }
 
-  public async reviewResume(resumeData: any): Promise<any> {
+  public async reviewResume(resumeData: ResumeData): Promise<unknown> {
     const { reviewResume } = await import('@/ai/flows/review-resume');
-    
+
     const resumeText = this.stringifyResumeForReview(resumeData);
-    
+
     const result = await reviewResume({
-      resumeText: resumeText
+      resumeText: resumeText,
     });
-    
+
     return result;
   }
 
   // NEW: Resume Stringify Service for Review
-  public stringifyResumeForReview(resumeData: any): string {
+  public stringifyResumeForReview(resumeData: ResumeData): string {
     const sectionParts: string[] = [];
 
+    const aiConfig = (
+      resumeData.metadata as {
+        aiConfig?: Record<string, unknown>;
+      }
+    )?.aiConfig;
+
     // Prepend the target job info and user bio for critical context
-    if (resumeData.aiConfig?.targetJobInfo) {
-      sectionParts.push(`## Target Job Description\n${resumeData.aiConfig.targetJobInfo}`);
+    if (aiConfig?.targetJobInfo && typeof aiConfig.targetJobInfo === 'string') {
+      sectionParts.push(`## Target Job Description\n${aiConfig.targetJobInfo}`);
     }
-    if (resumeData.aiConfig?.userBio) {
-      sectionParts.push(`## User's Professional Bio\n${resumeData.aiConfig.userBio}`);
+    if (aiConfig?.userBio && typeof aiConfig.userBio === 'string') {
+      sectionParts.push(`## User's Professional Bio\n${aiConfig.userBio}`);
     }
-    
+
     // Add personal details summary
     if (resumeData.personalDetails) {
       const personalInfo = [
         `Job Title: ${resumeData.personalDetails.jobTitle}`,
-        `Location: ${resumeData.personalDetails.address}`
-      ].filter(val => val.includes(': ') && val.split(': ')[1]).join(' | ');
-      
+        `Location: ${resumeData.personalDetails.address}`,
+      ]
+        .filter((val) => val.includes(': ') && val.split(': ')[1])
+        .join(' | ');
+
       if (personalInfo) {
         sectionParts.push(`## Personal Information Summary\n${personalInfo}`);
       }
     }
-    
+
     // Process all sections using their summary builders
     for (const section of resumeData.sections) {
       if (!section.visible) continue;
-      
-      const schemaId = section.schemaId || section.type;
+
+      const schemaId = section.schemaId;
       const sectionSchema = this.getSectionSchema(schemaId);
-      
+
       if (sectionSchema?.aiContext?.sectionSummaryBuilder) {
-        const summary = this.buildContext(sectionSchema.aiContext.sectionSummaryBuilder, section, resumeData);
+        const summary = this.buildContext(
+          sectionSchema.aiContext.sectionSummaryBuilder,
+          section,
+          resumeData
+        );
         if (summary.trim()) {
           sectionParts.push(summary);
         }
       }
     }
-    
+
     return sectionParts.join('\n\n---\n\n');
   }
 
@@ -346,4 +416,4 @@ export class SchemaRegistry implements ISchemaRegistry {
 }
 
 // 导出单例实例
-export const schemaRegistry = SchemaRegistry.getInstance(); 
+export const schemaRegistry = SchemaRegistry.getInstance();

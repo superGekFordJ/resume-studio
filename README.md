@@ -1,6 +1,6 @@
 # Resume Studio
 
-*[中文说明](./README.zh.md) | English*
+_[中文说明](./README.zh.md) | English_
 
 An intelligent, schema-driven resume builder powered by AI. Create, optimize, and customize professional resumes with advanced AI assistance features including auto-completion, content improvement, and comprehensive review capabilities.
 
@@ -11,6 +11,7 @@ An intelligent, schema-driven resume builder powered by AI. Create, optimize, an
 ## ✨ Key Features
 
 ### 🤖 AI-Powered Content Generation
+
 - **One-Click Resume Generation**: Generate complete resumes from job descriptions or personal context
 - **Cover Letter Generation**: Create tailored cover letters matching your resume and target job
 - **Smart Auto-completion**: Real-time content suggestions while typing
@@ -20,27 +21,31 @@ An intelligent, schema-driven resume builder powered by AI. Create, optimize, an
 - **🚀 Coming Soon**: Conversational agent for automated resume completion
 
 ### 🎨 Professional Templates
+
 Resume Studio includes several professionally designed templates:
 
-| Template | Preview | Description |
-|----------|---------|-------------|
-| **Classic Professional** | ![Classic](./public/images/templates/classic.png) | Traditional single-column layout |
-| **Pro Classic (2-Col)** | ![Pro Classic](./public/images/templates/pro-classic.png) | Professional two-column design |
-| **Sapphire Sidebar** | ![Sapphire](./public/images/templates/sapphire-sidebar.png) | Elegant layout with dark sidebar |
-| **Veridian Sidebar** | ![Veridian](./public/images/templates/veridian-sidebar.png) | Classic design with teal sidebar and serif fonts |
-| **Modern Minimalist** | ![Minimalist](./public/images/templates/minimalist.png) | Clean, contemporary styling |
-| **Creative Two-Column** | ![Creative](./public/images/templates/basic-two-column.png) | Innovative design with enhanced visual hierarchy |
-| **Continuous Narrative** | ![Narrative](./public/images/templates/continous-narrative.png) | Magazine-style continuous flow layout |
-| **Parallel Modular** | ![Parallel](./public/images/templates/prallel-module.png) | Functionally distinct parallel columns |
+| Template                 | Preview                                                         | Description                                      |
+| ------------------------ | --------------------------------------------------------------- | ------------------------------------------------ |
+| **Classic Professional** | ![Classic](./public/images/templates/classic.png)               | Traditional single-column layout                 |
+| **Pro Classic (2-Col)**  | ![Pro Classic](./public/images/templates/pro-classic.png)       | Professional two-column design                   |
+| **Sapphire Sidebar**     | ![Sapphire](./public/images/templates/sapphire-sidebar.png)     | Elegant layout with dark sidebar                 |
+| **Veridian Sidebar**     | ![Veridian](./public/images/templates/veridian-sidebar.png)     | Classic design with teal sidebar and serif fonts |
+| **Modern Minimalist**    | ![Minimalist](./public/images/templates/minimalist.png)         | Clean, contemporary styling                      |
+| **Creative Two-Column**  | ![Creative](./public/images/templates/basic-two-column.png)     | Innovative design with enhanced visual hierarchy |
+| **Continuous Narrative** | ![Narrative](./public/images/templates/continous-narrative.png) | Magazine-style continuous flow layout            |
+| **Parallel Modular**     | ![Parallel](./public/images/templates/prallel-module.png)       | Functionally distinct parallel columns           |
 
 ### 🏗️ Schema-Driven Architecture
+
 Built on a **single source of truth** schema system that enables:
+
 - Dynamic section creation and management
 - Consistent AI context building
 - Extensible data structures
 - Type-safe development
 
 ### 🛡️ Privacy & Data Control
+
 - **Local Storage**: All your data stays on your device
 - **No Data Collection**: We don't collect or store your personal information
 - **Open Source**: Full transparency with auditable code
@@ -49,47 +54,51 @@ Built on a **single source of truth** schema system that enables:
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 18+ 
-- npm or pnpm
+
+- Node.js 18+
+- pnpm
 - Google AI Studio API key (Gemini)
 
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/superGekFordJ/Resume-studio.git
    cd Resume-studio
    ```
 
 2. **Install dependencies**
+
    ```bash
-   npm install
-   # or
+   # Using pnpm as our package manager
    pnpm install
    ```
 
 3. **Configure environment variables**
+
    ```bash
    cp .env.example .env.local
    ```
-   
+
    Edit `.env.local` and add your Google AI Studio API key:
+
    ```env
    GEMINI_API_KEY=your_api_key_here
    ```
-   
+
    Get your API key from [Google AI Studio](https://aistudio.google.com/)
-   
+
    > **⚠️ Important Configuration Notes**:
+   >
    > - API keys **must** be configured through environment files (`.env.local` or `.env.production`)
    > - UI-based API key configuration is temporarily disabled due to Genkit lifecycle constraints
    > - Currently uses **pre-configured Gemini models only** - no model selection available
    > - Multi-provider support and flexible model selection coming after AI system refactor
 
 4. **Start the development server**
+
    ```bash
-   npm run dev
-   # or
    pnpm dev
    ```
 
@@ -119,8 +128,9 @@ To ensure maximum data privacy when using AI features:
 ### Demo Features
 
 Check out these demo files to see Resume Studio in action:
+
 - 📹 **Quick Start Demo**: [demo/quick-start-of-generating-new-resumes.mp4](./demo/quick-start-of-generating-new-resumes.mp4)
-- 🎯 **Auto-completion**: ![Auto-completion Demo](./demo/autocomplete.gif)  
+- 🎯 **Auto-completion**: ![Auto-completion Demo](./demo/autocomplete.gif)
 - 📊 **Batch Improvement**: ![Batch Improvement Diff View](./demo/diff-view-of-batch-improvement.png)
 
 ## 🔧 Extending Resume Studio
@@ -135,8 +145,9 @@ Resume Studio's schema-driven architecture makes it incredibly easy to add new s
 4. **That's it!** Your new section will automatically support all AI features
 
 The system will automatically handle:
+
 - ✅ Form field generation
-- ✅ AI context building  
+- ✅ AI context building
 - ✅ Auto-completion
 - ✅ Content improvement
 - ✅ Data validation
@@ -163,6 +174,7 @@ Our hybrid rendering model ensures your templates can leverage existing atomic c
 ## ⚠️ Current Limitations
 
 ### AI Provider Support
+
 Currently supports **Google Gemini only** through environment variable configuration:
 
 - ✅ **Supported**: Gemini via `.env.local` or `.env.production` with pre-configured models
@@ -183,8 +195,9 @@ We're actively working on a comprehensive AI system refactor that will support m
 ## 🤝 Contributing
 
 We welcome contributions! Whether it's:
+
 - 🐛 Bug fixes
-- ✨ New features  
+- ✨ New features
 - 🎨 New templates
 - 📝 Documentation improvements
 - 🌍 Translations
@@ -193,7 +206,7 @@ Please feel free to open issues and submit pull requests.
 
 ## 📄 License
 
-This project is licensed under a **Non-Commercial Use License**. 
+This project is licensed under a **Non-Commercial Use License**.
 
 - ✅ **Free for personal, educational, and non-commercial use**
 - ❌ **Commercial use requires explicit permission**
@@ -209,4 +222,4 @@ See the [LICENSE](LICENSE) file for full details.
 
 ---
 
-**Ready to build your perfect resume?** [Get started now!](#quick-start) 🚀 
+**Ready to build your perfect resume?** [Get started now!](#quick-start) 🚀

@@ -1,20 +1,23 @@
-"use client";
+'use client';
 
-import { RenderableItem, RoleMap } from "@/types/schema";
-import { pickFieldByRole, getItemDateRange } from "@/lib/roleMapUtils";
+import { RenderableItem, RoleMap } from '@/types/schema';
+import { pickFieldByRole, getItemDateRange } from '@/lib/roleMapUtils';
 
 interface EducationItemComponentProps {
   item: RenderableItem;
   roleMap?: RoleMap;
 }
 
-export const EducationItemComponent = ({ item, roleMap }: EducationItemComponentProps) => {
+export const EducationItemComponent = ({
+  item,
+  roleMap,
+}: EducationItemComponentProps) => {
   const degreeField = pickFieldByRole(item, 'title', roleMap);
   const universityField = pickFieldByRole(item, 'organization', roleMap);
-  
+
   // Use the standardized and robust date range utility
   const dateDisplay = getItemDateRange(item, roleMap);
-  
+
   return (
     <div className="py-1.5 px-3">
       <div className="flex justify-between items-start">
@@ -36,4 +39,4 @@ export const EducationItemComponent = ({ item, roleMap }: EducationItemComponent
       </div>
     </div>
   );
-}; 
+};

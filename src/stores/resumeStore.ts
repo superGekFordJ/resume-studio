@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { initialResumeData } from '@/types/resume';
 import { indexedDbStorage } from './indexedDbStorage';
-import { migrateLegacyResumeIfNeeded } from '@/lib/migrateLegacyResume';
+// import { migrateLegacyResumeIfNeeded } from '@/lib/migrateLegacyResume';
 import { ResumeState, ResumeActions } from './types';
 import { createDataActions } from './actions/dataActions';
 import { createAIActions } from './actions/aiActions';
@@ -47,31 +47,34 @@ export const useResumeStore = create<ResumeState & ResumeActions>()(
     {
       name: 'resume-studio-storage',
       storage: createJSONStorage(() => indexedDbStorage),
-      
+
       // This function determines which parts of the state are persisted.
       // We are excluding the API key from being saved to IndexedDB.
       partialize: (state) => {
         const { aiConfig, ...rest } = state;
-        const { apiKey, ...restAiConfig } = aiConfig;
+        const { ...restAiConfig } = aiConfig;
         return { ...rest, aiConfig: restAiConfig };
       },
 
       // This function merges the persisted state with the in-memory state.
       // It's crucial for keeping non-persisted values (like the API key) alive.
       merge: (persistedState, currentState) => {
-        const state = { ...currentState, ...(persistedState as Partial<ResumeState>) };
-        
+        const state = {
+          ...currentState,
+          ...(persistedState as Partial<ResumeState>),
+        };
+
         // Ensure the API key from the initial state is not overwritten
         // by the (intentionally) missing key from the persisted state.
         state.aiConfig.apiKey = currentState.aiConfig.apiKey;
-        
-        // Migrate legacy resume data if needed
-        if (state.resumeData) {
-          state.resumeData = migrateLegacyResumeIfNeeded(state.resumeData);
-        }
-        
+
+        // // Migrate legacy resume data if needed
+        // if (state.resumeData) {
+        //   state.resumeData = migrateLegacyResumeIfNeeded(state.resumeData);
+        // }
+
         return state;
       },
     }
   )
-); 
+);

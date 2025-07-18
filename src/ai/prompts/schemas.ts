@@ -5,7 +5,9 @@ import { z } from 'genkit';
 export const AIBridgedSectionSchema = ai.defineSchema(
   'AIBridgedSectionSchema',
   z.object({
-    schemaId: z.string().describe('The schema ID of the section (e.g., experience, education)'),
+    schemaId: z
+      .string()
+      .describe('The schema ID of the section (e.g., experience, education)'),
     // Define items as an array of records (string keys, any values) which is a standard for dynamic objects.
     items: z
       .array(z.record(z.string(), z.any()))
@@ -16,7 +18,9 @@ export const AIBridgedSectionSchema = ai.defineSchema(
 export const AIBridgedResumeSchema = ai.defineSchema(
   'AIBridgedResumeSchema',
   z.object({
-    sections: z.array(AIBridgedSectionSchema).describe('Array of sections in the resume'),
+    sections: z
+      .array(AIBridgedSectionSchema)
+      .describe('Array of sections in the resume'),
   })
 );
 
@@ -31,13 +35,25 @@ export const AutocompleteInputSchema = ai.defineSchema(
     textAfterCursor: z
       .string()
       .optional()
-      .describe('The text AFTER the cursor. Use this to understand the full context.'),
+      .describe(
+        'The text AFTER the cursor. Use this to understand the full context.'
+      ),
     context: z
       .object({
-        currentItemContext: z.string().describe('Context about the current item being edited'),
-        otherSectionsContext: z.string().describe('Summary of other resume sections'),
-        userJobTitle: z.string().optional().describe("The user's target job title"),
-        userJobInfo: z.string().optional().describe("The user's target job info"),
+        currentItemContext: z
+          .string()
+          .describe('Context about the current item being edited'),
+        otherSectionsContext: z
+          .string()
+          .describe('Summary of other resume sections'),
+        userJobTitle: z
+          .string()
+          .optional()
+          .describe("The user's target job title"),
+        userJobInfo: z
+          .string()
+          .optional()
+          .describe("The user's target job info"),
         userBio: z.string().optional().describe("The user's professional bio"),
       })
       .describe('Structured context from SchemaRegistry'),
@@ -64,14 +80,15 @@ export const BatchImproveSectionInputSchema = ai.defineSchema(
   'BatchImproveSectionInputSchema',
   z.object({
     section: AIBridgedSectionSchema,
-    improvementGoals: z
-      .array(z.string())
-      .describe('List of improvement goals'),
+    improvementGoals: z.array(z.string()).describe('List of improvement goals'),
     userJobTitle: z.string().optional(),
     userJobInfo: z.string().optional(),
     userBio: z.string().optional(),
     otherSectionsContext: z.string().optional(),
-    schemaInstructions: z.string().optional().describe('Dynamic schema instructions built from SchemaRegistry'),
+    schemaInstructions: z
+      .string()
+      .optional()
+      .describe('Dynamic schema instructions built from SchemaRegistry'),
   })
 );
 
@@ -87,8 +104,12 @@ export const BatchImproveSectionOutputSchema = ai.defineSchema(
 export const BatchImproveSectionOutputWrapperSchema = ai.defineSchema(
   'BatchImproveSectionOutputWrapperSchema',
   z.object({
-    improvedSectionJson: z.string().describe("The improved section data as a single, JSON-escaped string containing the AIBridgedSection structure."),
-    improvementSummary: z.string().describe("A summary of the changes made."),
+    improvedSectionJson: z
+      .string()
+      .describe(
+        'The improved section data as a single, JSON-escaped string containing the AIBridgedSection structure.'
+      ),
+    improvementSummary: z.string().describe('A summary of the changes made.'),
   })
 );
 
@@ -97,18 +118,33 @@ export const ComprehensiveResumeAnalysisInputSchema = ai.defineSchema(
   z.object({
     resumeData: z.record(z.any()).describe('Complete resume data'),
     analysisType: z
-      .enum(['ats-optimization', 'content-enhancement', 'structure-improvement', 'industry-alignment'])
+      .enum([
+        'ats-optimization',
+        'content-enhancement',
+        'structure-improvement',
+        'industry-alignment',
+      ])
       .describe('Type of analysis to perform'),
-    targetRole: z.string().optional().describe('Target job role for optimization'),
+    targetRole: z
+      .string()
+      .optional()
+      .describe('Target job role for optimization'),
     industryContext: z.string().optional().describe('Target industry context'),
-    experienceLevel: z.enum(['entry', 'mid', 'senior', 'executive']).optional().describe('Career level'),
+    experienceLevel: z
+      .enum(['entry', 'mid', 'senior', 'executive'])
+      .optional()
+      .describe('Career level'),
   })
 );
 
 export const ComprehensiveResumeAnalysisOutputSchema = ai.defineSchema(
   'ComprehensiveResumeAnalysisOutputSchema',
   z.object({
-    overallScore: z.number().min(0).max(100).describe('Overall resume quality score'),
+    overallScore: z
+      .number()
+      .min(0)
+      .max(100)
+      .describe('Overall resume quality score'),
     sectionScores: z.record(z.number()).describe('Individual section scores'),
     priorityImprovements: z
       .array(
@@ -137,7 +173,9 @@ export const ComprehensiveResumeAnalysisOutputSchema = ai.defineSchema(
         readabilityScore: z.number(),
       })
       .describe('Content quality analysis'),
-    nextSteps: z.array(z.string()).describe('Recommended next steps for improvement'),
+    nextSteps: z
+      .array(z.string())
+      .describe('Recommended next steps for improvement'),
   })
 );
 
@@ -146,17 +184,40 @@ export const GenerateResumeContextInputSchema = ai.defineSchema(
   z.object({
     bio: z.string().describe("The user's professional background and history."),
     jobDescription: z.string().describe('The target job description.'),
-    schemaInstructions: z.string().optional().describe('Dynamic schema instructions built from SchemaRegistry'),
-    availableSchemas: z.array(z.object({
-      schemaId: z.string(),
-      name: z.string(),
-      description: z.string().optional(),
-      fields: z.array(z.object({
-        id: z.string().describe('The key to use for this field in the JSON object'),
-        label: z.string().describe('A user-friendly label for the field'),
-        description: z.string().optional().describe('A description of what the field represents'),
-      })).describe('The list of fields that each item in this section should have'),
-    })).optional().describe('Available section schemas from SchemaRegistry, including their fields'),
+    schemaInstructions: z
+      .string()
+      .optional()
+      .describe('Dynamic schema instructions built from SchemaRegistry'),
+    availableSchemas: z
+      .array(
+        z.object({
+          schemaId: z.string(),
+          name: z.string(),
+          description: z.string().optional(),
+          fields: z
+            .array(
+              z.object({
+                id: z
+                  .string()
+                  .describe('The key to use for this field in the JSON object'),
+                label: z
+                  .string()
+                  .describe('A user-friendly label for the field'),
+                description: z
+                  .string()
+                  .optional()
+                  .describe('A description of what the field represents'),
+              })
+            )
+            .describe(
+              'The list of fields that each item in this section should have'
+            ),
+        })
+      )
+      .optional()
+      .describe(
+        'Available section schemas from SchemaRegistry, including their fields'
+      ),
   })
 );
 
@@ -164,7 +225,11 @@ export const GenerateResumeContextInputSchema = ai.defineSchema(
 export const JobInfoFromImageInputSchema = ai.defineSchema(
   'JobInfoFromImageInputSchema',
   z.object({
-    dataUri: z.string().describe('A full data URI for the image (e.g., data:image/png;base64,...)'),
+    dataUri: z
+      .string()
+      .describe(
+        'A full data URI for the image (e.g., data:image/png;base64,...)'
+      ),
   })
 );
 
@@ -172,23 +237,40 @@ export const JobInfoFromImageInputSchema = ai.defineSchema(
 export const JobInfoFromImageOutputSchema = ai.defineSchema(
   'JobInfoFromImageOutputSchema',
   z.object({
-    extractedText: z.string().describe('The extracted job information text from the image.'),
+    extractedText: z
+      .string()
+      .describe('The extracted job information text from the image.'),
   })
 );
-
 
 // Schemas for improve-resume-section
 export const ImproveResumeSectionInputSchema = ai.defineSchema(
   'ImproveResumeSectionInputSchema',
   z.object({
-    resumeSection: z.string().describe('The text content of the resume section to be improved.'),
-    prompt: z.string().describe('A prompt providing instructions on how to improve the resume section.'),
+    resumeSection: z
+      .string()
+      .describe('The text content of the resume section to be improved.'),
+    prompt: z
+      .string()
+      .describe(
+        'A prompt providing instructions on how to improve the resume section.'
+      ),
     context: z
       .object({
-        currentItemContext: z.string().describe('Context about the current item being improved'),
-        otherSectionsContext: z.string().describe('Summary of other resume sections'),
-        userJobTitle: z.string().optional().describe("The user's target job title"),
-        userJobInfo: z.string().optional().describe("The user's target job info"),
+        currentItemContext: z
+          .string()
+          .describe('Context about the current item being improved'),
+        otherSectionsContext: z
+          .string()
+          .describe('Summary of other resume sections'),
+        userJobTitle: z
+          .string()
+          .optional()
+          .describe("The user's target job title"),
+        userJobInfo: z
+          .string()
+          .optional()
+          .describe("The user's target job info"),
         userBio: z.string().optional().describe("The user's professional bio"),
       })
       .describe('Structured context from SchemaRegistry'),
@@ -202,7 +284,9 @@ export const ImproveResumeSectionInputSchema = ai.defineSchema(
 export const ImproveResumeSectionOutputSchema = ai.defineSchema(
   'ImproveResumeSectionOutputSchema',
   z.object({
-    improvedResumeSection: z.string().describe('The AI-rewritten and improved resume section.'),
+    improvedResumeSection: z
+      .string()
+      .describe('The AI-rewritten and improved resume section.'),
   })
 );
 
@@ -211,24 +295,32 @@ export const ImproveResumeSectionOutputSchema = ai.defineSchema(
 export const GeneratedResumeAsStringSchema = ai.defineSchema(
   'GeneratedResumeAsStringSchema',
   z.object({
-    resumeJson: z.string().describe("A string containing the full resume data as a JSON object. This string will be parsed by the application."),
+    resumeJson: z
+      .string()
+      .describe(
+        'A string containing the full resume data as a JSON object. This string will be parsed by the application.'
+      ),
   })
 );
 
 export const ReviewResumeInputSchema = ai.defineSchema(
   'ReviewResumeInputSchema',
   z.object({
-    resumeText: z.string().describe('The complete text content of the resume to be reviewed.'),
+    resumeText: z
+      .string()
+      .describe('The complete text content of the resume to be reviewed.'),
   })
 );
 
 export const ReviewResumeOutputSchema = ai.defineSchema(
   'ReviewResumeOutputSchema',
   z.object({
-  overallQuality: z.string().describe('An overall assessment of the resume quality.'),
-  suggestions: z
-    .string()
-    .describe('Specific, actionable suggestions for improving the resume.'),
+    overallQuality: z
+      .string()
+      .describe('An overall assessment of the resume quality.'),
+    suggestions: z
+      .string()
+      .describe('Specific, actionable suggestions for improving the resume.'),
   })
 );
 
@@ -237,12 +329,26 @@ export const ReviewResumeOutputSchema = ai.defineSchema(
 export const GenerateCoverLetterInputSchema = ai.defineSchema(
   'GenerateCoverLetterInputSchema',
   z.object({
-    resumeContext: z.string().describe('Structured summary of the user\'s resume including skills, experience, and background'),
-    targetJobInfo: z.string().describe('Information about the target job position, company, and requirements'),
-    targetCompany: z.string().optional().describe('Specific company name if available'),
+    resumeContext: z
+      .string()
+      .describe(
+        "Structured summary of the user's resume including skills, experience, and background"
+      ),
+    targetJobInfo: z
+      .string()
+      .describe(
+        'Information about the target job position, company, and requirements'
+      ),
+    targetCompany: z
+      .string()
+      .optional()
+      .describe('Specific company name if available'),
     context: z
       .object({
-        userJobTitle: z.string().optional().describe("The user's target job title"),
+        userJobTitle: z
+          .string()
+          .optional()
+          .describe("The user's target job title"),
         userBio: z.string().optional().describe("The user's professional bio"),
       })
       .optional()
@@ -253,7 +359,15 @@ export const GenerateCoverLetterInputSchema = ai.defineSchema(
 export const GenerateCoverLetterOutputSchema = ai.defineSchema(
   'GenerateCoverLetterOutputSchema',
   z.object({
-    coverLetterContent: z.string().describe('The complete, professionally written cover letter content in markdown format'),
-    generationSummary: z.string().describe('A brief summary of key themes and focus areas highlighted in the cover letter'),
+    coverLetterContent: z
+      .string()
+      .describe(
+        'The complete, professionally written cover letter content in markdown format'
+      ),
+    generationSummary: z
+      .string()
+      .describe(
+        'A brief summary of key themes and focus areas highlighted in the cover letter'
+      ),
   })
 );

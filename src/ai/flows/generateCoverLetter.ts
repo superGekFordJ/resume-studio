@@ -39,7 +39,7 @@ const generateCoverLetterFlow = ai.defineFlow(
     inputSchema: GenerateCoverLetterInputSchema,
     outputSchema: GenerateCoverLetterOutputSchema,
   },
-  async input => {
+  async (input) => {
     const prompt = ai.prompt<
       typeof GenerateCoverLetterInputSchema,
       typeof GenerateCoverLetterOutputSchema
@@ -50,4 +50,4 @@ const generateCoverLetterFlow = ai.defineFlow(
     }
     return output;
   }
-); 
+);

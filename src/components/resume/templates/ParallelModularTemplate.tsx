@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { RenderableResume, RenderableSection } from "@/types/schema";
-import { Mail, Phone, Linkedin, Github, Globe, MapPin } from "lucide-react";
+import { RenderableResume, RenderableSection } from '@/types/schema';
+import { Mail, Phone, Linkedin, Github, Globe, MapPin } from 'lucide-react';
 import { BadgeListComponent } from '../rendering/BadgeListComponent';
 import { TitledBlockComponent } from '../rendering/TitledBlockComponent';
 import { SimpleListComponent } from '../rendering/SimpleListComponent';
@@ -11,6 +11,7 @@ import { CertificationItemComponent } from '../rendering/CertificationItemCompon
 import { AdvancedSkillsComponent } from '../rendering/AdvancedSkillsComponent';
 import { CoverLetterComponent } from '../rendering/CoverLetterComponent';
 import { SchemaRegistry } from '@/lib/schemaRegistry';
+import Image from 'next/image';
 
 interface ParallelModularTemplateProps {
   resume: RenderableResume;
@@ -20,15 +21,18 @@ interface ParallelModularTemplateProps {
 const renderSectionByRenderType = (section: RenderableSection) => {
   // Template-specific overrides for the "Capability Hub" feel
   const templateLayoutMap: Record<string, string> = {
-    'skills': 'badge-list', // Override to badge-list for capability hub feel
+    skills: 'badge-list', // Override to badge-list for capability hub feel
     'advanced-skills': 'advanced-skills-list', // Use specialized advanced skills rendering
-    'languages': 'badge-list', // Languages as badges too
-    'projects': 'project-list',
-    'certifications': 'certification-list'
+    languages: 'badge-list', // Languages as badges too
+    projects: 'project-list',
+    certifications: 'certification-list',
   };
 
   // Use template override if exists, otherwise use schema default
-  const finalRenderType = templateLayoutMap[section.schemaId] || section.defaultRenderType || 'default';
+  const finalRenderType =
+    templateLayoutMap[section.schemaId] ||
+    section.defaultRenderType ||
+    'default';
   const schemaRegistry = SchemaRegistry.getInstance();
   const roleMap = schemaRegistry.getRoleMap(section.schemaId);
 
@@ -38,23 +42,35 @@ const renderSectionByRenderType = (section: RenderableSection) => {
     case 'badge-list':
       return <BadgeListComponent section={section} roleMap={roleMap} />;
     case 'timeline':
-      return section.items.map(item => <TitledBlockComponent key={item.id} item={item} roleMap={roleMap} />);
+      return section.items.map((item) => (
+        <TitledBlockComponent key={item.id} item={item} roleMap={roleMap} />
+      ));
     case 'single-text':
     case 'customText':
       return <SingleTextComponent items={section.items} roleMap={roleMap} />;
     case 'project-list':
-      return section.items.map(item => <ProjectItemComponent key={item.id} item={item} roleMap={roleMap} />);
+      return section.items.map((item) => (
+        <ProjectItemComponent key={item.id} item={item} roleMap={roleMap} />
+      ));
     case 'certification-list':
-      return section.items.map(item => <CertificationItemComponent key={item.id} item={item} roleMap={roleMap} />);
+      return section.items.map((item) => (
+        <CertificationItemComponent
+          key={item.id}
+          item={item}
+          roleMap={roleMap}
+        />
+      ));
     case 'advanced-skills-list':
-      return section.items.map(item => <AdvancedSkillsComponent key={item.id} item={item} roleMap={roleMap} />);
+      return section.items.map((item) => (
+        <AdvancedSkillsComponent key={item.id} item={item} roleMap={roleMap} />
+      ));
     case 'cover-letter':
       return <CoverLetterComponent section={section} roleMap={roleMap} />;
     default:
       // Generic fallback rendering
-      return section.items.map(item => (
+      return section.items.map((item) => (
         <div key={item.id} className="mb-2">
-          {item.fields.map(field => (
+          {item.fields.map((field) => (
             <div key={field.key}>
               {Array.isArray(field.value) ? (
                 <span>{field.value.join(', ')}</span>
@@ -72,9 +88,11 @@ const ParallelModularTemplate = ({ resume }: ParallelModularTemplateProps) => {
   const { personalDetails, sections } = resume;
 
   // Single-column fallback logic for cover letters
-  const hasCoverLetter = sections.some(s => s.schemaId === 'cover-letter');
+  const hasCoverLetter = sections.some((s) => s.schemaId === 'cover-letter');
   if (hasCoverLetter) {
-    const coverLetterSection = sections.find(s => s.schemaId === 'cover-letter');
+    const coverLetterSection = sections.find(
+      (s) => s.schemaId === 'cover-letter'
+    );
     return (
       <div className="text-[11px] leading-[1.4] h-full flex flex-col">
         {/* Header with shared styling */}
@@ -82,16 +100,22 @@ const ParallelModularTemplate = ({ resume }: ParallelModularTemplateProps) => {
           <div className="flex items-center gap-6">
             {personalDetails.avatar && (
               <div className="w-20 h-20 rounded-full overflow-hidden border-3 border-white/30 flex-shrink-0">
-                <img 
-                  src={personalDetails.avatar} 
+                <Image
+                  src={personalDetails.avatar}
                   alt={personalDetails.fullName}
                   className="w-full h-full object-cover"
+                  width={80}
+                  height={80}
                 />
               </div>
             )}
             <div className="flex-grow">
-              <h1 className="font-bold text-2xl mb-1">{personalDetails.fullName}</h1>
-              <p className="text-lg text-gray-300">{personalDetails.jobTitle}</p>
+              <h1 className="font-bold text-2xl mb-1">
+                {personalDetails.fullName}
+              </h1>
+              <p className="text-lg text-gray-300">
+                {personalDetails.jobTitle}
+              </p>
             </div>
           </div>
 
@@ -146,10 +170,22 @@ const ParallelModularTemplate = ({ resume }: ParallelModularTemplateProps) => {
 
   // Define which sections go into which column based on their function
   const timelineSections = ['experience', 'education', 'projects', 'volunteer']; // The narrative. Corrected 'work-experience' to 'experience' and added 'volunteer'.
-  const capabilitySections = ['summary', 'customText', 'skills', 'languages', 'awards', 'certifications', 'advanced-skills']; // The inventory
-  
-  const mainColumnSections = sections.filter(s => timelineSections.includes(s.schemaId));
-  const sideColumnSections = sections.filter(s => capabilitySections.includes(s.schemaId));
+  const capabilitySections = [
+    'summary',
+    'customText',
+    'skills',
+    'languages',
+    'awards',
+    'certifications',
+    'advanced-skills',
+  ]; // The inventory
+
+  const mainColumnSections = sections.filter((s) =>
+    timelineSections.includes(s.schemaId)
+  );
+  const sideColumnSections = sections.filter((s) =>
+    capabilitySections.includes(s.schemaId)
+  );
 
   return (
     <div className="text-[11px] leading-[1.4] h-full flex flex-col">
@@ -159,17 +195,21 @@ const ParallelModularTemplate = ({ resume }: ParallelModularTemplateProps) => {
           {/* Avatar */}
           {personalDetails.avatar && (
             <div className="w-20 h-20 rounded-full overflow-hidden border-3 border-white/30 flex-shrink-0">
-              <img 
-                src={personalDetails.avatar} 
+              <Image
+                src={personalDetails.avatar}
                 alt={personalDetails.fullName}
                 className="w-full h-full object-cover"
+                width={80}
+                height={80}
               />
             </div>
           )}
-          
+
           {/* Name and Title */}
           <div className="flex-grow">
-            <h1 className="font-bold text-2xl mb-1">{personalDetails.fullName}</h1>
+            <h1 className="font-bold text-2xl mb-1">
+              {personalDetails.fullName}
+            </h1>
             <p className="text-lg text-gray-300">{personalDetails.jobTitle}</p>
           </div>
         </div>
@@ -247,4 +287,4 @@ const ParallelModularTemplate = ({ resume }: ParallelModularTemplateProps) => {
   );
 };
 
-export default ParallelModularTemplate; 
+export default ParallelModularTemplate;

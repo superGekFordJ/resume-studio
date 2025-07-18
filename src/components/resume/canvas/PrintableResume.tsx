@@ -1,21 +1,24 @@
-"use client";
+'use client';
 
-import { RenderableResume } from "@/types/schema";
-import ModernTemplate from "../templates/ModernTemplate";
-import DefaultTemplate from "../templates/DefaultTemplate";
-import CreativeTemplate from "../templates/CreativeTemplate";
-import ContinuousNarrativeTemplate from "../templates/ContinuousNarrativeTemplate";
-import ParallelModularTemplate from "../templates/ParallelModularTemplate";
-import { ProClassicTemplate } from "../templates/ProClassicTemplate";
-import { SapphireSidebarTemplate } from "../templates/SapphireSidebarTemplate";
-import { VeridianSidebarTemplate } from "../templates/VeridianSidebarTemplate";
+import { RenderableResume } from '@/types/schema';
+import ModernTemplate from '../templates/ModernTemplate';
+import DefaultTemplate from '../templates/DefaultTemplate';
+import CreativeTemplate from '../templates/CreativeTemplate';
+import ContinuousNarrativeTemplate from '../templates/ContinuousNarrativeTemplate';
+import ParallelModularTemplate from '../templates/ParallelModularTemplate';
+import { ProClassicTemplate } from '../templates/ProClassicTemplate';
+import { SapphireSidebarTemplate } from '../templates/SapphireSidebarTemplate';
+import { VeridianSidebarTemplate } from '../templates/VeridianSidebarTemplate';
 
 interface PrintableResumeProps {
   resume: RenderableResume;
   templateId: string;
 }
 
-export default function PrintableResume({ resume, templateId }: PrintableResumeProps) {
+export default function PrintableResume({
+  resume,
+  templateId,
+}: PrintableResumeProps) {
   switch (templateId) {
     case 'modern-minimalist':
       return <ModernTemplate resume={resume} />;
@@ -33,17 +36,28 @@ export default function PrintableResume({ resume, templateId }: PrintableResumeP
       return <ParallelModularTemplate resume={resume} />;
     case 'default-with-cover':
       // Render cover letter first, then regular resume with page break
-      const hasCoverLetter = resume.sections.some(s => s.schemaId === 'cover-letter');
+      const hasCoverLetter = resume.sections.some(
+        (s) => s.schemaId === 'cover-letter'
+      );
       if (hasCoverLetter) {
-        const coverLetterSection = resume.sections.find(s => s.schemaId === 'cover-letter');
+        const coverLetterSection = resume.sections.find(
+          (s) => s.schemaId === 'cover-letter'
+        );
         const resumeWithoutCoverLetter = {
           ...resume,
-          sections: resume.sections.filter(s => s.schemaId !== 'cover-letter')
+          sections: resume.sections.filter(
+            (s) => s.schemaId !== 'cover-letter'
+          ),
         };
         return (
           <>
             {/* Cover Letter Page */}
-            <DefaultTemplate resume={{ ...resume, sections: coverLetterSection ? [coverLetterSection] : [] }} />
+            <DefaultTemplate
+              resume={{
+                ...resume,
+                sections: coverLetterSection ? [coverLetterSection] : [],
+              }}
+            />
             {/* Page Break for PDF */}
             <div className="page-break-before" />
             {/* Resume Page */}
@@ -56,4 +70,4 @@ export default function PrintableResume({ resume, templateId }: PrintableResumeP
     default:
       return <DefaultTemplate resume={resume} />;
   }
-} 
+}

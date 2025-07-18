@@ -1,4 +1,5 @@
 import { genkit } from 'genkit';
+import { GenkitPlugin } from 'genkit/plugin';
 import { googleAI } from '@genkit-ai/googleai';
 // import { vertexAI } from '@genkit-ai/vertexai';
 import type { AIConfig } from '@/stores/types';
@@ -8,13 +9,14 @@ import _ from 'lodash';
 // import { ollama } from 'genkitx-ollama';
 
 function createConfiguredGenkit(config: AIConfig) {
-  const plugins: any[] = [];
-  
+  const plugins: GenkitPlugin[] = [];
+
   // DEVELOPMENT OPTIMIZATION: Prioritize UI key, fallback to .env, then no key
   let apiKeyToUse = config.apiKey;
   if (!apiKeyToUse && process.env.NODE_ENV === 'development') {
     if (config.provider === 'google') {
-      apiKeyToUse = process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENAI_API_KEY;
+      apiKeyToUse =
+        process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENAI_API_KEY;
     } else if (config.provider === 'anthropic') {
       apiKeyToUse = process.env.ANTHROPIC_API_KEY;
     }
@@ -29,7 +31,9 @@ function createConfiguredGenkit(config: AIConfig) {
     //   models: [{ name: config.model, type: 'generate' }],
     //   serverAddress: config.ollamaServerAddress,
     // }));
-    console.warn('Ollama support is not yet implemented. Please install genkitx-ollama package.');
+    console.warn(
+      'Ollama support is not yet implemented. Please install genkitx-ollama package.'
+    );
     // Fallback to Google AI for now
     plugins.push(googleAI({ apiKey: process.env.GOOGLE_API_KEY }));
   } else if (config.provider === 'anthropic') {
@@ -38,12 +42,12 @@ function createConfiguredGenkit(config: AIConfig) {
     // Fallback to Google AI for now
     plugins.push(googleAI({ apiKey: process.env.GOOGLE_API_KEY }));
   }
-  
-  const ai = genkit({ 
+
+  const ai = genkit({
     plugins,
-    model: `googleai/${config.model}` // Default model
+    model: `googleai/${config.model}`, // Default model
   });
-  
+
   return ai;
 }
 
@@ -88,4 +92,4 @@ class AIManager {
   }
 }
 
-export const aiManager = AIManager.getInstance(); 
+export const aiManager = AIManager.getInstance();

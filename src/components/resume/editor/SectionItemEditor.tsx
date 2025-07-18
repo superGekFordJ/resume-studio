@@ -1,12 +1,15 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
-import { Trash2, GripVertical } from "lucide-react";
+import { Trash2, GripVertical } from 'lucide-react';
 import { SchemaRegistry } from '@/lib/schemaRegistry';
 import { useResumeStore } from '@/stores/resumeStore';
 import AIFieldWrapper from './AIFieldWrapper';
 import DynamicFieldRenderer from './DynamicFieldRenderer';
-import type { DynamicResumeSection, DynamicSectionItem, FieldSchema } from '@/types/schema';
+import type {
+  DynamicResumeSection,
+  DynamicSectionItem,
+  FieldSchema,
+} from '@/types/schema';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
@@ -22,15 +25,22 @@ interface SectionItemEditorProps {
   onRemove: () => void;
 }
 
-export default function SectionItemEditor({ item, section, index, onRemove }: SectionItemEditorProps) {
+export default function SectionItemEditor({
+  item,
+  section,
+  index,
+  onRemove,
+}: SectionItemEditorProps) {
   const schemaRegistry = SchemaRegistry.getInstance();
-  const updateField = useResumeStore(state => state.updateField);
-  const resumeData = useResumeStore(state => state.resumeData);
-  const isAutocompleteEnabled = useResumeStore(state => state.isAutocompleteEnabled);
-  
+  const updateField = useResumeStore((state) => state.updateField);
+  const resumeData = useResumeStore((state) => state.resumeData);
+  const isAutocompleteEnabled = useResumeStore(
+    (state) => state.isAutocompleteEnabled
+  );
+
   // Get schema for this section
   const sectionSchema = schemaRegistry.getSectionSchema(section.schemaId);
-  
+
   // Use sortable hook for drag-and-drop functionality
   const {
     attributes,
@@ -45,29 +55,33 @@ export default function SectionItemEditor({ item, section, index, onRemove }: Se
     transform: CSS.Transform.toString(transform),
     transition,
   };
-  
-  const constructUniqueFieldId = (fieldName: string, itemId: string, sectionType: string): string => {
+
+  const constructUniqueFieldId = (
+    fieldName: string,
+    itemId: string,
+    sectionType: string
+  ): string => {
     const safeItemId = itemId.replace(/_/g, '-');
     return `${safeItemId}_${sectionType}_${fieldName}`;
   };
-  
-  const handleFieldChange = (fieldId: string, value: any) => {
+
+  const handleFieldChange = (fieldId: string, value: unknown) => {
     updateField({
       sectionId: section.id,
       fieldId,
       value,
-      itemId: item.id
+      itemId: item.id,
     });
   };
-  
+
   if (!sectionSchema) {
     console.warn(`No schema found for section type: ${section.schemaId}`);
     return null;
   }
-  
+
   // Get field value from dynamic item
-  const getFieldValue = (field: FieldSchema): any => {
-      return item.data[field.id] || '';
+  const getFieldValue = (field: FieldSchema): unknown => {
+    return item.data[field.id] || '';
   };
 
   // For single type sections, don't use accordion wrapper
@@ -75,18 +89,25 @@ export default function SectionItemEditor({ item, section, index, onRemove }: Se
     return (
       <div className="my-4 p-4 space-y-2 bg-muted/50 rounded-lg border border-[#3F51B5]/20">
         <div className="space-y-3">
-          {sectionSchema.fields.map(field => {
-            const uniqueFieldId = constructUniqueFieldId(field.id, item.id, section.schemaId);
+          {sectionSchema.fields.map((field) => {
+            const uniqueFieldId = constructUniqueFieldId(
+              field.id,
+              item.id,
+              section.schemaId
+            );
             const currentValue = getFieldValue(field);
-            
+
             // For AI-enabled fields, wrap in AIFieldWrapper
-            if (field.aiHints?.autocompleteEnabled && (field.type === 'text' || field.type === 'textarea')) {
+            if (
+              field.aiHints?.autocompleteEnabled &&
+              (field.type === 'text' || field.type === 'textarea')
+            ) {
               return (
                 <AIFieldWrapper
                   key={field.id}
                   uniqueFieldId={uniqueFieldId}
                   label={field.label}
-                  value={currentValue}
+                  value={currentValue as string}
                   onValueChange={(value) => handleFieldChange(field.id, value)}
                   fieldId={field.id}
                   sectionId={section.id}
@@ -96,19 +117,23 @@ export default function SectionItemEditor({ item, section, index, onRemove }: Se
                   currentItem={item}
                   allResumeSections={resumeData.sections}
                   currentSectionId={section.id}
-                  className={field.uiProps?.rows === 1 || field.type === 'text' ? "min-h-[40px]" : "min-h-[80px]"}
+                  className={
+                    field.uiProps?.rows === 1 || field.type === 'text'
+                      ? 'min-h-[40px]'
+                      : 'min-h-[80px]'
+                  }
                   isAutocompleteEnabled={isAutocompleteEnabled}
                   placeholder={field.uiProps?.placeholder}
                 />
               );
             }
-            
+
             // For non-AI fields, use DynamicFieldRenderer
             return (
               <DynamicFieldRenderer
                 key={field.id}
                 field={field}
-                value={currentValue}
+                value={currentValue as string}
                 onChange={(value) => handleFieldChange(field.id, value)}
                 userJobTitle={resumeData.personalDetails.jobTitle}
                 currentItem={item}
@@ -155,7 +180,10 @@ export default function SectionItemEditor({ item, section, index, onRemove }: Se
           >
             <GripVertical size={16} className="text-[#3F51B5]" />
           </div>
-          <span className="font-medium text-[#3F51B5] truncate" title={getDisplayTitle()}>
+          <span
+            className="font-medium text-[#3F51B5] truncate"
+            title={getDisplayTitle()}
+          >
             {getDisplayTitle()}
           </span>
           <div className="flex-1" />
@@ -180,18 +208,25 @@ export default function SectionItemEditor({ item, section, index, onRemove }: Se
         </div>
       </AccordionTrigger>
       <AccordionContent className="px-4 pb-4 space-y-3">
-        {sectionSchema.fields.map(field => {
-          const uniqueFieldId = constructUniqueFieldId(field.id, item.id, section.schemaId);
+        {sectionSchema.fields.map((field) => {
+          const uniqueFieldId = constructUniqueFieldId(
+            field.id,
+            item.id,
+            section.schemaId
+          );
           const currentValue = getFieldValue(field);
-          
+
           // For AI-enabled fields, wrap in AIFieldWrapper
-          if (field.aiHints?.autocompleteEnabled && (field.type === 'text' || field.type === 'textarea')) {
+          if (
+            field.aiHints?.autocompleteEnabled &&
+            (field.type === 'text' || field.type === 'textarea')
+          ) {
             return (
               <AIFieldWrapper
                 key={field.id}
                 uniqueFieldId={uniqueFieldId}
                 label={field.label}
-                value={currentValue}
+                value={currentValue as string}
                 onValueChange={(value) => handleFieldChange(field.id, value)}
                 fieldId={field.id}
                 sectionId={section.id}
@@ -201,19 +236,23 @@ export default function SectionItemEditor({ item, section, index, onRemove }: Se
                 currentItem={item}
                 allResumeSections={resumeData.sections}
                 currentSectionId={section.id}
-                className={field.uiProps?.rows === 1 || field.type === 'text' ? "min-h-[40px]" : "min-h-[80px]"}
+                className={
+                  field.uiProps?.rows === 1 || field.type === 'text'
+                    ? 'min-h-[40px]'
+                    : 'min-h-[80px]'
+                }
                 isAutocompleteEnabled={isAutocompleteEnabled}
                 placeholder={field.uiProps?.placeholder}
               />
             );
           }
-          
+
           // For non-AI fields, use DynamicFieldRenderer
           return (
             <DynamicFieldRenderer
               key={field.id}
               field={field}
-              value={currentValue}
+              value={currentValue as string}
               onChange={(value) => handleFieldChange(field.id, value)}
               userJobTitle={resumeData.personalDetails.jobTitle}
               currentItem={item}
@@ -230,4 +269,4 @@ export default function SectionItemEditor({ item, section, index, onRemove }: Se
       </AccordionContent>
     </AccordionItem>
   );
-} 
+}

@@ -1,6 +1,6 @@
 # Resume Studio
 
-*中文说明 | [English](./README.md)*
+_中文说明 | [English](./README.md)_
 
 一个由 AI 驱动的智能简历构建器，采用 Schema 驱动架构。支持创建、优化和自定义专业简历，拥有自动补全、内容改进和全面评审等先进的 AI 辅助功能。
 
@@ -11,6 +11,7 @@
 ## ✨ 核心功能
 
 ### 🤖 AI 驱动的内容生成
+
 - **一键生成简历**：根据职位描述或个人背景生成完整简历
 - **求职信生成**：创建与简历和目标职位匹配的定制求职信
 - **智能自动补全**：输入时提供实时内容建议
@@ -20,27 +21,31 @@
 - **🚀 即将推出**：对话式智能助手自动完成简历
 
 ### 🎨 专业模板
+
 Resume Studio 包含多个专业设计的模板：
 
-| 模板 | 预览 | 描述 |
-|------|------|------|
-| **经典专业版** | ![Classic](./public/images/templates/classic.png) | 传统单列布局 |
-| **专业经典版（双列）** | ![Pro Classic](./public/images/templates/pro-classic.png) | 专业双列设计 |
-| **蓝宝石侧边栏** | ![Sapphire](./public/images/templates/sapphire-sidebar.png) | 优雅的深色侧边栏布局 |
-| **翠绿侧边栏** | ![Veridian](./public/images/templates/veridian-sidebar.png) | 经典设计配茶绿色侧边栏和衬线字体 |
-| **现代简约版** | ![Minimalist](./public/images/templates/minimalist.png) | 简洁现代的样式 |
-| **创意双列版** | ![Creative](./public/images/templates/basic-two-column.png) | 创新设计，视觉层次感强 |
-| **连续叙述版** | ![Narrative](./public/images/templates/continous-narrative.png) | 杂志风格的连续流动布局 |
-| **并行模块版** | ![Parallel](./public/images/templates/prallel-module.png) | 功能独立的并行列布局 |
+| 模板                   | 预览                                                            | 描述                             |
+| ---------------------- | --------------------------------------------------------------- | -------------------------------- |
+| **经典专业版**         | ![Classic](./public/images/templates/classic.png)               | 传统单列布局                     |
+| **专业经典版（双列）** | ![Pro Classic](./public/images/templates/pro-classic.png)       | 专业双列设计                     |
+| **蓝宝石侧边栏**       | ![Sapphire](./public/images/templates/sapphire-sidebar.png)     | 优雅的深色侧边栏布局             |
+| **翠绿侧边栏**         | ![Veridian](./public/images/templates/veridian-sidebar.png)     | 经典设计配茶绿色侧边栏和衬线字体 |
+| **现代简约版**         | ![Minimalist](./public/images/templates/minimalist.png)         | 简洁现代的样式                   |
+| **创意双列版**         | ![Creative](./public/images/templates/basic-two-column.png)     | 创新设计，视觉层次感强           |
+| **连续叙述版**         | ![Narrative](./public/images/templates/continous-narrative.png) | 杂志风格的连续流动布局           |
+| **并行模块版**         | ![Parallel](./public/images/templates/prallel-module.png)       | 功能独立的并行列布局             |
 
 ### 🏗️ Schema 驱动架构
+
 基于**单一数据源**的 Schema 系统构建，实现：
+
 - 动态章节创建和管理
 - 一致的 AI 上下文构建
 - 可扩展的数据结构
 - 类型安全的开发
 
 ### 🛡️ 隐私与数据控制
+
 - **本地存储**：所有数据都保留在您的设备上
 - **无数据收集**：我们不收集或存储您的个人信息
 - **开源透明**：完全透明的可审计代码
@@ -49,47 +54,51 @@ Resume Studio 包含多个专业设计的模板：
 ## 🚀 快速开始
 
 ### 前置要求
-- Node.js 18+ 
-- npm 或 pnpm
+
+- Node.js 18+
+- pnpm
 - Google AI Studio API 密钥（Gemini）
 
 ### 安装步骤
 
 1. **克隆仓库**
+
    ```bash
    git clone https://github.com/superGekFordJ/Resume-studio.git
    cd Resume-studio
    ```
 
 2. **安装依赖**
+
    ```bash
-   npm install
-   # 或者
+   # 使用 pnpm 作为包管理器
    pnpm install
    ```
 
 3. **配置环境变量**
+
    ```bash
    cp .env.example .env.local
    ```
-   
+
    编辑 `.env.local` 并添加您的 Google AI Studio API 密钥：
+
    ```env
    GEMINI_API_KEY=your_api_key_here
    ```
-   
+
    从 [Google AI Studio](https://aistudio.google.com/) 获取您的 API 密钥
-   
+
    > **⚠️ 重要配置说明**:
+   >
    > - API 密钥**必须**通过环境文件配置（`.env.local` 或 `.env.production`）
    > - 由于 Genkit 生命周期限制，基于 UI 的 API 密钥配置暂时禁用
    > - 当前仅使用**预配置的 Gemini 模型** - 无法选择模型
    > - AI 系统重构后将支持多供应商和灵活的模型选择
 
 4. **启动开发服务器**
+
    ```bash
-   npm run dev
-   # 或者
    pnpm dev
    ```
 
@@ -119,8 +128,9 @@ Resume Studio 包含多个专业设计的模板：
 ### 功能演示
 
 查看这些演示文件，了解 Resume Studio 的实际效果：
+
 - 📹 **快速开始演示**：[demo/quick-start-of-generating-new-resumes.mp4](./demo/quick-start-of-generating-new-resumes.mp4)
-- 🎯 **自动补全功能**：![自动补全演示](./demo/autocomplete.gif)  
+- 🎯 **自动补全功能**：![自动补全演示](./demo/autocomplete.gif)
 - 📊 **批量改进功能**：![批量改进差异视图](./demo/diff-view-of-batch-improvement.png)
 
 ## 🔧 扩展 Resume Studio
@@ -135,8 +145,9 @@ Resume Studio 的 Schema 驱动架构让添加新章节变得极其简单：
 4. **完成！** 您的新章节将自动支持所有 AI 功能
 
 系统将自动处理：
+
 - ✅ 表单字段生成
-- ✅ AI 上下文构建  
+- ✅ AI 上下文构建
 - ✅ 自动补全
 - ✅ 内容改进
 - ✅ 数据验证
@@ -163,6 +174,7 @@ Resume Studio 的 Schema 驱动架构让添加新章节变得极其简单：
 ## ⚠️ 当前限制
 
 ### AI 供应商支持
+
 目前**仅支持 Google Gemini**，通过环境变量配置：
 
 - ✅ **支持**：通过 `.env.local` 或 `.env.production` 配置 Gemini 预配置模型
@@ -183,8 +195,9 @@ Resume Studio 的 Schema 驱动架构让添加新章节变得极其简单：
 ## 🤝 参与贡献
 
 我们欢迎贡献！无论是：
+
 - 🐛 错误修复
-- ✨ 新功能  
+- ✨ 新功能
 - 🎨 新模板
 - 📝 文档改进
 - 🌍 翻译
@@ -209,4 +222,4 @@ Resume Studio 的 Schema 驱动架构让添加新章节变得极其简单：
 
 ---
 
-**准备好构建您的完美简历了吗？** [现在开始！](#快速开始) 🚀 
+**准备好构建您的完美简历了吗？** [现在开始！](#快速开始) 🚀

@@ -1,9 +1,10 @@
-"use client";
+'use client';
 
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Upload, X, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
 interface AvatarUploaderProps {
   value?: string;
@@ -11,7 +12,11 @@ interface AvatarUploaderProps {
   className?: string;
 }
 
-export default function AvatarUploader({ value, onChange, className }: AvatarUploaderProps) {
+export default function AvatarUploader({
+  value,
+  onChange,
+  className,
+}: AvatarUploaderProps) {
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -58,21 +63,23 @@ export default function AvatarUploader({ value, onChange, className }: AvatarUpl
   };
 
   return (
-    <div className={cn("flex flex-col items-center space-y-3", className)}>
+    <div className={cn('flex flex-col items-center space-y-3', className)}>
       {/* Avatar Preview */}
       <div className="relative">
         <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-border bg-muted flex items-center justify-center">
           {value ? (
-            <img 
-              src={value} 
-              alt="Avatar" 
+            <Image
+              src={value}
+              alt="Avatar"
               className="w-full h-full object-cover"
+              width={96}
+              height={96}
             />
           ) : (
             <User className="w-8 h-8 text-muted-foreground" />
           )}
         </div>
-        
+
         {/* Remove Button */}
         {value && (
           <Button
@@ -115,4 +122,4 @@ export default function AvatarUploader({ value, onChange, className }: AvatarUpl
       </p>
     </div>
   );
-} 
+}

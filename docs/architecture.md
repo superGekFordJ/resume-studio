@@ -207,10 +207,10 @@ src/
 
 - **问题**: 在旧架构中，原子渲染组件（如 `TitledBlockComponent`）需要硬编码查找可能的字段名（例如 `jobTitle`, `degree`, `name` 都可能被视为"标题"），这使得组件难以复用和维护。
 - **解决方案**:
-    1. **静态角色定义 (`staticRoleMaps.ts`)**: 我们创建了一个静态文件，为每个 `SectionSchema` 定义其字段 (`field.key`) 到一个通用角色 (`FieldRole`, 如 `'title'`, `'organization'`) 的映射。这是新的"单一事实来源"。
-    2. **`SchemaRegistry` 作为提供者**: `SchemaRegistry` 在启动时加载这些静态映射，并提供一个同步方法 `getRoleMap(schemaId)`。
-    3. **模板作为传递者**: 模板组件从 `SchemaRegistry` 获取对应章节的 `roleMap`，并将其作为 `prop` 传递给原子渲染组件。
-    4. **`pickFieldByRole` 作为消费者**: 原子渲染组件**必须**使用 `pickFieldByRole(item, 'title', roleMap)` 这样的工具函数来按"角色"获取数据，而不是按硬编码的字段名查找。
+  1. **静态角色定义 (`staticRoleMaps.ts`)**: 我们创建了一个静态文件，为每个 `SectionSchema` 定义其字段 (`field.key`) 到一个通用角色 (`FieldRole`, 如 `'title'`, `'organization'`) 的映射。这是新的"单一事实来源"。
+  2. **`SchemaRegistry` 作为提供者**: `SchemaRegistry` 在启动时加载这些静态映射，并提供一个同步方法 `getRoleMap(schemaId)`。
+  3. **模板作为传递者**: 模板组件从 `SchemaRegistry` 获取对应章节的 `roleMap`，并将其作为 `prop` 传递给原子渲染组件。
+  4. **`pickFieldByRole` 作为消费者**: 原子渲染组件**必须**使用 `pickFieldByRole(item, 'title', roleMap)` 这样的工具函数来按"角色"获取数据，而不是按硬编码的字段名查找。
 
 这个机制使得原子组件完全与具体的字段名解耦，极大地提升了系统的可复用性和可维护性。
 
@@ -232,6 +232,7 @@ src/
   - `SingleTextComponent`: 单一文本内容展示
 
 **示例**：
+
 ```typescript
 // 在模板中的混合渲染逻辑
 const renderSectionByRenderType = (section: RenderableSection) => {
@@ -266,7 +267,8 @@ const renderSectionByRenderType = (section: RenderableSection) => {
    - Store 更新状态（如 `aiImprovement`）
    - UI 组件自动响应状态变化并更新视图
 
-**Global Context Integration**: 
+**Global Context Integration**:
+
 - 所有 AI 操作现在都接收增强的上下文，包括：
   - `targetJobInfo`: 用户的目标职位（从设置面板或个人详情）
   - `userBio`: 用户的专业背景描述
@@ -280,10 +282,12 @@ const renderSectionByRenderType = (section: RenderableSection) => {
    - `AutocompleteTextarea`: 处理自动补全交互。它直接调用 AI flow 来获取内联建议，并通过 props 接收来自 store 的"强制建议"（AI 改进建议）。
 
 **UI/UX 增强 (Updated 2025-07-04)**:
+
 - **`SectionManager`**: 章节管理功能已增强，通过 `dnd-kit` 支持**拖拽排序**，取代了原有的上下箭头按钮，提升了操作的流畅性。
 - **`SectionItemEditor`**: 章节内的项目现已重构为**可拖拽的、可折叠的手风琴式 (`Accordion`) 项目**。为了提高可用性，手风琴的标题会动态显示该项目第一个字段的内容。
 
 ### 5. AI 集成架构
+
 - **统一的上下文构建**: 所有 AI 功能的上下文都由 `schemaRegistry.buildAIContext` 方法统一构建，确保了数据的一致性和可预测性。
 - **结构化输入**: AI Flow 的输入（`inputSchema`）接收的是结构化的 `context` 对象，而不是非结构化的字符串 "context blob"，这使得 Prompt Engineering 更加稳定和可控。
 - **Flow-based**: 使用 Genkit 的 Flow 模式，将每个 AI 功能封装为独立、可复用的单元。
@@ -295,12 +299,14 @@ const renderSectionByRenderType = (section: RenderableSection) => {
 ## 关键设计决策
 
 ### 1. 依赖倒置 (Dependency Inversion)
+
 - **旧架构**: UI 组件**告诉** `SchemaRegistry` 要构建什么。
 - **新架构**: UI 组件**询问** `SchemaRegistry` 它应该如何处理数据和构建上下文。这种依赖倒置是本次重构的核心，它极大地降低了耦合度，提升了系统的可维护性和扩展性。
 
 ### 2. 状态管理 (Updated 2025-06-23)
 
 #### Zustand Store Architecture
+
 - **Centralized State**: 所有 UI 状态都集中在单一 Zustand store (`resumeStore.ts`) 中管理
 - **Persistence**: 使用 Zustand 的 persist 中间件自动保存到 `localStorage`
 - **Type Safety**: 完整的 TypeScript 支持，强类型的状态和操作
@@ -309,6 +315,7 @@ const renderSectionByRenderType = (section: RenderableSection) => {
 - **AI Interaction**: 所有 AI 交互现在由 Store Actions 处理，而非组件
 
 #### Store Structure
+
 ```typescript
 interface ResumeState {
   resumeData: ResumeData;
@@ -319,14 +326,14 @@ interface ResumeState {
   isReviewDialogOpen: boolean;
   reviewContent: ReviewResumeOutput | null;
   isReviewLoading: boolean;
-  
+
   // AI 改进系统 v3 - 基于卡片/对话框的审查流程
   batchImprovementReview: BatchImprovementReview | null;
   singleFieldImprovementReview: SingleFieldImprovementReview | null;
 
   aiPrompt: string; // 通用AI提示词
   aiConfig: AIConfig;
-  
+
   // 已移除: 旧的强制建议流程 (v2)
   // SingleFieldImproveDialog.tsx 已删除
   // 相关 store 状态已清理
@@ -364,23 +371,38 @@ interface ResumeActions {
   updateResumeData: (updater: (prev: ResumeData) => ResumeData) => void;
   setSelectedTemplateId: (templateId: string) => void;
   setEditingTarget: (target: string | null) => void;
-  
+
   // 数据操作
-  updateField: (payload: { sectionId: string; itemId?: string; fieldId: string; value: any; isPersonalDetails?: boolean }) => void;
-  updateSectionTitle: (payload: { sectionId: string; newTitle: string }) => void;
+  updateField: (payload: {
+    sectionId: string;
+    itemId?: string;
+    fieldId: string;
+    value: any;
+    isPersonalDetails?: boolean;
+  }) => void;
+  updateSectionTitle: (payload: {
+    sectionId: string;
+    newTitle: string;
+  }) => void;
   addSectionItem: (sectionId: string) => void;
   removeSectionItem: (payload: { sectionId: string; itemId: string }) => void;
-  reorderSectionItems: (payload: { sectionId: string; fromIndex: number; toIndex: number; }) => void;
-  reorderSections: (payload: { fromIndex: number; toIndex: number; }) => void;
-  
+  reorderSectionItems: (payload: {
+    sectionId: string;
+    fromIndex: number;
+    toIndex: number;
+  }) => void;
+  reorderSections: (payload: { fromIndex: number; toIndex: number }) => void;
+
   // AI 改进操作 v3
   setAIPrompt: (prompt: string) => void;
-  
+
   // 批量改进流程
   startBatchImprovement: (sectionId: string, prompt: string) => Promise<void>;
-  acceptBatchImprovement: (itemsToAccept: Array<{id: string, data: any}>) => void;
+  acceptBatchImprovement: (
+    itemsToAccept: Array<{ id: string; data: any }>
+  ) => void;
   rejectBatchImprovement: () => void;
-  
+
   // 单字段改进流程
   startSingleFieldImprovement: (payload: {
     sectionId: string;
@@ -396,6 +418,7 @@ interface ResumeActions {
 ```
 
 #### Benefits
+
 - **No Prop Drilling**: 组件直接从 Store 访问状态，不再需要层层传递 props
 - **Persistence**: 用户的工作自动保存和恢复
 - **Scalability**: 无需重构即可轻松添加新的状态切片
@@ -406,19 +429,23 @@ interface ResumeActions {
 ### 3. 组件分解与单一职责 (Updated 2025-06-23)
 
 **SectionEditor 重构**:
+
 - **重构前**: 800多行代码，混合了状态管理、UI 渲染和业务逻辑
 - **重构后**: ~180行清晰、专注的代码，零本地业务状态
 
 **新增组件**:
+
 - **PersonalDetailsEditor**: 处理个人信息编辑，直接连接到 Store Actions
 - **SectionItemEditor**: 管理单个章节项目的编辑，适用于传统和动态章节
 - **AIFieldWrapper**: 封装所有 AI 改进功能，管理 AI 提示输入和改进按钮
 
 **AutocompleteTextarea 增强**:
+
 - 现在可以直接从 Store 读取 AI 改进建议
 - 保持向后兼容性的同时，自动绑定到 Store Actions
 
 ### 4. 扩展性
+
 - **添加新章节**: 只需在 `defaultSchemas.ts` 中定义一个新的 `SectionSchema` 并注册对应的 `ContextBuilderFunction`，UI 无需任何修改即可支持新章节的编辑和 AI 功能。
 - **添加新AI功能**: 只需创建一个新的 AI Flow，并在 `FieldSchema.aiHints.contextBuilders` 中为新功能添加一个 `contextBuilder` ID。
 - **添加新模板**: 创建新的模板组件，可以自由选择接受或覆写默认渲染建议。
@@ -427,6 +454,7 @@ interface ResumeActions {
 ## 主要功能模块
 
 ### 1. 简历编辑器 (Resume Editor)
+
 - **模板选择**: 支持多种简历模板
 - **章节管理**: 动态添加/删除/重排序章节，支持传统章节和动态 Schema 章节。
 - **两阶段编辑**: 结构视图和内容视图的分离，提供清晰的编辑焦点
@@ -434,12 +462,14 @@ interface ResumeActions {
 - **响应式设计**: 支持桌面和移动端
 
 ### 2. AI 助手 (AI Assistant)
+
 - **自动补全**: 基于上下文的智能补全
 - **内容改进**: AI 驱动的文本优化
 - **批量改进**: 针对特定章节内容的批量优化。
 - **整体评审**: 全面的简历质量分析
 
 ### 3. 模板系统 (Template System)
+
 - **可扩展**: 易于添加新模板
 - **组件化**: 每个模板都是独立的 React 组件
 - **主题支持**: 支持深色/浅色主题
@@ -448,16 +478,19 @@ interface ResumeActions {
 ## 扩展性考虑
 
 ### 1. 新模板添加
+
 1. 创建新的模板组件
 2. 定义模板特定的 `templateLayoutMap`（可选）
 3. 在 `PrintableResume` 中注册
 
 ### 2. 新 AI 功能
+
 1. 在 `src/ai/flows/` 中定义新的 Flow
 2. 创建对应的 UI 组件
 3. 集成到主应用中
 
 ### 3. 国际化支持
+
 - 预留了多语言支持的架构
 - 使用 TypeScript 确保类型安全
 - 组件化设计便于本地化
@@ -470,11 +503,13 @@ interface ResumeActions {
 - **CORS**: 适当的跨域资源共享配置
 
 ## AI Services
+
 - **Purpose**: Provide intelligent assistance for resume writing
 - **Key Features**: Auto-completion, section improvement, resume review
 - **Implementation**: Server-side AI flows using Genkit with memoized AIManager
 
 ### AI Provider Architecture (Updated 2025-06-23)
+
 The application now features a sophisticated AI provider system:
 
 1. **AIManager Singleton**
@@ -501,6 +536,7 @@ The application now features a sophisticated AI provider system:
 ## Schema-Driven Architecture (Updated 2025-06-19)
 
 ### Current State
+
 The application has successfully transitioned to a pure Schema-driven architecture where:
 
 1. **SchemaRegistry as Single Source of Truth**
@@ -528,6 +564,7 @@ The application has successfully transitioned to a pure Schema-driven architectu
    - Zero UI code changes required
 
 ### Architecture Flow
+
 ```
 Schema Definition → SchemaRegistry → UI Components
                           ↓
@@ -539,6 +576,7 @@ Schema Definition → SchemaRegistry → UI Components
 ## State Management with Zustand (Updated 2025-06-23)
 
 ### Overview
+
 The application now uses Zustand for centralized state management, replacing the previous prop-drilling approach:
 
 1. **Single Source of Truth**: All UI state lives in `resumeStore.ts`
@@ -548,6 +586,7 @@ The application now uses Zustand for centralized state management, replacing the
 5. **Business Logic Centralization**: All data manipulation and AI interaction logic now resides in store actions
 
 ### Migration Benefits
+
 - **Eliminated Prop Drilling**: No more passing state through multiple layers
 - **Improved Performance**: Components only re-render when their subscribed state changes
 - **Better Developer Experience**: Clear separation between UI state and business logic
@@ -557,6 +596,7 @@ The application now uses Zustand for centralized state management, replacing the
 ## Hybrid Rendering Model (Updated 2025-06-20)
 
 ### Overview
+
 The hybrid rendering model provides a perfect balance between convention and flexibility:
 
 1. **Convention Through Defaults**
@@ -579,6 +619,7 @@ This architecture ensures maximum flexibility and maintainability while keeping 
 ## Template System (Updated 2025-06-19)
 
 ### Template Architecture
+
 The template system follows the hybrid rendering model, allowing each template to maintain its unique design while leveraging shared atomic components:
 
 1. **Available Templates**
@@ -597,12 +638,22 @@ The template system follows the hybrid rendering model, allowing each template t
 
 3. **Two-Column Layout Implementation**
    The Creative template demonstrates how to implement complex layouts:
+
    ```typescript
    // Define which sections go into which column
-   const sidebarSections = ['skills', 'advanced-skills', 'languages', 'certifications'];
-   
-   const mainColumnSections = sections.filter(s => !sidebarSections.includes(s.schemaId));
-   const sideColumnSections = sections.filter(s => sidebarSections.includes(s.schemaId));
+   const sidebarSections = [
+     'skills',
+     'advanced-skills',
+     'languages',
+     'certifications',
+   ];
+
+   const mainColumnSections = sections.filter(
+     (s) => !sidebarSections.includes(s.schemaId)
+   );
+   const sideColumnSections = sections.filter((s) =>
+     sidebarSections.includes(s.schemaId)
+   );
    ```
 
 ### How to Develop a New Template
@@ -613,11 +664,12 @@ The template system follows the hybrid rendering model, allowing each template t
    - Implement layout-specific logic, such as defining main and side columns.
 
 2. **Implement Rendering Dispatcher**
-    The core of a template is its `renderSectionByRenderType` function. This function is responsible for retrieving the correct `RoleMap` and dispatching to the appropriate atomic rendering component.
+   The core of a template is its `renderSectionByRenderType` function. This function is responsible for retrieving the correct `RoleMap` and dispatching to the appropriate atomic rendering component.
+
    ```typescript
    const renderSectionByRenderType = (section: RenderableSection) => {
      const schemaRegistry = SchemaRegistry.getInstance();
-     
+
      // 1. Get the RoleMap for the current section
      const roleMap = schemaRegistry.getRoleMap(section.schemaId);
 
@@ -625,10 +677,10 @@ The template system follows the hybrid rendering model, allowing each template t
      const templateLayoutMap: Record<string, string> = {
        'skills': 'simple-list', // Override skills section to use a simple list
      };
-     
+
      // 3. Determine the final render type
      const finalRenderType = templateLayoutMap[section.schemaId] || section.defaultRenderType;
-     
+
      // 4. Dispatch to atomic components, passing the section and roleMap
      switch (finalRenderType) {
        case 'simple-list':
@@ -645,6 +697,7 @@ The template system follows the hybrid rendering model, allowing each template t
    - Add case in `PrintableResume.tsx` switch statement to render the new template component.
 
 ### WYSIWYG PDF Export
+
 The PDF export system ensures pixel-perfect consistency between screen and print:
 
 1. **Unified Styling**: PDF export uses the exact same CSS classes as Canvas rendering

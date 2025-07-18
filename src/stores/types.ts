@@ -1,4 +1,4 @@
-import type { ResumeData } from '@/types/resume';
+import type { ResumeData, DynamicSectionItem } from '@/types/resume';
 import type { ReviewResumeOutput } from '@/ai/flows/review-resume';
 
 // Version Snapshot interface
@@ -25,8 +25,8 @@ export interface BatchImprovementReview {
   sectionId: string;
   sectionTitle: string;
   prompt: string;
-  originalItems: any[];
-  improvedItems: any[];
+  originalItems: DynamicSectionItem[];
+  improvedItems: DynamicSectionItem['data'][];
   improvementSummary: string;
   isLoading: boolean;
 }
@@ -85,33 +85,42 @@ export interface ResumeActions {
   toggleReviewDialog: (isOpen?: boolean) => void;
   setReviewContent: (content: ReviewResumeOutput | null) => void;
   setIsReviewLoading: (isLoading: boolean) => void;
-  updateField: (payload: { 
-    sectionId: string; 
-    itemId?: string; 
-    fieldId: string; 
-    value: any; 
-    isPersonalDetails?: boolean 
+  updateField: (payload: {
+    sectionId: string;
+    itemId?: string;
+    fieldId: string;
+    value: unknown;
+    isPersonalDetails?: boolean;
   }) => void;
-  updateSectionTitle: (payload: { sectionId: string; newTitle: string }) => void;
+  updateSectionTitle: (payload: {
+    sectionId: string;
+    newTitle: string;
+  }) => void;
   addSectionItem: (sectionId: string) => void;
   removeSectionItem: (payload: { sectionId: string; itemId: string }) => void;
-  reorderSectionItems: (payload: { sectionId: string; fromIndex: number; toIndex: number; }) => void;
-  reorderSections: (payload: { fromIndex: number; toIndex: number; }) => void;
+  reorderSectionItems: (payload: {
+    sectionId: string;
+    fromIndex: number;
+    toIndex: number;
+  }) => void;
+  reorderSections: (payload: { fromIndex: number; toIndex: number }) => void;
   setAIPrompt: (prompt: string) => void;
   // DEPRECATED: Keep for backward compatibility
-  startAIImprovement: (payload: { 
-    sectionId: string; 
-    itemId?: string; 
-    fieldId: string; 
-    currentValue: string; 
-    uniqueFieldId: string; 
-    isPersonalDetails?: boolean 
+  startAIImprovement: (payload: {
+    sectionId: string;
+    itemId?: string;
+    fieldId: string;
+    currentValue: string;
+    uniqueFieldId: string;
+    isPersonalDetails?: boolean;
   }) => Promise<void>;
   acceptAIImprovement: () => void;
   rejectAIImprovement: () => void;
   // NEW: Dialog-based improvement actions
   startBatchImprovement: (sectionId: string, prompt: string) => Promise<void>;
-  acceptBatchImprovement: (itemsToAccept: Array<{id: string, data: any}>) => void;
+  acceptBatchImprovement: (
+    itemsToAccept: Array<{ id: string; data: DynamicSectionItem['data'] }>
+  ) => void;
   rejectBatchImprovement: () => void;
   startSingleFieldImprovement: (payload: {
     uniqueFieldId: string;
@@ -140,4 +149,4 @@ export interface ResumeActions {
   exportCurrentSchema: () => void;
   // NEW: Cover letter generation
   generateCoverLetter: () => Promise<string | null>;
-} 
+}

@@ -1,20 +1,22 @@
-"use client";
+'use client';
 
 import React from 'react';
 import dynamic from 'next/dynamic';
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Check, X, Sparkles, Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Check, X, Sparkles, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { DiffMethod } from 'react-diff-viewer-continued';
 
 // Dynamically import DiffViewer to avoid SSR issues
-const DiffViewer = dynamic(() => import('react-diff-viewer-continued'), { 
+const DiffViewer = dynamic(() => import('react-diff-viewer-continued'), {
   ssr: false,
-  loading: () => <div className="flex items-center justify-center p-2">
-    <Loader2 className="h-4 w-4 animate-spin" />
-  </div>
+  loading: () => (
+    <div className="flex items-center justify-center p-2">
+      <Loader2 className="h-4 w-4 animate-spin" />
+    </div>
+  ),
 });
 
 interface AISuggestionCardProps {
@@ -36,20 +38,24 @@ export default function AISuggestionCard({
   prompt,
   onAccept,
   onReject,
-  className
+  className,
 }: AISuggestionCardProps) {
   const hasChanges = originalValue !== suggestedValue;
 
   return (
-    <Card className={cn(
-      "mt-2 border-blue-200 bg-blue-50/50 shadow-sm animate-in slide-in-from-top-2 duration-200",
-      className
-    )}>
+    <Card
+      className={cn(
+        'mt-2 border-blue-200 bg-blue-50/50 shadow-sm animate-in slide-in-from-top-2 duration-200',
+        className
+      )}
+    >
       {isLoading ? (
         <CardContent className="py-4">
           <div className="flex items-center justify-center space-x-2">
             <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-            <span className="text-sm text-blue-700">AI is improving your {fieldName || 'field'}...</span>
+            <span className="text-sm text-blue-700">
+              AI is improving your {fieldName || 'field'}...
+            </span>
           </div>
         </CardContent>
       ) : (
@@ -57,14 +63,16 @@ export default function AISuggestionCard({
           <CardContent className="p-3">
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="h-4 w-4 text-blue-600" />
-              <span className="text-sm font-medium text-blue-900">AI Suggestion</span>
+              <span className="text-sm font-medium text-blue-900">
+                AI Suggestion
+              </span>
               {prompt && (
                 <Badge variant="secondary" className="text-xs">
                   {prompt}
                 </Badge>
               )}
             </div>
-            
+
             {hasChanges ? (
               <div className="w-full rounded overflow-hidden border border-gray-200 bg-white">
                 <DiffViewer
@@ -74,7 +82,7 @@ export default function AISuggestionCard({
                   hideLineNumbers={true}
                   showDiffOnly={false}
                   compareMethod={DiffMethod.WORDS}
-                  useDarkTheme={false}               
+                  useDarkTheme={false}
                   styles={{
                     variables: {
                       light: {
@@ -82,17 +90,17 @@ export default function AISuggestionCard({
                         codeFoldBackground: '#f8fafc',
                         diffViewerBackground: '#fafbfc',
                         diffViewerColor: '#2d3748',
-                        
+
                         // AI Suggestions - Brand Orange (what we recommend)
                         addedBackground: '#fff7ed',
                         addedColor: '#1e293b',
                         wordAddedBackground: '#fb923c',
-                        
+
                         // Original Text - Sky Blue (current state)
                         removedBackground: '#f0f9ff',
                         removedColor: '#64748b',
                         wordRemovedBackground: '#0ea5e9',
-                        
+
                         // Structure - Clean integration
                         gutterBackground: 'transparent',
                         gutterColor: 'transparent',
@@ -103,7 +111,7 @@ export default function AISuggestionCard({
                         diffViewerTitleBackground: 'transparent',
                         diffViewerTitleColor: '#1e293b',
                         diffViewerTitleBorderColor: 'transparent',
-                      }
+                      },
                     },
                     diffContainer: {
                       fontSize: '14px',
@@ -117,14 +125,14 @@ export default function AISuggestionCard({
                       '&:hover': {
                         backgroundColor: '#f1f5f9',
                         transition: 'background-color 0.15s ease',
-                      }
+                      },
                     },
                     contentText: {
-                        width: '70%', // 减去行号和+/-符号的大致宽度
-                        padding: '0 12px 0 0',
-                        wordBreak: 'break-word',
-                        whiteSpace: 'pre-wrap',
-                        fontFamily: 'Inter, sans-serif',
+                      width: '70%', // 减去行号和+/-符号的大致宽度
+                      padding: '0 12px 0 0',
+                      wordBreak: 'break-word',
+                      whiteSpace: 'pre-wrap',
+                      fontFamily: 'Inter, sans-serif',
                     },
                     wordAdded: {
                       color: '#ffffff',
@@ -140,10 +148,10 @@ export default function AISuggestionCard({
                       textDecoration: 'line-through',
                     },
                     marker: {
-                        width: '5px',
-                        padding: '2px 2px',
-                        textAlign: 'center',
-                      }
+                      width: '5px',
+                      padding: '2px 2px',
+                      textAlign: 'center',
+                    },
                   }}
                 />
               </div>
@@ -153,9 +161,9 @@ export default function AISuggestionCard({
               </div>
             )}
           </CardContent>
-          
+
           <CardFooter className="p-3 pt-0 gap-2">
-            <Button 
+            <Button
               size="sm"
               variant="default"
               onClick={onAccept}
@@ -165,9 +173,9 @@ export default function AISuggestionCard({
               <Check className="h-3 w-3 mr-1" />
               Apply
             </Button>
-            <Button 
+            <Button
               size="sm"
-              variant="outline" 
+              variant="outline"
               onClick={onReject}
               className="text-xs"
             >
@@ -179,4 +187,4 @@ export default function AISuggestionCard({
       )}
     </Card>
   );
-} 
+}

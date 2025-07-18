@@ -1,19 +1,30 @@
-import type { RenderableItem, RenderableField, FieldRole, RoleMap } from '@/types/schema';
+import type {
+  RenderableItem,
+  RenderableField,
+  FieldRole,
+  RoleMap,
+} from '@/types/schema';
 
 // Legacy field name mappings for backward compatibility
 const LEGACY_FIELD_MAPPINGS: Record<FieldRole, string[]> = {
-  'title': ['jobTitle', 'position', 'role', 'degree', 'name'],
-  'organization': ['company', 'employer', 'institution', 'school'],
-  'description': ['description', 'summary', 'details', 'content', 'accomplishments'],
-  'startDate': ['startDate', 'from', 'start'],
-  'endDate': ['endDate', 'to', 'end'],
-  'location': ['location', 'address', 'city'],
-  'dateRange': ['dateRange', 'period', 'duration'],
-  'url': ['url', 'link', 'website', 'portfolio'],
-  'skills': ['skills', 'technologies', 'tools', 'languages'],
-  'level': ['level', 'proficiency', 'graduationYear'],
-  'identifier': ['identifier', 'credentialId', 'certificateId'],
-  'other': []
+  title: ['jobTitle', 'position', 'role', 'degree', 'name'],
+  organization: ['company', 'employer', 'institution', 'school'],
+  description: [
+    'description',
+    'summary',
+    'details',
+    'content',
+    'accomplishments',
+  ],
+  startDate: ['startDate', 'from', 'start'],
+  endDate: ['endDate', 'to', 'end'],
+  location: ['location', 'address', 'city'],
+  dateRange: ['dateRange', 'period', 'duration'],
+  url: ['url', 'link', 'website', 'portfolio'],
+  skills: ['skills', 'technologies', 'tools', 'languages'],
+  level: ['level', 'proficiency', 'graduationYear'],
+  identifier: ['identifier', 'credentialId', 'certificateId'],
+  other: [],
 };
 
 /**
@@ -24,7 +35,7 @@ const LEGACY_FIELD_MAPPINGS: Record<FieldRole, string[]> = {
  * @returns The field matching the role, or undefined
  */
 export function pickFieldByRole(
-  item: RenderableItem, 
+  item: RenderableItem,
   role: FieldRole,
   roleMap?: RoleMap
 ): RenderableField | undefined {
@@ -60,23 +71,25 @@ export function pickFieldByRole(
   // If still not found and role is 'other', return the first unmatched field
   if (role === 'other') {
     const matchedRoles = new Set<string>();
-    
+
     // Collect all fields that have been matched to other roles
     if (roleMap) {
-      for (const [fieldKey, mappedRole] of Object.entries(roleMap.fieldMappings)) {
+      for (const [fieldKey, mappedRole] of Object.entries(
+        roleMap.fieldMappings
+      )) {
         if (mappedRole !== 'other') {
           matchedRoles.add(fieldKey);
         }
       }
     }
-    
+
     // Also mark legacy fields
     for (const [, fieldNames] of Object.entries(LEGACY_FIELD_MAPPINGS)) {
-      fieldNames.forEach(name => matchedRoles.add(name));
+      fieldNames.forEach((name) => matchedRoles.add(name));
     }
-    
+
     // Return first unmatched field
-    return item.fields.find(field => !matchedRoles.has(field.key));
+    return item.fields.find((field) => !matchedRoles.has(field.key));
   }
 
   return undefined;
@@ -141,7 +154,10 @@ export function getItemTitle(item: RenderableItem, roleMap?: RoleMap): string {
 /**
  * Get the organization/company field from an item
  */
-export function getItemOrganization(item: RenderableItem, roleMap?: RoleMap): string {
+export function getItemOrganization(
+  item: RenderableItem,
+  roleMap?: RoleMap
+): string {
   const orgField = pickFieldByRole(item, 'organization', roleMap);
   return orgField?.value?.toString() || '';
 }
@@ -149,7 +165,10 @@ export function getItemOrganization(item: RenderableItem, roleMap?: RoleMap): st
 /**
  * Get the date range for an item (either as a combined field or start/end)
  */
-export function getItemDateRange(item: RenderableItem, roleMap?: RoleMap): string {
+export function getItemDateRange(
+  item: RenderableItem,
+  roleMap?: RoleMap
+): string {
   // First try to find a combined date range field
   const dateRangeField = pickFieldByRole(item, 'dateRange', roleMap);
   if (dateRangeField?.value) {
@@ -159,11 +178,11 @@ export function getItemDateRange(item: RenderableItem, roleMap?: RoleMap): strin
   // Otherwise, combine start and end dates
   const startField = pickFieldByRole(item, 'startDate', roleMap);
   const endField = pickFieldByRole(item, 'endDate', roleMap);
-  
+
   if (startField?.value || endField?.value) {
     const start = startField?.value?.toString() || '';
     const end = endField?.value?.toString() || '';
-    
+
     if (start && end) {
       return `${start} - ${end}`;
     } else if (start) {
@@ -174,4 +193,4 @@ export function getItemDateRange(item: RenderableItem, roleMap?: RoleMap): strin
   }
 
   return '';
-} 
+}

@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { RenderableResume, RenderableSection, RenderableItem, RoleMap } from "@/types/schema";
-import { Mail, Phone, Linkedin, Github, Globe, MapPin } from "lucide-react";
+import { RenderableResume, RenderableSection } from '@/types/schema';
+import { Mail, Phone, Linkedin, Github, Globe, MapPin } from 'lucide-react';
 import { BadgeListComponent } from '../rendering/BadgeListComponent';
 import { TitledBlockComponent } from '../rendering/TitledBlockComponent';
 import { SimpleListComponent } from '../rendering/SimpleListComponent';
@@ -24,17 +24,20 @@ const DefaultTemplate = ({ resume }: DefaultTemplateProps) => {
   const renderSectionByRenderType = (section: RenderableSection) => {
     // Template-specific overrides (demonstration)
     const templateLayoutMap: Record<string, string> = {
-      'skills': 'simple-list', // Override skills to be a simple list instead of badge-list
-      'projects': 'project-list',
-      'certifications': 'certification-list',
-      'advanced-skills': 'advanced-skills-list'
+      skills: 'simple-list', // Override skills to be a simple list instead of badge-list
+      projects: 'project-list',
+      certifications: 'certification-list',
+      'advanced-skills': 'advanced-skills-list',
     };
 
     // Get role map for this section synchronously
     const roleMap = schemaRegistry.getRoleMap(section.schemaId);
 
     // Use template override if exists, otherwise use schema default
-    const finalRenderType = templateLayoutMap[section.schemaId] || section.defaultRenderType || 'default';
+    const finalRenderType =
+      templateLayoutMap[section.schemaId] ||
+      section.defaultRenderType ||
+      'default';
 
     switch (finalRenderType) {
       case 'simple-list':
@@ -42,22 +45,38 @@ const DefaultTemplate = ({ resume }: DefaultTemplateProps) => {
       case 'badge-list':
         return <BadgeListComponent section={section} roleMap={roleMap} />;
       case 'timeline':
-        return section.items.map(item => <TitledBlockComponent key={item.id} item={item} roleMap={roleMap} />);
+        return section.items.map((item) => (
+          <TitledBlockComponent key={item.id} item={item} roleMap={roleMap} />
+        ));
       case 'single-text':
         return <SingleTextComponent items={section.items} roleMap={roleMap} />;
       case 'project-list':
-        return section.items.map(item => <ProjectItemComponent key={item.id} item={item} roleMap={roleMap} />);
+        return section.items.map((item) => (
+          <ProjectItemComponent key={item.id} item={item} roleMap={roleMap} />
+        ));
       case 'certification-list':
-        return section.items.map(item => <CertificationItemComponent key={item.id} item={item} roleMap={roleMap} />);
+        return section.items.map((item) => (
+          <CertificationItemComponent
+            key={item.id}
+            item={item}
+            roleMap={roleMap}
+          />
+        ));
       case 'advanced-skills-list':
-        return section.items.map(item => <AdvancedSkillsComponent key={item.id} item={item} roleMap={roleMap} />);
+        return section.items.map((item) => (
+          <AdvancedSkillsComponent
+            key={item.id}
+            item={item}
+            roleMap={roleMap}
+          />
+        ));
       case 'cover-letter':
         return <CoverLetterComponent section={section} roleMap={roleMap} />;
       default:
         // Generic fallback rendering
-        return section.items.map(item => (
+        return section.items.map((item) => (
           <div key={item.id} className="mb-2">
-            {item.fields.map(field => (
+            {item.fields.map((field) => (
               <div key={field.key}>
                 {Array.isArray(field.value) ? (
                   <span>{field.value.join(', ')}</span>
@@ -78,18 +97,22 @@ const DefaultTemplate = ({ resume }: DefaultTemplateProps) => {
         {/* Avatar */}
         {personalDetails.avatar && (
           <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-primary/20 flex-shrink-0">
-            <img 
-              src={personalDetails.avatar} 
+            <img
+              src={personalDetails.avatar}
               alt={personalDetails.fullName}
               className="w-full h-full object-cover"
             />
-      </div>
+          </div>
         )}
-        
+
         {/* Personal Info */}
         <div className="flex-grow text-center">
-          <h1 className="font-headline text-2xl font-bold text-primary mb-1">{personalDetails.fullName}</h1>
-          <p className="font-headline text-sm text-foreground mb-3">{personalDetails.jobTitle}</p>
+          <h1 className="font-headline text-2xl font-bold text-primary mb-1">
+            {personalDetails.fullName}
+          </h1>
+          <p className="font-headline text-sm text-foreground mb-3">
+            {personalDetails.jobTitle}
+          </p>
 
           {/* Contact Info with Icons */}
           <div className="flex flex-wrap justify-center items-center gap-3 text-[9px] text-gray-600">
@@ -132,7 +155,7 @@ const DefaultTemplate = ({ resume }: DefaultTemplateProps) => {
           </div>
         </div>
       </div>
-      
+
       {/* Sections */}
       {sections.map((section) => (
         <div key={section.id} className="mb-3">
@@ -146,4 +169,4 @@ const DefaultTemplate = ({ resume }: DefaultTemplateProps) => {
   );
 };
 
-export default DefaultTemplate; 
+export default DefaultTemplate;

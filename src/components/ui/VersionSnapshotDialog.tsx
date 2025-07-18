@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   Dialog,
@@ -7,52 +7,75 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useResumeStore } from '@/stores/resumeStore';
-import { Calendar, History, Save, RotateCcw, Trash2, Edit2, Check, X } from "lucide-react";
-import { useState } from "react";
-import { formatDistanceToNow } from "date-fns";
+import {
+  Calendar,
+  History,
+  Save,
+  RotateCcw,
+  Trash2,
+  Edit2,
+  Check,
+  X,
+} from 'lucide-react';
+import { useState } from 'react';
+import { formatDistanceToNow } from 'date-fns';
+import type { VersionSnapshot } from '@/stores/types';
 
 interface VersionSnapshotDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export default function VersionSnapshotDialog({ open, onOpenChange }: VersionSnapshotDialogProps) {
-  const versionSnapshots = useResumeStore(state => state.versionSnapshots);
-  const createSnapshot = useResumeStore(state => state.createSnapshot);
-  const restoreSnapshot = useResumeStore(state => state.restoreSnapshot);
-  const deleteSnapshot = useResumeStore(state => state.deleteSnapshot);
-  const updateSnapshotName = useResumeStore(state => state.updateSnapshotName);
-  
-  const [newSnapshotName, setNewSnapshotName] = useState("");
+export default function VersionSnapshotDialog({
+  open,
+  onOpenChange,
+}: VersionSnapshotDialogProps) {
+  const versionSnapshots = useResumeStore((state) => state.versionSnapshots);
+  const createSnapshot = useResumeStore((state) => state.createSnapshot);
+  const restoreSnapshot = useResumeStore((state) => state.restoreSnapshot);
+  const deleteSnapshot = useResumeStore((state) => state.deleteSnapshot);
+  const updateSnapshotName = useResumeStore(
+    (state) => state.updateSnapshotName
+  );
+
+  const [newSnapshotName, setNewSnapshotName] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingName, setEditingName] = useState("");
+  const [editingName, setEditingName] = useState('');
 
   const handleCreateSnapshot = () => {
     if (newSnapshotName.trim()) {
       createSnapshot(newSnapshotName.trim());
-      setNewSnapshotName("");
+      setNewSnapshotName('');
     }
   };
 
   const handleRestoreSnapshot = (snapshotId: string) => {
-    if (confirm("Are you sure you want to restore this version? Your current work will be replaced.")) {
+    if (
+      confirm(
+        'Are you sure you want to restore this version? Your current work will be replaced.'
+      )
+    ) {
       restoreSnapshot(snapshotId);
       onOpenChange(false);
     }
   };
 
   const handleDeleteSnapshot = (snapshotId: string) => {
-    if (confirm("Are you sure you want to delete this version? This action cannot be undone.")) {
+    if (
+      confirm(
+        'Are you sure you want to delete this version? This action cannot be undone.'
+      )
+    ) {
       deleteSnapshot(snapshotId);
     }
   };
 
-  const handleStartEdit = (snapshot: any) => {
+  const handleStartEdit = (snapshot: VersionSnapshot) => {
     setEditingId(snapshot.id);
     setEditingName(snapshot.name);
   };
@@ -61,13 +84,13 @@ export default function VersionSnapshotDialog({ open, onOpenChange }: VersionSna
     if (editingId && editingName.trim()) {
       updateSnapshotName(editingId, editingName.trim());
       setEditingId(null);
-      setEditingName("");
+      setEditingName('');
     }
   };
 
   const handleCancelEdit = () => {
     setEditingId(null);
-    setEditingName("");
+    setEditingName('');
   };
 
   return (
@@ -79,10 +102,11 @@ export default function VersionSnapshotDialog({ open, onOpenChange }: VersionSna
             Version History
           </DialogTitle>
           <DialogDescription>
-            Save and restore different versions of your resume. Each version includes all your content and settings.
+            Save and restore different versions of your resume. Each version
+            includes all your content and settings.
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="px-6 pt-4 flex-shrink-0">
           <div className="flex gap-2">
             <Input
@@ -92,8 +116,8 @@ export default function VersionSnapshotDialog({ open, onOpenChange }: VersionSna
               onKeyDown={(e) => e.key === 'Enter' && handleCreateSnapshot()}
               className="flex-1"
             />
-            <Button 
-              onClick={handleCreateSnapshot} 
+            <Button
+              onClick={handleCreateSnapshot}
               disabled={!newSnapshotName.trim()}
               className="flex items-center gap-2"
             >
@@ -110,87 +134,94 @@ export default function VersionSnapshotDialog({ open, onOpenChange }: VersionSna
                 No versions saved yet. Create your first snapshot above.
               </p>
             ) : (
-              versionSnapshots.slice().reverse().map(snapshot => (
-                <div
-                  key={snapshot.id}
-                  className="border rounded-lg p-4 hover:bg-accent/5 transition-colors"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      {editingId === snapshot.id ? (
-                        <div className="flex items-center gap-2 mb-2">
-                          <Input
-                            value={editingName}
-                            onChange={(e) => setEditingName(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') handleSaveEdit();
-                              if (e.key === 'Escape') handleCancelEdit();
-                            }}
-                            className="h-8 flex-1"
-                            autoFocus
-                          />
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={handleSaveEdit}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Check className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={handleCancelEdit}
-                            className="h-8 w-8 p-0"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
+              versionSnapshots
+                .slice()
+                .reverse()
+                .map((snapshot) => (
+                  <div
+                    key={snapshot.id}
+                    className="border rounded-lg p-4 hover:bg-accent/5 transition-colors"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        {editingId === snapshot.id ? (
+                          <div className="flex items-center gap-2 mb-2">
+                            <Input
+                              value={editingName}
+                              onChange={(e) => setEditingName(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSaveEdit();
+                                if (e.key === 'Escape') handleCancelEdit();
+                              }}
+                              className="h-8 flex-1"
+                              autoFocus
+                            />
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={handleSaveEdit}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={handleCancelEdit}
+                              className="h-8 w-8 p-0"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <h3 className="font-semibold text-base mb-1">
+                            {snapshot.name}
+                          </h3>
+                        )}
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {formatDistanceToNow(new Date(snapshot.createdAt), {
+                              addSuffix: true,
+                            })}
+                          </span>
+                          <span className="text-xs">
+                            Schema v{snapshot.schemaVersion}
+                          </span>
                         </div>
-                      ) : (
-                        <h3 className="font-semibold text-base mb-1">{snapshot.name}</h3>
-                      )}
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {formatDistanceToNow(new Date(snapshot.createdAt), { addSuffix: true })}
-                        </span>
-                        <span className="text-xs">
-                          Schema v{snapshot.schemaVersion}
-                        </span>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-1 ml-4">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleRestoreSnapshot(snapshot.id)}
-                        className="h-8 px-3"
-                      >
-                        <RotateCcw className="h-4 w-4 mr-1" />
-                        Restore
-                      </Button>
-                      {editingId !== snapshot.id && (
+                      <div className="flex items-center gap-1 ml-4">
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => handleStartEdit(snapshot)}
-                          className="h-8 w-8 p-0"
+                          onClick={() => handleRestoreSnapshot(snapshot.id)}
+                          className="h-8 px-3"
                         >
-                          <Edit2 className="h-4 w-4" />
+                          <RotateCcw className="h-4 w-4 mr-1" />
+                          Restore
                         </Button>
-                      )}
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleDeleteSnapshot(snapshot.id)}
-                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                        {editingId !== snapshot.id && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleStartEdit(snapshot)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDeleteSnapshot(snapshot.id)}
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                ))
             )}
           </div>
           <ScrollBar />
@@ -204,4 +235,4 @@ export default function VersionSnapshotDialog({ open, onOpenChange }: VersionSna
       </DialogContent>
     </Dialog>
   );
-} 
+}

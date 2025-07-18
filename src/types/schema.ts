@@ -1,16 +1,29 @@
 // Schema system for extensible resume data structures
 
+import { AIConfig } from '@/stores/types';
 import type { PersonalDetails } from './resume';
+import { type ResumeData } from './resume';
 
 export interface ValidationRule {
   type: 'required' | 'minLength' | 'maxLength' | 'pattern' | 'custom';
-  value?: any;
+  value?: string | number | boolean | RegExp;
   message: string;
 }
 
 export interface FieldSchema {
   id: string;
-  type: 'text' | 'textarea' | 'date' | 'url' | 'email' | 'phone' | 'select' | 'multiselect' | 'combobox' | 'object' | 'array';
+  type:
+    | 'text'
+    | 'textarea'
+    | 'date'
+    | 'url'
+    | 'email'
+    | 'phone'
+    | 'select'
+    | 'multiselect'
+    | 'combobox'
+    | 'object'
+    | 'array';
   label: string;
   required?: boolean;
   validation?: ValidationRule[];
@@ -18,7 +31,7 @@ export interface FieldSchema {
     // REMOVE: contextBuilder?: string; // 如何为AI构建上下文
     // ADD: Structured context builders for different AI tasks
     contextBuilders?: {
-      improve?: string;      // Builder ID for the 'improve' task
+      improve?: string; // Builder ID for the 'improve' task
       autocomplete?: string; // Builder ID for the 'autocomplete' task
     };
     improvementPrompts?: string[]; // 预设的改进提示
@@ -44,7 +57,7 @@ export interface SectionSchema {
     // RENAME summaryBuilder for clarity
     sectionSummaryBuilder?: string; // Builder ID to summarize the entire section
     // ADD:
-    itemSummaryBuilder?: string;    // Builder ID to summarize a single item in a list
+    itemSummaryBuilder?: string; // Builder ID to summarize a single item in a list
     // KEEP for backward compatibility
     itemContextBuilder?: string; // 如何为AI构建单个条目的上下文 (deprecated, use itemSummaryBuilder)
     batchImprovementSupported?: boolean; // 是否支持批量改进
@@ -63,7 +76,7 @@ export interface SectionSchema {
 export interface DynamicSectionItem {
   id: string;
   schemaId: string; // 引用SectionSchema
-  data: Record<string, any>; // 动态字段数据
+  data: Record<string, unknown>; // 动态字段数据
   metadata?: {
     createdAt: string;
     updatedAt: string;
@@ -83,8 +96,19 @@ export interface DynamicResumeSection {
   };
 }
 
+// A flexible type to represent all possible inputs to a context builder.
+export type ContextBuilderInput =
+  | DynamicResumeSection // For summarizing an entire section.
+  | DynamicSectionItem // For summarizing a single item.
+  | PersonalDetails // For personal details.
+  | DynamicSectionItem['data'] // For raw item data (most common).
+  | string; // For simple text content.
+
 // AI上下文构建器类型
-export type ContextBuilderFunction = (data: any, allData: any) => string;
+export type ContextBuilderFunction = (
+  data: ContextBuilderInput,
+  allData: ResumeData
+) => string;
 
 // Schema注册中心接口
 export interface ISchemaRegistry {
@@ -92,19 +116,23 @@ export interface ISchemaRegistry {
   getSectionSchema(id: string): SectionSchema | undefined;
   getAllSectionSchemas(): SectionSchema[];
   registerContextBuilder(id: string, builder: ContextBuilderFunction): void;
-  buildContext(builderId: string, data: any, allData: any): string;
+  buildContext(
+    builderId: string,
+    data: ContextBuilderInput,
+    allData: ResumeData
+  ): string;
   // New: Main method to build structured AI context
   buildAIContext(payload: AIContextPayload): StructuredAIContext;
   // New: Method to stringify the entire resume for review
-  stringifyResumeForReview(resumeData: any): string;
+  stringifyResumeForReview(resumeData: ResumeData): string;
   // NEW: Role-Map methods - simplified for static loading
   getRoleMap(schemaId: string): RoleMap | undefined;
 }
 
 // 扩展的简历数据结构（向后兼容）
 export interface ExtendedResumeData {
-  personalDetails: Record<string, any>; // 支持动态个人信息字段
-  sections: (DynamicResumeSection | any)[]; // 支持新旧数据结构混合
+  personalDetails: PersonalDetails;
+  sections: DynamicResumeSection[];
   templateId: string;
   schemaVersion: string; // 用于数据迁移
   metadata?: {
@@ -115,14 +143,14 @@ export interface ExtendedResumeData {
 
 // New shared types for AI context payloads and structured context
 export interface AIContextPayload {
-  resumeData: any; // Use `any` for now to support legacy and dynamic data
+  resumeData: ResumeData;
   task: 'improve' | 'autocomplete';
   sectionId: string;
   fieldId: string;
   itemId?: string;
   inputText?: string; // This is textBeforeCursor
   textAfterCursor?: string; // Add textAfterCursor
-  aiConfig?: any;
+  aiConfig?: AIConfig;
 }
 
 export interface StructuredAIContext {
@@ -136,7 +164,7 @@ export interface StructuredAIContext {
 
 // Renderable View Models for decoupled rendering
 export interface RenderableField {
-  key: string;  // e.g., 'jobTitle'
+  key: string; // e.g., 'jobTitle'
   label: string; // e.g., 'Job Title'
   value: string | string[];
   markdownEnabled?: boolean; // Whether this field should be rendered as markdown
@@ -160,25 +188,24 @@ export interface RenderableResume {
   sections: RenderableSection[];
 }
 
-
 // Role-Map types
-export type FieldRole = 
-  | 'title'         // Job title, position, role name
-  | 'organization'  // Company, institution, school name
-  | 'description'   // Main content description
-  | 'startDate'     // Begin date
-  | 'endDate'       // End date
-  | 'location'      // Geographic location
-  | 'dateRange'     // Combined date range
-  | 'url'           // Website link
-  | 'skills'        // Skills list
-  | 'level'         // Proficiency or education level
-  | 'identifier'    // A unique ID or code
-  | 'other';        // Catch-all for unclassifiable fields
+export type FieldRole =
+  | 'title' // Job title, position, role name
+  | 'organization' // Company, institution, school name
+  | 'description' // Main content description
+  | 'startDate' // Begin date
+  | 'endDate' // End date
+  | 'location' // Geographic location
+  | 'dateRange' // Combined date range
+  | 'url' // Website link
+  | 'skills' // Skills list
+  | 'level' // Proficiency or education level
+  | 'identifier' // A unique ID or code
+  | 'other'; // Catch-all for unclassifiable fields
 
 export interface RoleMap {
   schemaId: string;
   schemaVersion: string;
   fieldMappings: Record<string, FieldRole | FieldRole[]>; // fieldId -> role(s)
   inferredAt: string; // ISO timestamp
-} 
+}

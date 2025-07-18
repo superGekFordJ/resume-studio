@@ -22,7 +22,7 @@ class AIManager {
   // 缓存的 Genkit 实例，只在配置改变时重新创建
   private activeInstance: ReturnType<typeof genkit> | null = null;
   private activeConfig: AIConfig | null = null;
-  
+
   public getGenkit(config: AIConfig): ReturnType<typeof genkit> {
     // 深度比较配置，如果相同则返回缓存的实例
     if (this.activeInstance && _.isEqual(this.activeConfig, config)) {
@@ -49,11 +49,9 @@ class AIManager {
 1. **用户界面提供的 Key**（最高优先级）
    - 通过设置面板输入
    - 仅存储在内存中，刷新页面后需要重新输入
-   
 2. **开发环境变量**（仅在开发模式下）
    - `GOOGLE_API_KEY` 或 `GOOGLE_GENAI_API_KEY`
    - 从 `.env.local` 文件读取
-   
 3. **默认认证**（最低优先级）
    - 使用 Genkit 的默认认证机制
 
@@ -62,7 +60,8 @@ class AIManager {
 let apiKeyToUse = config.apiKey;
 if (!apiKeyToUse && process.env.NODE_ENV === 'development') {
   if (config.provider === 'google') {
-    apiKeyToUse = process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENAI_API_KEY;
+    apiKeyToUse =
+      process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENAI_API_KEY;
   }
 }
 ```
@@ -89,7 +88,6 @@ if (!apiKeyToUse && process.env.NODE_ENV === 'development') {
 - UI 组件不再直接调用 AI 服务，而是派发 Store Actions（如 `startSingleFieldImprovement`）。
 - Store Actions 负责调用 `SchemaRegistry` 构建上下文，执行 AI 调用，并更新状态。
 - UI 组件只需订阅相关状态（如 `singleFieldImprovementReview`）并进行渲染。
-
 
 ### 4. 标准化的数据流 (Enhanced with Global Context)
 
@@ -130,6 +128,7 @@ if (!apiKeyToUse && process.env.NODE_ENV === 'development') {
 自动补全功能是性能最敏感的AI交互，因此它采用了一种特殊的、优化的**"热路径"**数据流。
 
 #### 实现位置
+
 - **Flow**: `src/ai/flows/autocomplete-input.ts`
 - **UI 集成**: `src/components/resume/ui/AutocompleteTextarea.tsx`
 
@@ -139,11 +138,11 @@ if (!apiKeyToUse && process.env.NODE_ENV === 'development') {
 
 关键实现细节：
 
--   **适配器模式**: 该组件作为 `copilot-react-kit` 的一个"智能包装器"。
--   **"热路径"调用**: 为了将延迟降至最低，该组件**不通过Zustand Store**来发起AI调用，而是直接 `await` 调用 `autocompleteInput` 这个Genkit Flow。
--   **防抖机制**: 组件利用 `copilot-react-kit` 原生的 `debounceTime` prop 来控制 AI 建议的请求频率。
--   **竞态条件处理**: 使用一个基于 `useRef` 的标志 (`suggestionJustAccepted`) 来解决用户接受建议时可能触发冗余调用的问题。
--   **v3 简化**: 随着 v3 改进系统的实施，旧的、基于 `forcedSuggestion` prop 的**双重建议系统已被移除**。组件现在只专注于处理其自身的内联自动补全逻辑，代码更简洁、职责更单一。
+- **适配器模式**: 该组件作为 `copilot-react-kit` 的一个"智能包装器"。
+- **"热路径"调用**: 为了将延迟降至最低，该组件**不通过Zustand Store**来发起AI调用，而是直接 `await` 调用 `autocompleteInput` 这个Genkit Flow。
+- **防抖机制**: 组件利用 `copilot-react-kit` 原生的 `debounceTime` prop 来控制 AI 建议的请求频率。
+- **竞态条件处理**: 使用一个基于 `useRef` 的标志 (`suggestionJustAccepted`) 来解决用户接受建议时可能触发冗余调用的问题。
+- **v3 简化**: 随着 v3 改进系统的实施，旧的、基于 `forcedSuggestion` prop 的**双重建议系统已被移除**。组件现在只专注于处理其自身的内联自动补全逻辑，代码更简洁、职责更单一。
 
 关于此组件当前的局限性和未来的改进，请参阅 `docs/FIXES_SUMMARY.md` 文档。
 
@@ -153,26 +152,26 @@ if (!apiKeyToUse && process.env.NODE_ENV === 'development') {
 
 #### 场景 1: 单字段改进 (Inline Suggestion Card)
 
--   **目标**: 针对单个文本字段进行快速、上下文内的优化。
--   **UI**: 不再使用模态框。AI 建议会通过一个**内联卡片 (`AISuggestionCard`)** 直接显示在被编辑字段的下方。
--   **流程**:
-    1.  用户在 `AIFieldWrapper` 中输入提示，点击 "Improve"。
-    2.  `resumeStore` 的 `startSingleFieldImprovement` action 被调用。
-    3.  `singleFieldImprovementReview` 状态被更新，UI 出现加载指示。
-    4.  AI 返回结果后，状态再次更新，`AISuggestionCard` 显示差异对比。
-    5.  用户点击 "Apply" 或 "Dismiss"，调用相应的 store action 来应用更改或关闭卡片。
+- **目标**: 针对单个文本字段进行快速、上下文内的优化。
+- **UI**: 不再使用模态框。AI 建议会通过一个**内联卡片 (`AISuggestionCard`)** 直接显示在被编辑字段的下方。
+- **流程**:
+  1.  用户在 `AIFieldWrapper` 中输入提示，点击 "Improve"。
+  2.  `resumeStore` 的 `startSingleFieldImprovement` action 被调用。
+  3.  `singleFieldImprovementReview` 状态被更新，UI 出现加载指示。
+  4.  AI 返回结果后，状态再次更新，`AISuggestionCard` 显示差异对比。
+  5.  用户点击 "Apply" 或 "Dismiss"，调用相应的 store action 来应用更改或关闭卡片。
 
 #### 场景 2: 章节批量改进 (Collapsible Review Dialog)
 
--   **目标**: 对整个章节（如所有工作经历）进行全面、一致的优化。
--   **UI**: 使用一个增强的**模态对话框 (`BatchImprovementDialog`)** 提供专用的审查环境。
--   **流程**:
-    1.  用户在 `SectionEditor` 顶部输入提示，点击 "批量改进"。
-    2.  `resumeStore` 的 `startBatchImprovement` action 被调用。
-    3.  `batchImprovementReview` 状态被更新，UI 显示加载中的对话框。
-    4.  AI 返回结果后，对话框内容被填充。
-    5.  UI 内部使用**可折叠的手风琴布局**来展示每个条目的差异。用户可以使用**复选框**来选择性地接受个别改进。
-    6.  用户点击 "Accept Improvements (N)"，调用 `acceptBatchImprovement` action，仅传递被选中的项目。
+- **目标**: 对整个章节（如所有工作经历）进行全面、一致的优化。
+- **UI**: 使用一个增强的**模态对话框 (`BatchImprovementDialog`)** 提供专用的审查环境。
+- **流程**:
+  1.  用户在 `SectionEditor` 顶部输入提示，点击 "批量改进"。
+  2.  `resumeStore` 的 `startBatchImprovement` action 被调用。
+  3.  `batchImprovementReview` 状态被更新，UI 显示加载中的对话框。
+  4.  AI 返回结果后，对话框内容被填充。
+  5.  UI 内部使用**可折叠的手风琴布局**来展示每个条目的差异。用户可以使用**复选框**来选择性地接受个别改进。
+  6.  用户点击 "Accept Improvements (N)"，调用 `acceptBatchImprovement` action，仅传递被选中的项目。
 
 #### Store Action 调用示例 (v3)
 
@@ -185,10 +184,10 @@ startSingleFieldImprovement: async (payload) => {
   try {
     const improvedText = await schemaRegistry.improveField(...);
     set(state => ({
-      singleFieldImprovementReview: { 
-        ...state.singleFieldImprovementReview, 
-        improvedText, 
-        isLoading: false 
+      singleFieldImprovementReview: {
+        ...state.singleFieldImprovementReview,
+        improvedText,
+        isLoading: false
       }
     }));
   } catch (e) {
@@ -226,10 +225,12 @@ acceptBatchImprovement: (itemsToAccept) => {
 ### 3. 简历评审 (Resume Review)
 
 #### 实现位置
+
 - **Flow**: `src/ai/flows/review-resume.ts`
 - **UI 集成**: `src/app/page.tsx` (via `AIReviewDialog.tsx`)
 
 #### 核心特性
+
 - **全面分析**: 评估简历的整体质量和结构。
 - **统一序列化**: 使用 `schemaRegistry.stringifyResumeForReview` 来生成一致的、可供 AI 分析的简历文本。
 
@@ -246,7 +247,7 @@ const handleReviewResume = async () => {
   try {
     // The ONLY line needed to prepare the data for the review flow.
     const resumeText = schemaRegistry.stringifyResumeForReview(resumeData);
-    
+
     const result = await reviewResume({ resumeText });
     setReviewContent(result);
   } catch (error) {
@@ -261,10 +262,10 @@ const handleReviewResume = async () => {
 
 > 这一节记录了 **2025-06-30** 合并的重大重构：
 >
-> * 全部 Genkit Flow 迁移到 **Dotprompt** 文件格式。
-> * 所有 Zod Schema 通过 `ai.defineSchema()` **显式注册**。
-> * Flow 代码全部使用 **`ai.prompt<Input, Output>()` 泛型**，端到端类型安全。
-> * 引入 **自定义助手 buildDataUri** 解决多模态 Data-URI 拼接问题。
+> - 全部 Genkit Flow 迁移到 **Dotprompt** 文件格式。
+> - 所有 Zod Schema 通过 `ai.defineSchema()` **显式注册**。
+> - Flow 代码全部使用 **`ai.prompt<Input, Output>()` 泛型**，端到端类型安全。
+> - 引入 **自定义助手 buildDataUri** 解决多模态 Data-URI 拼接问题。
 
 ### 1. `src/ai/prompts/` 目录
 
@@ -285,7 +286,7 @@ output:
 ---
 ```
 
-*表体* 为 Handlebars 模板，完全脱离 TypeScript 代码。
+_表体_ 为 Handlebars 模板，完全脱离 TypeScript 代码。
 
 ### 2. `src/ai/prompts/schemas.ts`
 
@@ -310,7 +311,9 @@ Genkit 会自动解析并提供静态类型。
 ### 3. Flow 调用约定
 
 ```ts
-const prompt = ai.prompt<typeof MyInputSchema, typeof MyOutputSchema>('myPrompt');
+const prompt = ai.prompt<typeof MyInputSchema, typeof MyOutputSchema>(
+  'myPrompt'
+);
 const { output } = await prompt(input);
 ```
 
@@ -332,6 +335,6 @@ ai.defineHelper('buildDataUri', (ct, b64) => `data:${ct};base64,${b64}`);
 
 ### 5. Windows ↔︎ Unix 换行
 
-所有 `.prompt` 文件需使用 **LF** 行尾，避免 `\r` 被解析进 schema 名称导致 *Schema not found* 错误。
+所有 `.prompt` 文件需使用 **LF** 行尾，避免 `\r` 被解析进 schema 名称导致 _Schema not found_ 错误。
 
 ---

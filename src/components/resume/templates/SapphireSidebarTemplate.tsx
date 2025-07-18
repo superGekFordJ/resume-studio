@@ -1,19 +1,26 @@
-"use client";
+'use client';
 
-import { RenderableResume, RenderableSection } from "@/types/schema";
-import { SchemaRegistry } from "@/lib/schemaRegistry";
-import { getItemDateRange, pickFieldByRole } from "@/lib/roleMapUtils";
-import { User, Phone, Mail, MapPin, Link as LinkIcon, Linkedin, Github } from "lucide-react";
-import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
+import { RenderableResume, RenderableSection } from '@/types/schema';
+import { SchemaRegistry } from '@/lib/schemaRegistry';
+import { getItemDateRange, pickFieldByRole } from '@/lib/roleMapUtils';
+import {
+  User,
+  Phone,
+  Mail,
+  MapPin,
+  Link as LinkIcon,
+  Linkedin,
+  Github,
+} from 'lucide-react';
+import { MarkdownRenderer } from '@/components/ui/markdown-renderer';
 
 // Import rendering components
-import { BadgeListComponent } from "../rendering/BadgeListComponent";
-import { SapphireCategorizedSkillsComponent } from "../rendering/sapphire/SapphireCategorizedSkillsComponent";
-import { CoverLetterComponent } from "../rendering/CoverLetterComponent";
-import { AchievementItemComponent } from "../rendering/AchievementItemComponent";
-import { TitledBlockComponent } from "../rendering/TitledBlockComponent";
-import { PersonalDetails } from "@/types/resume";
-
+import { BadgeListComponent } from '../rendering/BadgeListComponent';
+import { SapphireCategorizedSkillsComponent } from '../rendering/sapphire/SapphireCategorizedSkillsComponent';
+import { CoverLetterComponent } from '../rendering/CoverLetterComponent';
+import { AchievementItemComponent } from '../rendering/AchievementItemComponent';
+import { TitledBlockComponent } from '../rendering/TitledBlockComponent';
+import Image from 'next/image';
 
 interface SapphireSidebarTemplateProps {
   resume: RenderableResume;
@@ -31,37 +38,47 @@ const MainSectionTitle = ({ title }: { title: string }) => (
   </h2>
 );
 
-export const SapphireSidebarTemplate = ({ resume }: SapphireSidebarTemplateProps) => {
+export const SapphireSidebarTemplate = ({
+  resume,
+}: SapphireSidebarTemplateProps) => {
   const { personalDetails, sections } = resume;
   const schemaRegistry = SchemaRegistry.getInstance();
-  const hasCoverLetter = sections.some(s => s.schemaId === 'cover-letter');
-  
-  const renderSection = (section: RenderableSection, isInSidebar: boolean = false) => {
+  const hasCoverLetter = sections.some((s) => s.schemaId === 'cover-letter');
+
+  const renderSection = (
+    section: RenderableSection,
+    isInSidebar: boolean = false
+  ) => {
     const roleMap = schemaRegistry.getRoleMap(section.schemaId);
 
-    switch(section.schemaId) {
+    switch (section.schemaId) {
       case 'summary':
       case 'customText':
         const item = section.items[0];
         const field = pickFieldByRole(item, 'description', roleMap);
-        const content = field?.value ? 
-          (Array.isArray(field.value) ? field.value.join('\n') : field.value) : '';
-        
+        const content = field?.value
+          ? Array.isArray(field.value)
+            ? field.value.join('\n')
+            : field.value
+          : '';
+
         const textColor = isInSidebar ? 'text-white/90' : 'text-gray-800';
 
         return (
-          <p className={`text-[14px] leading-[1.4] m-0 ${textColor}`}>
+          <MarkdownRenderer
+            className={`text-[15px] leading-[1.4] m-0 ${textColor}`}
+          >
             {content}
-          </p>
+          </MarkdownRenderer>
         );
-      
+
       case 'skills':
         if (isInSidebar) {
           const skillsText = section.items
-            .map(item => {
+            .map((item) => {
               const skillsField = pickFieldByRole(item, 'skills', roleMap);
-              return Array.isArray(skillsField?.value) 
-                ? skillsField.value.join(', ') 
+              return Array.isArray(skillsField?.value)
+                ? skillsField.value.join(', ')
                 : skillsField?.value || '';
             })
             .filter(Boolean)
@@ -73,14 +90,19 @@ export const SapphireSidebarTemplate = ({ resume }: SapphireSidebarTemplateProps
           );
         }
         return <BadgeListComponent section={section} roleMap={roleMap} />;
-      
+
       case 'advanced-skills':
-        return <SapphireCategorizedSkillsComponent items={section.items} roleMap={roleMap} />;
-      
+        return (
+          <SapphireCategorizedSkillsComponent
+            items={section.items}
+            roleMap={roleMap}
+          />
+        );
+
       case 'experience':
       case 'education':
       case 'projects':
-        return section.items.map(item => (
+        return section.items.map((item) => (
           <div key={item.id} className="mb-5">
             <div className="flex justify-between items-start mb-1">
               <h3 className="font-rubik text-[20px] leading-6 font-medium text-gray-800 flex-grow">
@@ -105,7 +127,7 @@ export const SapphireSidebarTemplate = ({ resume }: SapphireSidebarTemplateProps
               const descriptionContent = Array.isArray(descField.value)
                 ? descField.value.join('\n')
                 : String(descField.value);
-              
+
               return (
                 <>
                   {descField.markdownEnabled ? (
@@ -122,47 +144,66 @@ export const SapphireSidebarTemplate = ({ resume }: SapphireSidebarTemplateProps
             })()}
           </div>
         ));
-      
+
       case 'certifications':
-        return section.items.map(item => (
-          <AchievementItemComponent key={item.id} item={item} roleMap={roleMap} />
+        return section.items.map((item) => (
+          <AchievementItemComponent
+            key={item.id}
+            item={item}
+            roleMap={roleMap}
+          />
         ));
-      
+
       case 'cover-letter':
         return <CoverLetterComponent section={section} roleMap={roleMap} />;
-      
+
       default:
-        return <TitledBlockComponent item={section.items[0]} roleMap={roleMap} />;
+        return (
+          <TitledBlockComponent item={section.items[0]} roleMap={roleMap} />
+        );
     }
   };
 
-  const coverLetterSection = hasCoverLetter ? sections.find(s => s.schemaId === 'cover-letter') : null;
-  
-  const sidebarSchemaIds = ['skills', 'advanced-skills', 'certifications', 'languages', 'customText'];
+  const coverLetterSection = hasCoverLetter
+    ? sections.find((s) => s.schemaId === 'cover-letter')
+    : null;
+
+  const sidebarSchemaIds = [
+    'skills',
+    'advanced-skills',
+    'certifications',
+    'languages',
+    'customText',
+  ];
   const mainSchemaIds = ['summary', 'experience', 'education', 'projects'];
 
-  const sidebarSections = sections.filter(s => sidebarSchemaIds.includes(s.schemaId));
-  const mainSections = sections.filter(s => mainSchemaIds.includes(s.schemaId));
-  
+  const sidebarSections = sections.filter((s) =>
+    sidebarSchemaIds.includes(s.schemaId)
+  );
+  const mainSections = sections.filter((s) =>
+    mainSchemaIds.includes(s.schemaId)
+  );
 
-  let resumeContent 
+  let resumeContent;
   resumeContent = (
     <div className="grid grid-cols-[326px_614px] w-[940px] h-[352mm] bg-white shadow-lg">
       <aside className="bg-[#22405C] text-white px-[30px] py-[40px]">
         <div className="flex justify-center mb-10">
           <div className="w-[130px] h-[130px] rounded-full bg-white/10 border-2 border-white/20 flex items-center justify-center">
             {personalDetails.avatar ? (
-              <img 
-                src={personalDetails.avatar} 
-                alt="Profile" 
+              <Image
+                src={personalDetails.avatar}
+                alt="Profile"
                 className="w-full h-full rounded-full object-cover"
+                width={130}
+                height={130}
               />
             ) : (
               <User className="w-16 h-16 text-white/40" />
             )}
           </div>
         </div>
-        
+
         {/* Conditionally render contact info in sidebar */}
         {hasCoverLetter && (
           <div className="flex flex-col gap-2 text-[14px] text-white/90 mt-6 font-inter">
@@ -207,7 +248,7 @@ export const SapphireSidebarTemplate = ({ resume }: SapphireSidebarTemplateProps
 
         {!hasCoverLetter && (
           <div className="mt-8">
-            {sidebarSections.map(section => (
+            {sidebarSections.map((section) => (
               <section key={section.id} className="mb-8">
                 <SidebarSectionTitle title={section.title} />
                 {renderSection(section, true)}
@@ -272,7 +313,7 @@ export const SapphireSidebarTemplate = ({ resume }: SapphireSidebarTemplateProps
             {renderSection(coverLetterSection, false)}
           </section>
         ) : (
-          mainSections.map(section => (
+          mainSections.map((section) => (
             <section key={section.id} className="mb-6">
               <MainSectionTitle title={section.title} />
               {renderSection(section, false)}
@@ -282,7 +323,7 @@ export const SapphireSidebarTemplate = ({ resume }: SapphireSidebarTemplateProps
       </main>
     </div>
   );
-  
+
   // A4 paper width is 210mm, which is approx 794px.
   // The template has a fixed width of 940px.
   // We need to scale it down to fit. 794 / 940 = 0.8446
@@ -290,19 +331,23 @@ export const SapphireSidebarTemplate = ({ resume }: SapphireSidebarTemplateProps
   const inverseScale = 100 / scale;
 
   return (
-    <div style={{
-      width: '100%',
-      height: '100%',
-      overflow: 'hidden'
-    }}>
-      <div style={{
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        style={{
           transform: `scale(${scale})`,
           transformOrigin: 'top left',
           width: `${inverseScale}%`,
           height: `${inverseScale}%`,
-      }}>
+        }}
+      >
         {resumeContent}
       </div>
     </div>
   );
-}; 
+};

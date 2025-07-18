@@ -24,42 +24,44 @@ export interface ExtendedResumeData {
 ```
 
 #### 个人信息 (PersonalDetails)
+
 ```typescript
 interface PersonalDetails {
-  fullName: string;           // 全名
-  jobTitle: string;           // 职位标题
-  email: string;              // 邮箱
-  phone: string;              // 电话
-  address: string;            // 地址
-  linkedin?: string;          // LinkedIn 链接 (可选)
-  github?: string;            // GitHub 链接 (可选)
-  portfolio?: string;         // 作品集链接 (可选)
-  avatar?: string;            // 头像 (Base64 或 URL)
+  fullName: string; // 全名
+  jobTitle: string; // 职位标题
+  email: string; // 邮箱
+  phone: string; // 电话
+  address: string; // 地址
+  linkedin?: string; // LinkedIn 链接 (可选)
+  github?: string; // GitHub 链接 (可选)
+  portfolio?: string; // 作品集链接 (可选)
+  avatar?: string; // 头像 (Base64 或 URL)
 }
 ```
 
 #### 动态简历章节 (DynamicResumeSection)
+
 ```typescript
 export interface DynamicResumeSection {
-  id: string;                 // 唯一标识符
-  schemaId: string;           // 引用SectionSchema
-  title: string;              // 章节标题
-  visible: boolean;           // 是否可见
+  id: string; // 唯一标识符
+  schemaId: string; // 引用SectionSchema
+  title: string; // 章节标题
+  visible: boolean; // 是否可见
   items: DynamicSectionItem[]; // 动态章节内容项
   metadata?: {
-    customTitle?: boolean;    // 是否使用自定义标题
-    aiOptimized?: boolean;    // 是否经过AI优化
+    customTitle?: boolean; // 是否使用自定义标题
+    aiOptimized?: boolean; // 是否经过AI优化
   };
 }
 
 export interface DynamicSectionItem {
-  id: string;                 // 唯一标识符
-  schemaId: string;           // 引用SectionSchema
-  data: Record<string, any>;  // 动态字段数据 (键值对)
+  id: string; // 唯一标识符
+  schemaId: string; // 引用SectionSchema
+  data: Record<string, any>; // 动态字段数据 (键值对)
   metadata?: {
     createdAt: string;
     updatedAt: string;
-    aiGenerated?: boolean;    // 是否由AI生成
+    aiGenerated?: boolean; // 是否由AI生成
   };
 }
 ```
@@ -69,51 +71,57 @@ export interface DynamicSectionItem {
 这是从 `ResumeData` 转换而来的、专门用于渲染的只读视图模型。
 
 ### 1. RenderableField
+
 ```typescript
 export interface RenderableField {
-  key: string;     // 字段标识符，如 'jobTitle'
-  label: string;   // 字段显示标签，如 'Job Title'
-  value: string | string[];  // 字段值，支持单值或数组
+  key: string; // 字段标识符，如 'jobTitle'
+  label: string; // 字段显示标签，如 'Job Title'
+  value: string | string[]; // 字段值，支持单值或数组
 }
 ```
 
 ### 2. RenderableItem
+
 ```typescript
 export interface RenderableItem {
-  id: string;                    // 项目唯一标识符
-  fields: RenderableField[];     // 该项目的所有字段
+  id: string; // 项目唯一标识符
+  fields: RenderableField[]; // 该项目的所有字段
 }
 ```
 
 ### 3. RenderableSection
+
 ```typescript
 export interface RenderableSection {
-  id: string;                    // 章节唯一标识符
-  title: string;                 // 章节标题
-  schemaId: string;              // 关联的Schema ID
-  defaultRenderType?: string;    // Schema建议的默认渲染组件
-  items: RenderableItem[];       // 该章节的所有项目
+  id: string; // 章节唯一标识符
+  title: string; // 章节标题
+  schemaId: string; // 关联的Schema ID
+  defaultRenderType?: string; // Schema建议的默认渲染组件
+  items: RenderableItem[]; // 该章节的所有项目
 }
 ```
 
 ### 4. RenderableResume
+
 ```typescript
 export interface RenderableResume {
-  personalDetails: PersonalDetails;  // 个人信息（保持扁平结构）
-  sections: RenderableSection[];     // 所有渲染章节
+  personalDetails: PersonalDetails; // 个人信息（保持扁平结构）
+  sections: RenderableSection[]; // 所有渲染章节
 }
 ```
 
 ### 5. 数据转换函数
+
 ```typescript
 // 将原始简历数据转换为可渲染视图
 export function transformToRenderableView(
-  resumeData: ResumeData, 
+  resumeData: ResumeData,
   schemaRegistry: SchemaRegistry
 ): RenderableResume;
 ```
 
 这个转换函数负责：
+
 - 过滤不可见章节
 - 将传统章节数据转换为统一格式
 - 将动态章节数据根据Schema定义转换为统一格式
@@ -125,19 +133,19 @@ export function transformToRenderableView(
 
 ```typescript
 // 定义了字段在简历中的通用语义角色
-export type FieldRole = 
-  | 'title'         // 职位、学位、项目名等
-  | 'organization'  // 公司、学校、组织名
-  | 'description'   // 主要的描述性文本
-  | 'startDate'     // 开始日期
-  | 'endDate'       // 结束日期
-  | 'location'      // 地理位置
-  | 'dateRange'     // 组合的日期范围
-  | 'url'           // 链接
-  | 'skills'        // 技能列表
-  | 'level'         // 等级或熟练度
-  | 'identifier'    // 唯一标识符，如证书ID
-  | 'other';        // 其他
+export type FieldRole =
+  | 'title' // 职位、学位、项目名等
+  | 'organization' // 公司、学校、组织名
+  | 'description' // 主要的描述性文本
+  | 'startDate' // 开始日期
+  | 'endDate' // 结束日期
+  | 'location' // 地理位置
+  | 'dateRange' // 组合的日期范围
+  | 'url' // 链接
+  | 'skills' // 技能列表
+  | 'level' // 等级或熟练度
+  | 'identifier' // 唯一标识符，如证书ID
+  | 'other'; // 其他
 
 // RoleMap 结构，将 schema 的字段名映射到其角色
 export interface RoleMap {
@@ -151,7 +159,8 @@ export interface RoleMap {
 在渲染时，模板组件会获取对应章节的 `RoleMap`，并将其传递给原子渲染组件。渲染组件则使用 `pickFieldByRole(item, 'title', roleMap)` 这样的工具函数来安全地获取数据，而无需关心字段名是 `jobTitle` 还是 `position`。
 
 ---
-*最后更新: 2025-07-04*  
-*文档版本: v3.1.0*
 
-<!-- 过时内容已移除 --> 
+_最后更新: 2025-07-04_  
+_文档版本: v3.1.0_
+
+<!-- 过时内容已移除 -->

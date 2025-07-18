@@ -1,7 +1,20 @@
-"use client";
+'use client';
 
-import { RenderableResume, RenderableSection } from "@/types/schema";
-import { Mail, Phone, Linkedin, Github, Globe, MapPin, Briefcase } from "lucide-react";
+import {
+  RenderableField,
+  RenderableItem,
+  RenderableResume,
+  RenderableSection,
+} from '@/types/schema';
+import {
+  Mail,
+  Phone,
+  Linkedin,
+  Github,
+  Globe,
+  MapPin,
+  Briefcase,
+} from 'lucide-react';
 import { BadgeListComponent } from '../rendering/BadgeListComponent';
 import { TitledBlockComponent } from '../rendering/TitledBlockComponent';
 import { SimpleListComponent } from '../rendering/SimpleListComponent';
@@ -11,21 +24,25 @@ import { CertificationItemComponent } from '../rendering/CertificationItemCompon
 import { AdvancedSkillsComponent } from '../rendering/AdvancedSkillsComponent';
 import { CoverLetterComponent } from '../rendering/CoverLetterComponent';
 import { SchemaRegistry } from '@/lib/schemaRegistry';
+import { MarkdownRenderer } from '@/components/ui/markdown-renderer';
 
 interface ContinuousNarrativeTemplateProps {
   resume: RenderableResume;
 }
 
 // Custom component to render summary without title
-const SummaryWithoutTitle = ({ items }: { items: any[] }) => {
+const SummaryWithoutTitle = ({ items }: { items: RenderableItem[] }) => {
   return (
     <div className="text-gray-700 leading-relaxed">
-      {items.map(item => (
+      {items.map((item) => (
         <div key={item.id}>
-          {item.fields.map((field: any) => (
-            <p key={field.key} className="text-justify whitespace-pre-wrap">
-              {field.value}
-            </p>
+          {item.fields.map((field: RenderableField) => (
+            <MarkdownRenderer
+              key={field.key}
+              className="text-justify whitespace-pre-wrap"
+            >
+              {field.value as string}
+            </MarkdownRenderer>
           ))}
         </div>
       ))}
@@ -34,8 +51,11 @@ const SummaryWithoutTitle = ({ items }: { items: any[] }) => {
 };
 
 // Reusable rendering dispatcher following the hybrid pattern
-const renderSectionByRenderType = (section: RenderableSection, isHeader: boolean = false) => {
-    // Get role map for this section synchronously
+const renderSectionByRenderType = (
+  section: RenderableSection,
+  isHeader: boolean = false
+) => {
+  // Get role map for this section synchronously
   const schemaRegistry = SchemaRegistry.getInstance();
   const roleMap = schemaRegistry.getRoleMap(section.schemaId);
 
@@ -46,13 +66,16 @@ const renderSectionByRenderType = (section: RenderableSection, isHeader: boolean
 
   // This template uses mostly defaults for a clean, continuous narrative
   const templateLayoutMap: Record<string, string> = {
-    'projects': 'project-list',
-    'certifications': 'certification-list',
-    'advanced-skills': 'advanced-skills-list'
+    projects: 'project-list',
+    certifications: 'certification-list',
+    'advanced-skills': 'advanced-skills-list',
   };
 
   // Use template override if exists, otherwise use schema default
-  const finalRenderType = templateLayoutMap[section.schemaId] || section.defaultRenderType || 'default';
+  const finalRenderType =
+    templateLayoutMap[section.schemaId] ||
+    section.defaultRenderType ||
+    'default';
 
   switch (finalRenderType) {
     case 'simple-list':
@@ -60,22 +83,34 @@ const renderSectionByRenderType = (section: RenderableSection, isHeader: boolean
     case 'badge-list':
       return <BadgeListComponent section={section} roleMap={roleMap} />;
     case 'timeline':
-      return section.items.map(item => <TitledBlockComponent key={item.id} item={item} roleMap={roleMap} />);
+      return section.items.map((item) => (
+        <TitledBlockComponent key={item.id} item={item} roleMap={roleMap} />
+      ));
     case 'single-text':
       return <SingleTextComponent items={section.items} roleMap={roleMap} />;
     case 'project-list':
-      return section.items.map(item => <ProjectItemComponent key={item.id} item={item} roleMap={roleMap} />);
+      return section.items.map((item) => (
+        <ProjectItemComponent key={item.id} item={item} roleMap={roleMap} />
+      ));
     case 'certification-list':
-      return section.items.map(item => <CertificationItemComponent key={item.id} item={item} roleMap={roleMap} />);
+      return section.items.map((item) => (
+        <CertificationItemComponent
+          key={item.id}
+          item={item}
+          roleMap={roleMap}
+        />
+      ));
     case 'advanced-skills-list':
-      return section.items.map(item => <AdvancedSkillsComponent key={item.id} item={item} roleMap={roleMap} />);
+      return section.items.map((item) => (
+        <AdvancedSkillsComponent key={item.id} item={item} roleMap={roleMap} />
+      ));
     case 'cover-letter':
       return <CoverLetterComponent section={section} roleMap={roleMap} />;
     default:
       // Generic fallback rendering
-      return section.items.map(item => (
+      return section.items.map((item) => (
         <div key={item.id} className="mb-2">
-          {item.fields.map(field => (
+          {item.fields.map((field) => (
             <div key={field.key}>
               {Array.isArray(field.value) ? (
                 <span>{field.value.join(', ')}</span>
@@ -89,21 +124,27 @@ const renderSectionByRenderType = (section: RenderableSection, isHeader: boolean
   }
 };
 
-const ContinuousNarrativeTemplate = ({ resume }: ContinuousNarrativeTemplateProps) => {
+const ContinuousNarrativeTemplate = ({
+  resume,
+}: ContinuousNarrativeTemplateProps) => {
   const { personalDetails, sections } = resume;
 
   // Single-column fallback logic for cover letters
-  const hasCoverLetter = sections.some(s => s.schemaId === 'cover-letter');
+  const hasCoverLetter = sections.some((s) => s.schemaId === 'cover-letter');
   if (hasCoverLetter) {
-    const coverLetterSection = sections.find(s => s.schemaId === 'cover-letter');
+    const coverLetterSection = sections.find(
+      (s) => s.schemaId === 'cover-letter'
+    );
     return (
       <div className="h-full relative bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
         {/* Header with shared styling */}
         <div className="pt-8 pb-4 px-[25mm]">
           <div className="text-center">
-            <h1 className="font-bold text-3xl mb-3 text-gray-800">{personalDetails.fullName}</h1>
+            <h1 className="font-bold text-3xl mb-3 text-gray-800">
+              {personalDetails.fullName}
+            </h1>
             <p className="text-lg text-gray-600">{personalDetails.jobTitle}</p>
-            
+
             {/* Contact Info */}
             <div className="flex flex-wrap justify-center items-center gap-4 mt-4 text-[10px] text-gray-700">
               {personalDetails.email && (
@@ -156,16 +197,20 @@ const ContinuousNarrativeTemplate = ({ resume }: ContinuousNarrativeTemplateProp
 
   // Use summary as the prologue
   const prologueSectionId = 'summary';
-  
-  const prologueSection = sections.find(s => s.schemaId === prologueSectionId);
-  const bodySections = sections.filter(s => s.schemaId !== prologueSectionId);
+
+  const prologueSection = sections.find(
+    (s) => s.schemaId === prologueSectionId
+  );
+  const bodySections = sections.filter((s) => s.schemaId !== prologueSectionId);
 
   return (
     <div className="h-full relative bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
       {/* Header - Floating on gradient background */}
       <div className="pt-8 pb-4 px-[25mm]">
         <div className="text-center">
-          <h1 className="font-bold text-3xl mb-3 text-gray-800">{personalDetails.fullName}</h1>
+          <h1 className="font-bold text-3xl mb-3 text-gray-800">
+            {personalDetails.fullName}
+          </h1>
           {/* Summary without title */}
           {prologueSection && (
             <div className="max-w-3xl mx-auto text-sm">
@@ -182,7 +227,9 @@ const ContinuousNarrativeTemplate = ({ resume }: ContinuousNarrativeTemplateProp
           {bodySections.map((section) => (
             <div key={section.id} className="break-inside-avoid mb-6">
               <h2 className="font-bold text-[13px] text-gray-800 border-b-2 border-gray-200 pb-1 mb-3 flex items-center gap-2">
-                {section.schemaId === 'work-experience' && <Briefcase size={14} />}
+                {section.schemaId === 'work-experience' && (
+                  <Briefcase size={14} />
+                )}
                 {section.title}
               </h2>
               <div className="text-gray-600">
@@ -238,4 +285,4 @@ const ContinuousNarrativeTemplate = ({ resume }: ContinuousNarrativeTemplateProp
   );
 };
 
-export default ContinuousNarrativeTemplate; 
+export default ContinuousNarrativeTemplate;

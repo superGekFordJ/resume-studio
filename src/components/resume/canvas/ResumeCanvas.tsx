@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
 import React, { useMemo, forwardRef } from 'react';
-import { cn } from "@/lib/utils";
-import { SchemaRegistry } from "@/lib/schemaRegistry";
-import { transformToRenderableView } from "@/lib/dataTransformer";
-import PrintableResume from "./PrintableResume";
+import { cn } from '@/lib/utils';
+import { SchemaRegistry } from '@/lib/schemaRegistry';
+import { transformToRenderableView } from '@/lib/dataTransformer';
+import PrintableResume from './PrintableResume';
 import { useResumeStore } from '@/stores/resumeStore';
 
 interface ResumeCanvasProps {
@@ -13,21 +13,24 @@ interface ResumeCanvasProps {
 
 const ResumeCanvas = forwardRef<HTMLDivElement, ResumeCanvasProps>(
   ({ className }, ref) => {
-    const resumeData = useResumeStore(state => state.resumeData);
+    const resumeData = useResumeStore((state) => state.resumeData);
     const schemaRegistry = SchemaRegistry.getInstance();
-    const renderableResume = useMemo(() => 
-      transformToRenderableView(resumeData, schemaRegistry), 
+    const renderableResume = useMemo(
+      () => transformToRenderableView(resumeData, schemaRegistry),
       [resumeData, schemaRegistry]
     );
 
     return (
-      <div 
+      <div
         ref={ref}
         id="resume-canvas-printable-area"
         data-template-id={resumeData.templateId}
-        className={cn("a4-canvas printable-area", className)}
+        className={cn('a4-canvas printable-area', className)}
       >
-        <PrintableResume resume={renderableResume} templateId={resumeData.templateId} />
+        <PrintableResume
+          resume={renderableResume}
+          templateId={resumeData.templateId}
+        />
       </div>
     );
   }
@@ -36,5 +39,3 @@ const ResumeCanvas = forwardRef<HTMLDivElement, ResumeCanvasProps>(
 ResumeCanvas.displayName = 'ResumeCanvas';
 
 export default ResumeCanvas;
-
-    

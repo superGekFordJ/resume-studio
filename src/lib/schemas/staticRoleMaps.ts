@@ -111,4 +111,4 @@ export const staticRoleMaps: Record<string, RoleMap> = {
       content: 'description',
     },
   },
-}; 
+};

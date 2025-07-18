@@ -14,10 +14,8 @@ Our initial goal was to have the AI directly populate a dynamic JSON structure b
   "sections": [
     {
       "schemaId": "experience",
-      "items": [
-        { "jobTitle": "...", "company": "..." }
-      ]
-    },
+      "items": [{ "jobTitle": "...", "company": "..." }]
+    }
     // ... other dynamic sections
   ]
 }
@@ -32,16 +30,17 @@ To bypass this platform limitation, we inverted the responsibility. Instead of a
 The end-to-end flow, exemplified by `generateResumeFromContext`, is as follows:
 
 1.  **Dynamic Instruction Generation (`AIDataBridge.buildSchemaInstructions`)**:
-    *   This method queries the `SchemaRegistry` to get all available section schemas.
-    *   It dynamically constructs a detailed, human-readable set of instructions, essentially creating a "JSON template" in plain text. This text explicitly defines the `schemaId` and all required fields for each possible section.
+    - This method queries the `SchemaRegistry` to get all available section schemas.
+    - It dynamically constructs a detailed, human-readable set of instructions, essentially creating a "JSON template" in plain text. This text explicitly defines the `schemaId` and all required fields for each possible section.
 
 2.  **AI Prompting (The Wrapper Request)**:
-    *   The `generateResumeFromContext` flow calls the AI.
-    *   The prompt provides the user's bio, job description, and the dynamically generated `schemaInstructions`.
-    *   Crucially, the prompt instructs the AI to return a **single JSON object** with only one key: `"resumeJson"`.
-    *   The value for this key must be a **JSON-escaped string** that contains the full, complex resume structure.
+    - The `generateResumeFromContext` flow calls the AI.
+    - The prompt provides the user's bio, job description, and the dynamically generated `schemaInstructions`.
+    - Crucially, the prompt instructs the AI to return a **single JSON object** with only one key: `"resumeJson"`.
+    - The value for this key must be a **JSON-escaped string** that contains the full, complex resume structure.
 
     **Example AI Output:**
+
     ```json
     {
       "resumeJson": "{\"sections\":[{\"schemaId\":\"summary\",\"items\":[...]}]}"
@@ -49,14 +48,14 @@ The end-to-end flow, exemplified by `generateResumeFromContext`, is as follows:
     ```
 
 3.  **AI Flow: Parse and Validate**:
-    *   The `generateResumeFromContext` flow receives this simple wrapper object.
-    *   It extracts the `resumeJson` string.
-    *   It performs `JSON.parse()` on the string to turn it back into a JavaScript object.
-    *   It then validates this parsed object against our internal `AIBridgedResumeSchema`. This step is critical for ensuring the AI-generated string conforms to our application's data contract. If validation fails, the flow throws an error.
+    - The `generateResumeFromContext` flow receives this simple wrapper object.
+    - It extracts the `resumeJson` string.
+    - It performs `JSON.parse()` on the string to turn it back into a JavaScript object.
+    - It then validates this parsed object against our internal `AIBridgedResumeSchema`. This step is critical for ensuring the AI-generated string conforms to our application's data contract. If validation fails, the flow throws an error.
 
 4.  **Data Bridge Conversion (`AIDataBridge.toExtendedResumeData`)**:
-    *   The validated, parsed `AIBridgedResume` object is passed to the `AIDataBridge`.
-    *   The data bridge then performs its primary function: converting the AI-friendly format into the application's `ExtendedResumeData` format, creating section IDs, and adding necessary metadata.
+    - The validated, parsed `AIBridgedResume` object is passed to the `AIDataBridge`.
+    - The data bridge then performs its primary function: converting the AI-friendly format into the application's `ExtendedResumeData` format, creating section IDs, and adding necessary metadata.
 
 ## 4. Generalization: Applying the Pattern to Other Flows
 
@@ -69,13 +68,13 @@ Another critical use case is the `batchImproveSection` flow, which asks the AI t
 1.  **The Challenge**: Just like resume generation, the output is a dynamic `AIBridgedSection` object, which would cause the same `400 Bad Request` error if requested directly.
 
 2.  **The Implementation**:
-    *   **Wrapper Schema**: We created `BatchImproveSectionOutputWrapperSchema`, which contains `improvedSectionJson: z.string()` and `improvementSummary: z.string()`.
-    *   **Prompt Instruction**: The `batchImproveSection.prompt` instructs the AI to place the modified section object into the `improvedSectionJson` field as a JSON-escaped string.
-    *   **Flow Logic**: The `batchImproveSectionFlow` receives the wrapper, parses `improvedSectionJson`, validates it against the internal `AIBridgedSectionSchema`, and then returns the structured, validated object.
+    - **Wrapper Schema**: We created `BatchImproveSectionOutputWrapperSchema`, which contains `improvedSectionJson: z.string()` and `improvementSummary: z.string()`.
+    - **Prompt Instruction**: The `batchImproveSection.prompt` instructs the AI to place the modified section object into the `improvedSectionJson` field as a JSON-escaped string.
+    - **Flow Logic**: The `batchImproveSectionFlow` receives the wrapper, parses `improvedSectionJson`, validates it against the internal `AIBridgedSectionSchema`, and then returns the structured, validated object.
 
 ## 5. Architectural Benefits
 
-*   **Reliability**: This pattern completely bypasses the platform's problematic schema validation for dynamic objects, eliminating the `400 Bad Request` errors.
-*   **Decoupling**: The AI's *direct* output schema (e.g., `GeneratedResumeAsStringSchema`) is extremely simple and stable. All the complexity is handled within our own controlled environment (the AI flow and the data bridge).
-*   **Clarity for the AI**: Providing the schema as plain-text instructions inside the prompt is often easier for an LLM to follow than relying on it to perfectly interpret a complex function-calling schema.
-*   **Maintained Principles**: We still adhere to our core principles. The AI Flow remains "pure" (it doesn't know about `ResumeData`), and the `AIDataBridge` is still the sole conversion layer. The `SchemaRegistry` remains the single source of truth for all structures. 
+- **Reliability**: This pattern completely bypasses the platform's problematic schema validation for dynamic objects, eliminating the `400 Bad Request` errors.
+- **Decoupling**: The AI's _direct_ output schema (e.g., `GeneratedResumeAsStringSchema`) is extremely simple and stable. All the complexity is handled within our own controlled environment (the AI flow and the data bridge).
+- **Clarity for the AI**: Providing the schema as plain-text instructions inside the prompt is often easier for an LLM to follow than relying on it to perfectly interpret a complex function-calling schema.
+- **Maintained Principles**: We still adhere to our core principles. The AI Flow remains "pure" (it doesn't know about `ResumeData`), and the `AIDataBridge` is still the sole conversion layer. The `SchemaRegistry` remains the single source of truth for all structures.

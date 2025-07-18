@@ -8,17 +8,21 @@
  * - ReviewResumeOutput - The return type for the reviewResume function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
-import {ReviewResumeInputSchema, ReviewResumeOutputSchema} from '../prompts/schemas';
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
+import {
+  ReviewResumeInputSchema,
+  ReviewResumeOutputSchema,
+} from '../prompts/schemas';
 
 export type ReviewResumeInput = z.infer<typeof ReviewResumeInputSchema>;
 export type ReviewResumeOutput = z.infer<typeof ReviewResumeOutputSchema>;
 
-export async function reviewResume(input: ReviewResumeInput): Promise<ReviewResumeOutput> {
+export async function reviewResume(
+  input: ReviewResumeInput
+): Promise<ReviewResumeOutput> {
   return reviewResumeFlow(input);
 }
-
 
 const reviewResumeFlow = ai.defineFlow(
   {
@@ -26,9 +30,12 @@ const reviewResumeFlow = ai.defineFlow(
     inputSchema: ReviewResumeInputSchema,
     outputSchema: ReviewResumeOutputSchema,
   },
-  async input => {
-    const prompt = ai.prompt<typeof ReviewResumeInputSchema, typeof ReviewResumeOutputSchema>('reviewResume');
-    const {output} = await prompt(input);
+  async (input) => {
+    const prompt = ai.prompt<
+      typeof ReviewResumeInputSchema,
+      typeof ReviewResumeOutputSchema
+    >('reviewResume');
+    const { output } = await prompt(input);
     return output!;
   }
 );

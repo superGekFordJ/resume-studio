@@ -1,20 +1,30 @@
-"use client";
+'use client';
 
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { Combobox } from '@/components/ui/combobox';
-import { FieldSchema, DynamicResumeSection, DynamicSectionItem } from '@/types/schema';
+import {
+  FieldSchema,
+  DynamicResumeSection,
+  DynamicSectionItem,
+} from '@/types/schema';
 import AutocompleteTextarea from '@/components/resume/ui/AutocompleteTextarea';
 
 interface DynamicFieldRendererProps {
   field: FieldSchema;
-  value: any;
-  onChange: (value: any) => void;
+  value: string | string[] | undefined;
+  onChange: (value: string | string[] | undefined) => void;
   // AI-related props
   userJobTitle?: string;
   currentItem?: DynamicSectionItem | { fieldName: string };
@@ -28,7 +38,7 @@ interface DynamicFieldRendererProps {
   // NEW: Item ID for SchemaRegistry context building
   itemId?: string;
   // NEW: SchemaRegistry and IDs for AI operations
-  schemaRegistry?: any; // Using any to avoid circular dependency
+  schemaRegistry?: unknown; // Using any to avoid circular dependency
   sectionId?: string;
   fieldId?: string;
 }
@@ -42,17 +52,14 @@ export default function DynamicFieldRenderer({
   allResumeSections,
   currentSectionId,
   isAutocompleteEnabled = false,
-  onImproveField,
-  isImproving = false,
   className,
   itemId,
-  schemaRegistry,
-  sectionId,
-  fieldId,
 }: DynamicFieldRendererProps) {
   const localFieldId = field.id;
   const isRequired = field.required || false;
-  const aiEnabled = field.aiHints?.autocompleteEnabled !== false && isAutocompleteEnabled;
+  const aiEnabled =
+    field.aiHints?.autocompleteEnabled !== false && isAutocompleteEnabled;
+  const [customInput, setCustomInput] = React.useState('');
 
   const renderField = () => {
     switch (field.type) {
@@ -64,7 +71,7 @@ export default function DynamicFieldRenderer({
           <Input
             id={localFieldId}
             type={field.type === 'text' ? 'text' : field.type}
-            value={value || ''}
+            value={(value as string) || ''}
             onChange={(e) => onChange(e.target.value)}
             placeholder={field.uiProps?.placeholder}
             maxLength={field.uiProps?.maxLength}
@@ -89,7 +96,7 @@ export default function DynamicFieldRenderer({
         if (aiEnabled) {
           return (
             <AutocompleteTextarea
-              value={value || ''}
+              value={(value as string) || ''}
               onValueChange={onChange}
               placeholder={field.uiProps?.placeholder}
               rows={field.uiProps?.rows || 3}
@@ -98,7 +105,6 @@ export default function DynamicFieldRenderer({
               currentItem={currentItem}
               allResumeSections={allResumeSections}
               currentSectionId={currentSectionId}
-              forcedSuggestion={null}
               isAutocompleteEnabledGlobally={isAutocompleteEnabled}
               className={className}
               name={field.id} // Pass field ID as name for context building
@@ -121,9 +127,13 @@ export default function DynamicFieldRenderer({
 
       case 'select':
         return (
-          <Select value={value || ''} onValueChange={onChange}>
+          <Select value={(value as string) || ''} onValueChange={onChange}>
             <SelectTrigger className={className}>
-              <SelectValue placeholder={field.uiProps?.placeholder || `Select ${field.label}`} />
+              <SelectValue
+                placeholder={
+                  field.uiProps?.placeholder || `Select ${field.label}`
+                }
+              />
             </SelectTrigger>
             <SelectContent>
               {field.uiProps?.options?.map((option) => (
@@ -136,17 +146,21 @@ export default function DynamicFieldRenderer({
         );
 
       case 'combobox':
-        const comboboxOptions = (field.uiProps?.options || []).map(option => ({
-          value: option,
-          label: option
-        }));
-        
+        const comboboxOptions = (field.uiProps?.options || []).map(
+          (option) => ({
+            value: option,
+            label: option,
+          })
+        );
+
         return (
           <Combobox
             options={comboboxOptions}
-            value={value || ''}
+            value={(value as string) || ''}
             onValueChange={onChange}
-            placeholder={field.uiProps?.placeholder || `Select or enter ${field.label}`}
+            placeholder={
+              field.uiProps?.placeholder || `Select or enter ${field.label}`
+            }
             searchPlaceholder={`Search ${field.label}...`}
             emptyText={`No ${field.label.toLowerCase()} found.`}
             allowCustomValue={true}
@@ -157,8 +171,7 @@ export default function DynamicFieldRenderer({
       case 'multiselect':
         const selectedValues = Array.isArray(value) ? value : [];
         const availableOptions = field.uiProps?.options || [];
-        const [customInput, setCustomInput] = React.useState('');
-        
+
         return (
           <div className="space-y-2">
             {/* Custom input for adding new values */}
@@ -183,17 +196,23 @@ export default function DynamicFieldRenderer({
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  if (customInput.trim() && !selectedValues.includes(customInput.trim())) {
+                  if (
+                    customInput.trim() &&
+                    !selectedValues.includes(customInput.trim())
+                  ) {
                     onChange([...selectedValues, customInput.trim()]);
                     setCustomInput('');
                   }
                 }}
-                disabled={!customInput.trim() || selectedValues.includes(customInput.trim())}
+                disabled={
+                  !customInput.trim() ||
+                  selectedValues.includes(customInput.trim())
+                }
               >
                 Add
               </Button>
             </div>
-            
+
             {/* Predefined options (if any) */}
             {availableOptions.length > 0 && (
               <Select
@@ -208,7 +227,7 @@ export default function DynamicFieldRenderer({
                 </SelectTrigger>
                 <SelectContent>
                   {availableOptions
-                    .filter(option => !selectedValues.includes(option))
+                    .filter((option) => !selectedValues.includes(option))
                     .map((option) => (
                       <SelectItem key={option} value={option}>
                         {option}
@@ -217,11 +236,15 @@ export default function DynamicFieldRenderer({
                 </SelectContent>
               </Select>
             )}
-            
+
             {selectedValues.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {selectedValues.map((selectedValue, index) => (
-                  <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                  <Badge
+                    key={index}
+                    variant="secondary"
+                    className="flex items-center gap-1"
+                  >
                     {selectedValue}
                     <Button
                       type="button"
@@ -229,7 +252,9 @@ export default function DynamicFieldRenderer({
                       size="sm"
                       className="h-auto p-0 text-muted-foreground hover:text-foreground"
                       onClick={() => {
-                        const newValues = selectedValues.filter((_, i) => i !== index);
+                        const newValues = selectedValues.filter(
+                          (_, i) => i !== index
+                        );
                         onChange(newValues);
                       }}
                     >
@@ -319,12 +344,10 @@ export default function DynamicFieldRenderer({
       {field.validation && (
         <div className="text-xs text-muted-foreground">
           {field.validation.map((rule, index) => (
-            <div key={index}>
-              {rule.message}
-            </div>
+            <div key={index}>{rule.message}</div>
           ))}
         </div>
       )}
     </div>
   );
-} 
+}

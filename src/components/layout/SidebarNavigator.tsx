@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
@@ -15,26 +15,26 @@ export default function SidebarNavigator({
   childrenStructure,
   childrenContent,
 }: SidebarNavigatorProps) {
-  const isEditing = useResumeStore(state => !!state.editingTarget);
-  const setEditingTarget = useResumeStore(state => state.setEditingTarget);
+  const isEditing = useResumeStore((state) => !!state.editingTarget);
+  const setEditingTarget = useResumeStore((state) => state.setEditingTarget);
 
   return (
     <div className="relative w-full h-full overflow-hidden">
       {/* Structure View */}
       <div
         className={cn(
-          "absolute inset-0 transition-transform duration-200 ease-in-out",
-          isEditing ? "-translate-x-full" : "translate-x-0"
+          'absolute inset-0 transition-transform duration-200 ease-in-out',
+          isEditing ? '-translate-x-full' : 'translate-x-0'
         )}
       >
         {childrenStructure}
       </div>
-      
+
       {/* Content View */}
       <div
         className={cn(
-          "absolute inset-0 transition-transform duration-200 ease-in-out",
-          isEditing ? "translate-x-0" : "translate-x-full"
+          'absolute inset-0 transition-transform duration-200 ease-in-out',
+          isEditing ? 'translate-x-0' : 'translate-x-full'
         )}
       >
         {/* Back button header */}
@@ -51,12 +51,12 @@ export default function SidebarNavigator({
             </Button>
           </div>
         )}
-        
+
         {/* Content */}
-        <div className={cn("h-full", isEditing ? "pt-0" : "")}>
+        <div className={cn('h-full', isEditing ? 'pt-0' : '')}>
           {childrenContent}
         </div>
       </div>
     </div>
   );
-} 
+}

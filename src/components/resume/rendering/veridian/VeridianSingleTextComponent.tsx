@@ -1,26 +1,30 @@
-"use client";
+'use client';
 
-import { RenderableSection, RoleMap } from "@/types/schema";
-import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
-import { pickFieldByRole } from "@/lib/roleMapUtils";
+import { RenderableSection, RoleMap } from '@/types/schema';
+import { MarkdownRenderer } from '@/components/ui/markdown-renderer';
+import { pickFieldByRole } from '@/lib/roleMapUtils';
 
 interface VeridianSingleTextComponentProps {
   section: RenderableSection;
   roleMap?: RoleMap;
 }
 
-export const VeridianSingleTextComponent = ({ section, roleMap }: VeridianSingleTextComponentProps) => {
+export const VeridianSingleTextComponent = ({
+  section,
+  roleMap,
+}: VeridianSingleTextComponentProps) => {
   if (!section?.items?.[0]) return null;
 
   const item = section.items[0];
-  const contentField = pickFieldByRole(item, 'description', roleMap) || 
-                      pickFieldByRole(item, 'title', roleMap) ||
-                      item.fields[0];
+  const contentField =
+    pickFieldByRole(item, 'description', roleMap) ||
+    pickFieldByRole(item, 'title', roleMap) ||
+    item.fields[0];
 
   if (!contentField?.value) return null;
 
-  const content = Array.isArray(contentField.value) 
-    ? contentField.value.join('\n') 
+  const content = Array.isArray(contentField.value)
+    ? contentField.value.join('\n')
     : String(contentField.value);
 
   if (contentField.markdownEnabled) {
@@ -36,4 +40,4 @@ export const VeridianSingleTextComponent = ({ section, roleMap }: VeridianSingle
       {content}
     </p>
   );
-}; 
+};

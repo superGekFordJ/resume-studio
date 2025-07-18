@@ -7,16 +7,16 @@
 在开始之前，请务必理解以下几个核心原则：
 
 1.  **Schema 驱动 (Schema-Driven)**:
-    -   **绝对禁止硬编码**。渲染组件**绝不能**通过 `item.fields.find(f => f.key === 'jobTitle')` 这样的方式直接访问数据。
-    -   所有数据都必须通过 `pickFieldByRole(item, 'title', roleMap)` 这样的角色工具函数来获取。`RoleMap` 由模板从 `SchemaRegistry` 获取并向下传递。
+    - **绝对禁止硬编码**。渲染组件**绝不能**通过 `item.fields.find(f => f.key === 'jobTitle')` 这样的方式直接访问数据。
+    - 所有数据都必须通过 `pickFieldByRole(item, 'title', roleMap)` 这样的角色工具函数来获取。`RoleMap` 由模板从 `SchemaRegistry` 获取并向下传递。
 
 2.  **布局与渲染分离 (Layout vs. Rendering)**:
-    -   **模板 (`templates/`) 只负责布局**：决定简历的宏观结构（如双栏、单栏），以及哪个章节 (`section`) 放在哪个位置。
-    -   **原子组件 (`rendering/`) 只负责渲染**：将接收到的数据以特定的样式（如徽章、时间线区块）呈现出来。
+    - **模板 (`templates/`) 只负责布局**：决定简历的宏观结构（如双栏、单栏），以及哪个章节 (`section`) 放在哪个位置。
+    - **原子组件 (`rendering/`) 只负责渲染**：将接收到的数据以特定的样式（如徽章、时间线区块）呈现出来。
 
 3.  **样式隔离与复用 (Styling Isolation & Reuse)**:
-    -   **优先创建专有组件**。如果一个通用组件（如 `BadgeListComponent`）在新模板中需要独特的样式（例如，在深色背景上显示），**不要修改原组件**。
-    -   正确的做法是：在 `src/components/resume/rendering/` 下创建一个以你的模板命名的文件夹（如 `veridian/`），然后复制一份基础组件并进行样式修改。这能确保你的修改不会影响到其他模板。
+    - **优先创建专有组件**。如果一个通用组件（如 `BadgeListComponent`）在新模板中需要独特的样式（例如，在深色背景上显示），**不要修改原组件**。
+    - 正确的做法是：在 `src/components/resume/rendering/` 下创建一个以你的模板命名的文件夹（如 `veridian/`），然后复制一份基础组件并进行样式修改。这能确保你的修改不会影响到其他模板。
 
 ## 复刻步骤
 
@@ -30,12 +30,12 @@
 
 **示例 - `Veridian` 模板的映射方案**:
 
-| Schema (`schemaId`) | 目标区域 | 渲染组件 | 样式说明 |
-| :--- | :--- | :--- | :--- |
-| **`summary`** | 主栏 | `SingleTextComponent` | - |
-| **`experience`** | 主栏 | (模板内自定义渲染) | 需要双行标题和强调色项目符号 |
-| **`certifications`** | 侧边栏 | `AchievementItemComponent` | 需要适配深色背景 |
-| **`skills`** | 侧边栏 | `VeridianBadgeListComponent` | **新建**，适配侧边栏颜色 |
+| Schema (`schemaId`)  | 目标区域 | 渲染组件                     | 样式说明                     |
+| :------------------- | :------- | :--------------------------- | :--------------------------- |
+| **`summary`**        | 主栏     | `SingleTextComponent`        | -                            |
+| **`experience`**     | 主栏     | (模板内自定义渲染)           | 需要双行标题和强调色项目符号 |
+| **`certifications`** | 侧边栏   | `AchievementItemComponent`   | 需要适配深色背景             |
+| **`skills`**         | 侧边栏   | `VeridianBadgeListComponent` | **新建**，适配侧边栏颜色     |
 
 ### 第 2 步：创建模板文件和专有组件
 
@@ -49,9 +49,9 @@
 1.  **构建宏观布局**: 使用 `div` 和 `grid` 或 `flex` 实现你的主栏和侧边栏结构。
 2.  **处理缩放 (可选)**: 如果你的模板设计了固定的像素宽度（如 `Veridian` 的 `816px`），为了让它完美适应 A4 画布，你需要在根元素上应用 `transform: scale(0.97)` 类似的缩放。
 3.  **实现渲染调度函数**:
-    -   创建一个（或多个）`renderSection` 函数。
-    -   函数内部，使用 `switch (section.schemaId)` 来决定调用哪个原子渲染组件。
-    -   **关键**：在调用渲染组件之前，必须先从 `SchemaRegistry` 获取 `roleMap`，并将其作为 `prop` 传递下去。
+    - 创建一个（或多个）`renderSection` 函数。
+    - 函数内部，使用 `switch (section.schemaId)` 来决定调用哪个原子渲染组件。
+    - **关键**：在调用渲染组件之前，必须先从 `SchemaRegistry` 获取 `roleMap`，并将其作为 `prop` 传递下去。
 
     ```typescript
     // 在 YourTemplateName.tsx 中
@@ -77,28 +77,28 @@
 
 1.  **检测求职信**: `const hasCoverLetter = sections.some(s => s.schemaId === 'cover-letter');`
 2.  **条件化布局**:
-    -   如果 `hasCoverLetter` 为 `true`，**必须**隐藏侧边栏的其他简历章节，以确保求职信能独立、完整地显示。
-    -   你可以选择性地将个人信息从主栏移动到侧边栏，以填充空白。
-    -   主栏此时**只应**渲染求职信章节。
-    -   参考 `VeridianSidebarTemplate.tsx` 或 `SapphireSidebarTemplate.tsx` 中的实现。
+    - 如果 `hasCoverLetter` 为 `true`，**必须**隐藏侧边栏的其他简历章节，以确保求职信能独立、完整地显示。
+    - 你可以选择性地将个人信息从主栏移动到侧边栏，以填充空白。
+    - 主栏此时**只应**渲染求职信章节。
+    - 参考 `VeridianSidebarTemplate.tsx` 或 `SapphireSidebarTemplate.tsx` 中的实现。
 
 ### 第 5 步：注册模板与配置样式
 
 1.  **注册模板信息**:
-    -   在 `src/types/resume.ts` 的 `templates` 数组中，添加你的模板信息（`id`, `name`, `imageUrl` 等）。
+    - 在 `src/types/resume.ts` 的 `templates` 数组中，添加你的模板信息（`id`, `name`, `imageUrl` 等）。
 2.  **注册模板组件**:
-    -   在 `src/components/resume/canvas/PrintableResume.tsx` 的 `switch` 语句中，为你的模板 `id` 添加一个 `case`，返回你的模板组件。
+    - 在 `src/components/resume/canvas/PrintableResume.tsx` 的 `switch` 语句中，为你的模板 `id` 添加一个 `case`，返回你的模板组件。
 3.  **配置全局样式 (可选)**:
-    -   **字体**: 如果使用了新字体，通过 `npm install @fontsource/your-font` 安装，并在 `src/app/globals.css` 中 `@import`。
-    -   **全幅渲染**: 如果模板需要移除画布的默认边距，请在 `src/app/globals.css` 中为 `.a4-canvas[data-template-id='your-template-id']` 添加 `padding: 0 !important;` 规则。
+    - **字体**: 如果使用了新字体，通过 `npm install @fontsource/your-font` 安装，并在 `src/app/globals.css` 中 `@import`。
+    - **全幅渲染**: 如果模板需要移除画布的默认边距，请在 `src/app/globals.css` 中为 `.a4-canvas[data-template-id='your-template-id']` 添加 `padding: 0 !important;` 规则。
 
 ## 最终核对清单
 
-- [ ]  模板中没有任何硬编码的字段名 (`item.data.jobTitle`)。
-- [ ]  所有数据都通过 `pickFieldByRole` 获取。
-- [ ]  所有需要特殊样式的组件都已创建为模板专有版本，没有修改任何共享组件。
-- [ ]  求职信的条件渲染逻辑已正确实现。
-- [ ]  模板已在 `PrintableResume.tsx` 和 `types/resume.ts` 中注册。
-- [ ]  新添加的字体或全局样式已在 `globals.css` 中配置。
+- [ ] 模板中没有任何硬编码的字段名 (`item.data.jobTitle`)。
+- [ ] 所有数据都通过 `pickFieldByRole` 获取。
+- [ ] 所有需要特殊样式的组件都已创建为模板专有版本，没有修改任何共享组件。
+- [ ] 求职信的条件渲染逻辑已正确实现。
+- [ ] 模板已在 `PrintableResume.tsx` 和 `types/resume.ts` 中注册。
+- [ ] 新添加的字体或全局样式已在 `globals.css` 中配置。
 
-遵循此指南，你将能够高效、可靠地为我们的应用贡献新的、高质量的简历模板。 
+遵循此指南，你将能够高效、可靠地为我们的应用贡献新的、高质量的简历模板。

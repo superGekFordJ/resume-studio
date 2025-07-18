@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   Dialog,
@@ -7,23 +7,21 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { ThumbsUp, AlertTriangle, Lightbulb } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { ThumbsUp, AlertTriangle, Lightbulb } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useResumeStore } from '@/stores/resumeStore';
 
-interface AIReviewDialogProps {
-  // No props needed anymore
-}
-
-export default function AIReviewDialog({}: AIReviewDialogProps) {
-  const isOpen = useResumeStore(state => state.isReviewDialogOpen);
-  const reviewContent = useResumeStore(state => state.reviewContent);
-  const isLoading = useResumeStore(state => state.isReviewLoading);
-  const setIsReviewDialogOpen = useResumeStore(state => state.setIsReviewDialogOpen);
+export default function AIReviewDialog() {
+  const isOpen = useResumeStore((state) => state.isReviewDialogOpen);
+  const reviewContent = useResumeStore((state) => state.reviewContent);
+  const isLoading = useResumeStore((state) => state.isReviewLoading);
+  const setIsReviewDialogOpen = useResumeStore(
+    (state) => state.setIsReviewDialogOpen
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsReviewDialogOpen}>
@@ -34,7 +32,8 @@ export default function AIReviewDialog({}: AIReviewDialogProps) {
             AI Resume Review
           </DialogTitle>
           <DialogDescription>
-            Here's an AI-powered analysis of your resume with suggestions for improvement.
+            Here&apos;s an AI-powered analysis of your resume with suggestions
+            for improvement.
           </DialogDescription>
         </DialogHeader>
         <div className="flex-1 overflow-y-auto px-6 min-h-0">
@@ -83,7 +82,9 @@ export default function AIReviewDialog({}: AIReviewDialogProps) {
               </div>
             )}
             {!isLoading && !reviewContent && (
-              <p className="text-muted-foreground">No review content available. Please try again.</p>
+              <p className="text-muted-foreground">
+                No review content available. Please try again.
+              </p>
             )}
           </div>
         </div>
@@ -94,5 +95,3 @@ export default function AIReviewDialog({}: AIReviewDialogProps) {
     </Dialog>
   );
 }
-
-    

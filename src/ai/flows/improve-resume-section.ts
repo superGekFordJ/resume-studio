@@ -40,7 +40,7 @@ const improveResumeSectionFlow = ai.defineFlow(
     inputSchema: ImproveResumeSectionInputSchema,
     outputSchema: ImproveResumeSectionOutputSchema,
   },
-  async input => {
+  async (input) => {
     const prompt = ai.prompt<
       typeof ImproveResumeSectionInputSchema,
       typeof ImproveResumeSectionOutputSchema

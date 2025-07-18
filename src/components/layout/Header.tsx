@@ -1,12 +1,20 @@
-import { Button } from "@/components/ui/button";
-import { Download, Sparkles, Printer, ChevronDown, Settings, History, Code } from "lucide-react";
-import Logo from "./Logo";
+import { Button } from '@/components/ui/button';
+import {
+  Download,
+  Sparkles,
+  Printer,
+  ChevronDown,
+  Settings,
+  History,
+  Code,
+} from 'lucide-react';
+import Logo from './Logo';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 import { useResumeStore } from '@/stores/resumeStore';
 import { reviewResume } from '@/ai/flows/review-resume';
 import { schemaRegistry } from '@/lib/schemaRegistry';
@@ -24,12 +32,18 @@ export default function Header({ onExportPdf, onPrint }: HeaderProps) {
   const { toast } = useToast();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isVersionsOpen, setIsVersionsOpen] = useState(false);
-  const resumeData = useResumeStore(state => state.resumeData);
-  const aiConfig = useResumeStore(state => state.aiConfig);
-  const setIsReviewDialogOpen = useResumeStore(state => state.setIsReviewDialogOpen);
-  const setReviewContent = useResumeStore(state => state.setReviewContent);
-  const setIsReviewLoading = useResumeStore(state => state.setIsReviewLoading);
-  const exportCurrentSchema = useResumeStore(state => state.exportCurrentSchema);
+  const resumeData = useResumeStore((state) => state.resumeData);
+  const aiConfig = useResumeStore((state) => state.aiConfig);
+  const setIsReviewDialogOpen = useResumeStore(
+    (state) => state.setIsReviewDialogOpen
+  );
+  const setReviewContent = useResumeStore((state) => state.setReviewContent);
+  const setIsReviewLoading = useResumeStore(
+    (state) => state.setIsReviewLoading
+  );
+  const exportCurrentSchema = useResumeStore(
+    (state) => state.exportCurrentSchema
+  );
 
   const handleReviewResume = async () => {
     setIsReviewLoading(true);
@@ -44,9 +58,16 @@ export default function Header({ onExportPdf, onPrint }: HeaderProps) {
       const result = await reviewResume({ resumeText });
       setReviewContent(result);
     } catch (error) {
-      console.error("AI Review error:", error);
-      toast({ variant: "destructive", title: "Error", description: "Failed to get AI review." });
-      setReviewContent({ overallQuality: "Error fetching review.", suggestions: "Please try again." });
+      console.error('AI Review error:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to get AI review.',
+      });
+      setReviewContent({
+        overallQuality: 'Error fetching review.',
+        suggestions: 'Please try again.',
+      });
     } finally {
       setIsReviewLoading(false);
     }
@@ -63,26 +84,34 @@ export default function Header({ onExportPdf, onPrint }: HeaderProps) {
             </h1>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setIsVersionsOpen(true)}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsVersionsOpen(true)}
+            >
               <History className="mr-2 h-4 w-4" />
               Versions
             </Button>
-            
-            <Button variant="outline" size="sm" onClick={() => setIsSettingsOpen(true)}>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsSettingsOpen(true)}
+            >
               <Settings className="mr-2 h-4 w-4" />
               Settings
             </Button>
-            
+
             <Button variant="outline" size="sm" onClick={handleReviewResume}>
               <Sparkles className="mr-2 h-4 w-4" />
               AI Review
             </Button>
-            
+
             <Button variant="outline" size="sm" onClick={exportCurrentSchema}>
               <Code className="mr-2 h-4 w-4" />
               Export Schema
             </Button>
-            
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="default" size="sm">
@@ -107,12 +136,9 @@ export default function Header({ onExportPdf, onPrint }: HeaderProps) {
           </div>
         </div>
       </header>
-      
-      <SettingsPanel 
-        open={isSettingsOpen}
-        onOpenChange={setIsSettingsOpen}
-      />
-      
+
+      <SettingsPanel open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
+
       <VersionSnapshotDialog
         open={isVersionsOpen}
         onOpenChange={setIsVersionsOpen}
@@ -120,5 +146,3 @@ export default function Header({ onExportPdf, onPrint }: HeaderProps) {
     </>
   );
 }
-
-    
