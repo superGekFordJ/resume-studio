@@ -89,12 +89,13 @@ Built on a **single source of truth** schema system that enables:
 
    Get your API key from [Google AI Studio](https://aistudio.google.com/)
 
+   > [!IMPORTANT]
    > **⚠️ Important Configuration Notes**:
    >
    > - API keys **must** be configured through environment files (`.env.local` or `.env.production`)
    > - UI-based API key configuration is temporarily disabled due to Genkit lifecycle constraints
    > - Currently uses **pre-configured Gemini models only** - no model selection available
-   > - Multi-provider support and flexible model selection coming after AI system refactor
+   > - Multi-provider support and flexible model selection coming after AI system refactor(You could try it by cloning feature/ai-provider-backup branch )
 
 4. **Start the development server**
 
@@ -113,7 +114,8 @@ For the best AI assistance experience, we **strongly recommend** configuring the
 
 2. **Professional Bio**: Add your professional background in Settings. The system will help you format it while protecting sensitive credential information for privacy.
 
-**Why this matters**: All AI features (auto-completion, improvements, reviews, generation) receive these contexts to provide personalized, relevant suggestions tailored to your career goals.
+> [!NOTE]
+> **Why this matters**: All AI features (auto-completion, improvements, reviews, generation) receive these contexts to provide personalized, relevant suggestions tailored to your career goals.
 
 ### 🔒 Privacy Recommendations
 
@@ -222,4 +224,4 @@ See the [LICENSE](LICENSE) file for full details.
 
 ---
 
-**Ready to build your perfect resume?** [Get started now!](#quick-start) 🚀
+**Ready to build your perfect resume?** [Get started now!](#-quick-start) 🚀

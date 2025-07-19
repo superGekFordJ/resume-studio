@@ -1,8 +1,8 @@
 // Schema system for extensible resume data structures
 
-import { AIConfig } from '@/stores/types';
+import type { AIConfig } from '@/stores/types';
 import type { PersonalDetails } from './resume';
-import { type ResumeData } from './resume';
+import type { ResumeData } from './resume';
 
 export interface ValidationRule {
   type: 'required' | 'minLength' | 'maxLength' | 'pattern' | 'custom';

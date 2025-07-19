@@ -15,6 +15,7 @@ import { registerDefaultSchemas } from './schemas/defaultSchemas';
 import { registerDefaultContextBuilders } from './schemas/defaultContextBuilders';
 import { staticRoleMaps } from './schemas/staticRoleMaps'; // Import the static maps
 import { AIConfig } from '@/stores/types';
+import { LRUCache, stableHash } from '@/lib/utils';
 
 // Schema注册中心实现
 export class SchemaRegistry implements ISchemaRegistry {
@@ -26,6 +27,12 @@ export class SchemaRegistry implements ISchemaRegistry {
   // Cache for otherSectionsContext to improve performance.
   // The key is a combination of resume data hash and the excluded section id.
   private otherSectionsContextCache: Map<string, string> = new Map();
+
+  // Builder-level LRU cache for repeated context building calls
+  private builderCache: LRUCache<string, string> = new LRUCache(200);
+
+  // Placeholder token for currently editing fields
+  public static readonly CURRENTLY_EDITING_TOKEN = '[[CURRENTLY_EDITING]]';
 
   private constructor() {
     this.initializeDefaultSchemas();
@@ -91,6 +98,10 @@ export class SchemaRegistry implements ISchemaRegistry {
 
   public clearContextCache(): void {
     this.otherSectionsContextCache.clear();
+    this.builderCache.clear();
+    if (process.env.NEXT_PUBLIC_DEBUG_CACHE === 'true') {
+      console.log('[Cache] All AI context caches cleared.');
+    }
   }
 
   // 初始化默认Schema
@@ -128,8 +139,23 @@ export class SchemaRegistry implements ISchemaRegistry {
     data: ContextBuilderInput,
     allData: ResumeData
   ): string {
+    const cacheKey = `${builderId}:${stableHash(data)}`;
+    const cachedResult = this.builderCache.get(cacheKey);
+
+    if (cachedResult !== undefined) {
+      if (process.env.NEXT_PUBLIC_DEBUG_CACHE === 'true') {
+        console.log(`%c[Cache Hit] Builder: ${builderId}`, 'color: #2e9940');
+      }
+      return cachedResult;
+    }
+
+    if (process.env.NEXT_PUBLIC_DEBUG_CACHE === 'true') {
+      console.log(`%c[Cache Miss] Builder: ${builderId}`, 'color: #c72929');
+    }
     const builder = this.contextBuilders.get(builderId);
-    return builder ? builder(data, allData) : '';
+    const result = builder ? builder(data, allData) : '';
+    this.builderCache.set(cacheKey, result);
+    return result;
   }
 
   // 工具方法
@@ -174,7 +200,6 @@ export class SchemaRegistry implements ISchemaRegistry {
       itemId,
       fieldId,
       inputText,
-      textAfterCursor,
       aiConfig,
     } = payload;
 
@@ -198,15 +223,13 @@ export class SchemaRegistry implements ISchemaRegistry {
 
       let itemContent: unknown = originalItemData?.data || originalItemData;
 
-      // 2. If we have live input text, create a copy of the item data and update the
-      //    field being currently edited. This gives the context builder the most
-      //    up-to-date information for the active field, while preserving all other fields.
+      // 2. If we have live input text, create a copy of the item data and inject the
+      //    placeholder token for the field being edited. This avoids passing partial/raw
+      //    input to builders and signals which field is active.
       if (itemContent && typeof inputText === 'string' && fieldId) {
-        // Here, we combine the text before and after the cursor to represent the full, up-to-date field value
-        const completeInput = inputText + (textAfterCursor || '');
         itemContent = {
           ...itemContent,
-          [fieldId]: completeInput,
+          [fieldId]: SchemaRegistry.CURRENTLY_EDITING_TOKEN,
         };
       }
 
@@ -218,27 +241,38 @@ export class SchemaRegistry implements ISchemaRegistry {
       );
     }
 
-    // 2. Build otherSectionsContext (使用缓存)
-    const currentResumeDataHash = this.generateResumeDataHash(
-      resumeData,
-      sectionId
-    );
-    const cacheKey = this.generateOtherSectionsContextKey(
-      currentResumeDataHash,
-      sectionId
+    // 4. Build otherSectionsContext (using Layer 1 cache)
+    // The key is based on a hash of all resume data *except* the section currently being edited.
+    // This ensures the cache hits when typing within a single section.
+    const relevantDataForOtherSections = {
+      ...resumeData,
+      sections: resumeData.sections.filter((s) => s.id !== sectionId),
+    };
+    const otherSectionsCacheKey = `other-sections:${stableHash(
+      relevantDataForOtherSections
+    )}`;
+
+    let otherSectionsContext = this.otherSectionsContextCache.get(
+      otherSectionsCacheKey
     );
 
-    let otherSectionsContext = '';
-
-    if (this.otherSectionsContextCache.has(cacheKey)) {
-      otherSectionsContext = this.otherSectionsContextCache.get(cacheKey)!;
+    if (otherSectionsContext !== undefined) {
+      if (process.env.NEXT_PUBLIC_DEBUG_CACHE === 'true') {
+        console.log('%c[Cache Hit] Other sections context', 'color: #2e9940');
+      }
     } else {
+      if (process.env.NEXT_PUBLIC_DEBUG_CACHE === 'true') {
+        console.log('%c[Cache Miss] Other sections context', 'color: #c72929');
+      }
       // 缓存未命中，重新构建
       otherSectionsContext = this.buildOtherSectionsContext(
         resumeData,
         sectionId
       );
-      this.otherSectionsContextCache.set(cacheKey, otherSectionsContext);
+      this.otherSectionsContextCache.set(
+        otherSectionsCacheKey,
+        otherSectionsContext
+      );
     }
 
     const result = {
@@ -303,7 +337,10 @@ export class SchemaRegistry implements ISchemaRegistry {
     sectionId: string;
     prompt: string;
     aiConfig?: AIConfig;
-  }): Promise<unknown[]> {
+  }): Promise<{
+    improvedItems: Record<string, unknown>[];
+    improvementSummary: string;
+  }> {
     const section = payload.resumeData.sections.find(
       (s: DynamicResumeSection) => s.id === payload.sectionId
     );
@@ -333,12 +370,20 @@ export class SchemaRegistry implements ISchemaRegistry {
       otherSectionsContext: this.stringifyResumeForReview(payload.resumeData),
     });
 
-    // Return the improved items directly from the result
-    if (result && result.improvedSection && result.improvedSection.items) {
-      return result.improvedSection.items;
+    if (result && result.improvedSection) {
+      return {
+        improvedItems: (result.improvedSection.items ?? []) as Record<
+          string,
+          unknown
+        >[],
+        improvementSummary: result.improvementSummary ?? '',
+      };
     }
 
-    return [];
+    return {
+      improvedItems: [] as Record<string, unknown>[],
+      improvementSummary: '',
+    };
   }
 
   public async reviewResume(resumeData: ResumeData): Promise<unknown> {

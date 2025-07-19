@@ -11,6 +11,7 @@ import { CertificationItemComponent } from '../rendering/CertificationItemCompon
 import { AdvancedSkillsComponent } from '../rendering/AdvancedSkillsComponent';
 import { CoverLetterComponent } from '../rendering/CoverLetterComponent';
 import { SchemaRegistry } from '@/lib/schemaRegistry';
+import Image from 'next/image';
 
 interface DefaultTemplateProps {
   resume: RenderableResume;
@@ -97,10 +98,12 @@ const DefaultTemplate = ({ resume }: DefaultTemplateProps) => {
         {/* Avatar */}
         {personalDetails.avatar && (
           <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-primary/20 flex-shrink-0">
-            <img
+            <Image
               src={personalDetails.avatar}
               alt={personalDetails.fullName}
               className="w-full h-full object-cover"
+              width={64}
+              height={64}
             />
           </div>
         )}

@@ -202,12 +202,6 @@ export const createAIActions: StateCreator<
     });
 
     try {
-      const { AIDataBridge } = await import('@/lib/aiDataBridge');
-      const { SchemaRegistry } = await import('@/lib/schemaRegistry');
-      const { batchImproveSection } = await import(
-        '@/ai/flows/batch-improve-section'
-      );
-
       const schemaRegistry = SchemaRegistry.getInstance();
 
       // Check if batch improvement is supported
@@ -218,30 +212,23 @@ export const createAIActions: StateCreator<
         return;
       }
 
-      // Convert section to AI-friendly format
-      const aiSection = AIDataBridge.fromSection(section, schemaRegistry);
+      // Delegate the heavy lifting to SchemaRegistry (single source of truth)
+      const { improvedItems, improvementSummary } =
+        await schemaRegistry.batchImproveSection({
+          resumeData: state.resumeData,
+          sectionId,
+          prompt,
+          aiConfig: state.aiConfig,
+        });
 
-      // Call AI flow
-      const result = await batchImproveSection({
-        section: aiSection,
-        improvementGoals: [prompt],
-        userJobTitle: state.resumeData.personalDetails?.jobTitle,
-        userJobInfo: state.aiConfig.targetJobInfo,
-        userBio: state.aiConfig.userBio,
-        otherSectionsContext: schemaRegistry.stringifyResumeForReview(
-          state.resumeData
-        ),
-      });
-
-      if (result && result.improvedSection) {
-        // Update review state with improved items
+      if (improvedItems.length > 0) {
         set((currentState) => {
           if (!currentState.batchImprovementReview) return currentState;
           return {
             batchImprovementReview: {
               ...currentState.batchImprovementReview,
-              improvedItems: result.improvedSection.items,
-              improvementSummary: result.improvementSummary,
+              improvedItems: improvedItems,
+              improvementSummary: improvementSummary,
               isLoading: false,
             },
           };
