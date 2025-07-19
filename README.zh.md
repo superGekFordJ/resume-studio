@@ -6,7 +6,9 @@ _中文说明 | [English](./README.md)_
 
 **🛡️ 隐私优先设计**: Resume Studio 以隐私为核心原则构建。您的数据通过本地存储保留在您的设备上，您可以完全控制自己的信息。
 
-![Resume Studio 演示](./demo/diff-view-of-batch-improvement.png)
+<p align="center">
+   <img src="./demo/diff-view-of-batch-improvement.png" alt="Resume Studio Demo" width="800">
+</p>
 
 ## ✨ 核心功能
 
@@ -24,16 +26,16 @@ _中文说明 | [English](./README.md)_
 
 Resume Studio 包含多个专业设计的模板：
 
-| 模板                   | 预览                                                            | 描述                             |
-| ---------------------- | --------------------------------------------------------------- | -------------------------------- |
-| **经典专业版**         | ![Classic](./public/images/templates/classic.png)               | 传统单列布局                     |
-| **专业经典版（双列）** | ![Pro Classic](./public/images/templates/pro-classic.png)       | 专业双列设计                     |
-| **蓝宝石侧边栏**       | ![Sapphire](./public/images/templates/sapphire-sidebar.png)     | 优雅的深色侧边栏布局             |
-| **翠绿侧边栏**         | ![Veridian](./public/images/templates/veridian-sidebar.png)     | 经典设计配茶绿色侧边栏和衬线字体 |
-| **现代简约版**         | ![Minimalist](./public/images/templates/minimalist.png)         | 简洁现代的样式                   |
-| **创意双列版**         | ![Creative](./public/images/templates/basic-two-column.png)     | 创新设计，视觉层次感强           |
-| **连续叙述版**         | ![Narrative](./public/images/templates/continous-narrative.png) | 杂志风格的连续流动布局           |
-| **并行模块版**         | ![Parallel](./public/images/templates/prallel-module.png)       | 功能独立的并行列布局             |
+| 模板                   | 预览                                                                                      | 描述                             |
+| ---------------------- | ----------------------------------------------------------------------------------------- | -------------------------------- |
+| **经典专业版**         | <img src="./public/images/templates/classic.png" alt="Classic" width="300">               | 传统单列布局                     |
+| **专业经典版（双列）** | <img src="./public/images/templates/pro-classic.png" alt="Pro Classic" width="300">       | 专业双列设计                     |
+| **蓝宝石侧边栏**       | <img src="./public/images/templates/sapphire-sidebar.png" alt="Sapphire" width="300">     | 优雅的深色侧边栏布局             |
+| **翠绿侧边栏**         | <img src="./public/images/templates/veridian-sidebar.png" alt="Veridian" width="300">     | 经典设计配茶绿色侧边栏和衬线字体 |
+| **现代简约版**         | <img src="./public/images/templates/minimalist.png" alt="Minimalist" width="300">         | 简洁现代的样式                   |
+| **创意双列版**         | <img src="./public/images/templates/basic-two-column.png" alt="Creative" width="300">     | 创新设计，视觉层次感强           |
+| **连续叙述版**         | <img src="./public/images/templates/continous-narrative.png" alt="Narrative" width="300"> | 杂志风格的连续流动布局           |
+| **并行模块版**         | <img src="./public/images/templates/prallel-module.png" alt="Parallel" width="300">       | 功能独立的并行列布局             |
 
 ### 🏗️ Schema 驱动架构
 

@@ -126,15 +126,11 @@ export default function AutocompleteTextarea({
       | KeyboardEvent<HTMLDivElement>
   ) => {
     // Handle regular inline suggestions with Tab key
-    // Ensure that event.key exists before accessing it
-    if (event.key && event.key === 'Tab') {
-      // Only apply this logic if the event originated from a textarea
-      if (event.target instanceof HTMLTextAreaElement) {
-        suggestionJustAccepted.current = true;
-        console.log(
-          `[${new Date().toISOString()}] --- AutocompleteTextarea: Tab pressed for INLINE suggestion. Setting block flag.`
-        );
-      }
+    if (event.key === 'Tab') {
+      suggestionJustAccepted.current = true;
+      console.log(
+        `[${new Date().toISOString()}] --- AutocompleteTextarea: Tab pressed for INLINE suggestion. Setting block flag.`
+      );
     }
   };
 

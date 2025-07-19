@@ -31,7 +31,7 @@ export const initialPersonalDetails: PersonalDetails = {
   linkedin: 'linkedin.com/in/yourprofile',
   github: 'github.com/yourusername',
   portfolio: 'yourportfolio.com',
-  avatar: 'https://placehold.co/200x283.png',
+  avatar: '/avatar_placeholder.png',
 };
 
 export const initialResumeData: ResumeData = {

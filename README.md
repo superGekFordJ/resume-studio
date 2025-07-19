@@ -6,7 +6,9 @@ An intelligent, schema-driven resume builder powered by AI. Create, optimize, an
 
 **🛡️ Privacy-First Design**: Resume Studio is built with privacy as a core principle. Your data stays on your device with local storage, and you maintain full control over your information.
 
-![Resume Studio Demo](./demo/diff-view-of-batch-improvement.png)
+<p align="center">
+   <img src="./demo/diff-view-of-batch-improvement.png" alt="Resume Studio Demo" width="800">
+</p>
 
 ## ✨ Key Features
 
@@ -24,16 +26,16 @@ An intelligent, schema-driven resume builder powered by AI. Create, optimize, an
 
 Resume Studio includes several professionally designed templates:
 
-| Template                 | Preview                                                         | Description                                      |
-| ------------------------ | --------------------------------------------------------------- | ------------------------------------------------ |
-| **Classic Professional** | ![Classic](./public/images/templates/classic.png)               | Traditional single-column layout                 |
-| **Pro Classic (2-Col)**  | ![Pro Classic](./public/images/templates/pro-classic.png)       | Professional two-column design                   |
-| **Sapphire Sidebar**     | ![Sapphire](./public/images/templates/sapphire-sidebar.png)     | Elegant layout with dark sidebar                 |
-| **Veridian Sidebar**     | ![Veridian](./public/images/templates/veridian-sidebar.png)     | Classic design with teal sidebar and serif fonts |
-| **Modern Minimalist**    | ![Minimalist](./public/images/templates/minimalist.png)         | Clean, contemporary styling                      |
-| **Creative Two-Column**  | ![Creative](./public/images/templates/basic-two-column.png)     | Innovative design with enhanced visual hierarchy |
-| **Continuous Narrative** | ![Narrative](./public/images/templates/continous-narrative.png) | Magazine-style continuous flow layout            |
-| **Parallel Modular**     | ![Parallel](./public/images/templates/prallel-module.png)       | Functionally distinct parallel columns           |
+| Template                 | Preview                                                                                   | Description                                      |
+| ------------------------ | ----------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| **Classic Professional** | <img src="./public/images/templates/classic.png" alt="Classic" width="300">               | Traditional single-column layout                 |
+| **Pro Classic (2-Col)**  | <img src="./public/images/templates/pro-classic.png" alt="Pro Classic" width="300">       | Professional two-column design                   |
+| **Sapphire Sidebar**     | <img src="./public/images/templates/sapphire-sidebar.png" alt="Sapphire" width="300">     | Elegant layout with dark sidebar                 |
+| **Veridian Sidebar**     | <img src="./public/images/templates/veridian-sidebar.png" alt="Veridian" width="300">     | Classic design with teal sidebar and serif fonts |
+| **Modern Minimalist**    | <img src="./public/images/templates/minimalist.png" alt="Minimalist" width="300">         | Clean, contemporary styling                      |
+| **Creative Two-Column**  | <img src="./public/images/templates/basic-two-column.png" alt="Creative" width="300">     | Innovative design with enhanced visual hierarchy |
+| **Continuous Narrative** | <img src="./public/images/templates/continous-narrative.png" alt="Narrative" width="300"> | Magazine-style continuous flow layout            |
+| **Parallel Modular**     | <img src="./public/images/templates/prallel-module.png" alt="Parallel" width="300">       | Functionally distinct parallel columns           |
 
 ### 🏗️ Schema-Driven Architecture
 
