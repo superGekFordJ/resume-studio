@@ -66,7 +66,7 @@ export const ProClassicMarkdownRenderer = ({
 
   const customComponents = {
     // Override list rendering to ensure proper structure
-    ul: ({ children, ...props }: { children: React.ReactNode }) => (
+    ul: ({ children, ...props }: React.ComponentPropsWithoutRef<'ul'>) => (
       <ul
         {...props}
         style={{
@@ -79,7 +79,7 @@ export const ProClassicMarkdownRenderer = ({
         {children}
       </ul>
     ),
-    ol: ({ children, ...props }: { children: React.ReactNode }) => (
+    ol: ({ children, ...props }: React.ComponentPropsWithoutRef<'ol'>) => (
       <ol
         {...props}
         style={{
@@ -92,7 +92,7 @@ export const ProClassicMarkdownRenderer = ({
         {children}
       </ol>
     ),
-    li: ({ children, ...props }: { children: React.ReactNode }) => (
+    li: ({ children, ...props }: React.ComponentPropsWithoutRef<'li'>) => (
       <li
         {...props}
         style={{
@@ -106,7 +106,7 @@ export const ProClassicMarkdownRenderer = ({
       </li>
     ),
     // Handle inline rendering
-    p: ({ children }: { children: React.ReactNode }) =>
+    p: ({ children }: React.ComponentPropsWithoutRef<'p'>) =>
       inline ? <span>{children}</span> : <p>{children}</p>,
   };
 

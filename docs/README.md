@@ -181,14 +181,8 @@ GOOGLE_AI_API_KEY=your_api_key_here
 ### 构建和部署
 
 ```bash
-npm run build
-npm run start
-```
-
-### Firebase 部署
-
-```bash
-firebase deploy
+pnpm build
+pnpm start
 ```
 
 ## 🤝 贡献指南
@@ -222,10 +216,6 @@ firebase deploy
 2. 搜索已有的 Issues
 3. 创建新的 Issue 或 Discussion
 4. 联系维护团队
-
-## 📄 许可证
-
-本项目采用 MIT 许可证，详见 LICENSE 文件。
 
 ---
 

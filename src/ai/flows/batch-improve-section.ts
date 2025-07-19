@@ -66,7 +66,7 @@ const batchImproveSectionFlow = ai.defineFlow(
       // Parse the JSON string from the wrapper
       const parsedSection = JSON.parse(wrappedOutput.improvedSectionJson);
 
-      // Validate the parsed object against our internal schema
+      // safely parsed validated object against our internal schema
       const validatedSection = AIBridgedSectionSchema.parse(parsedSection);
 
       // Return the final output matching the flow's expected schema

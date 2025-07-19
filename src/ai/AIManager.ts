@@ -1,5 +1,5 @@
 import { genkit } from 'genkit';
-import { GenkitPlugin } from 'genkit/plugin';
+import type { GenkitPlugin } from 'genkit/plugin';
 import { googleAI } from '@genkit-ai/googleai';
 // import { vertexAI } from '@genkit-ai/vertexai';
 import type { AIConfig } from '@/stores/types';

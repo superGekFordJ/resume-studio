@@ -508,6 +508,15 @@ interface ResumeActions {
 - **Key Features**: Auto-completion, section improvement, resume review
 - **Implementation**: Server-side AI flows using Genkit with memoized AIManager
 
+### AI Context Building with Caching (Updated 2025-07-20)
+
+The application now features a sophisticated, two-layer caching system to optimize AI context building, dramatically improving performance during text editing.
+
+This system uses a combination of coarse-grained caching for the overall context and fine-grained, builder-level caching for its constituent parts. It also enhances the context by using a placeholder for the field currently being edited, providing clearer instructions to the LLM.
+
+For a detailed explanation of the caching strategy, placeholder logic, and how to enable debug logs, please refer to the dedicated documentation:
+**[-> AI Context Building: A Deep Dive (V3)](./ai/ai-context-building.md)**
+
 ### AI Provider Architecture (Updated 2025-06-23)
 
 The application now features a sophisticated AI provider system:
