@@ -1,6 +1,11 @@
-# Resume Studio
+<div align="center">
+  <h1>Resume Studio</h1>
 
-_[中文说明](./README.zh.md) | English_
+<p>
+  <a href="./README.zh.md">中文说明</a> | English
+</p>
+
+</div>
 
 An intelligent, schema-driven resume builder powered by AI. Create, optimize, and customize professional resumes with advanced AI assistance features including auto-completion, content improvement, and comprehensive review capabilities.
 
@@ -66,14 +71,14 @@ Built on a **single source of truth** schema system that enables:
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/superGekFordJ/Resume-studio.git
-   cd Resume-studio
+   git clone https://github.com/superGekFordJ/resume-studio.git
+   cd resume-studio
    ```
 
 2. **Install dependencies**
 
    ```bash
-   # Using pnpm as our package manager
+   # We recommend using pnpm as our package manager
    pnpm install
    ```
 

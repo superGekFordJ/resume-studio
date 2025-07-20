@@ -1,6 +1,12 @@
-# Resume Studio
+<div align="center">
 
-_中文说明 | [English](./README.md)_
+<h1>Resume Studio</h1>
+
+<p>
+  <a href="./README.md">English</a> | 中文
+</p>
+
+</div>
 
 一个由 AI 驱动的智能简历构建器，采用 Schema 驱动架构。支持创建、优化和自定义专业简历，拥有自动补全、内容改进和全面评审等先进的 AI 辅助功能。
 
@@ -66,14 +72,14 @@ Resume Studio 包含多个专业设计的模板：
 1. **克隆仓库**
 
    ```bash
-   git clone https://github.com/superGekFordJ/Resume-studio.git
-   cd Resume-studio
+   git clone https://github.com/superGekFordJ/resume-studio.git
+   cd resume-studio
    ```
 
 2. **安装依赖**
 
    ```bash
-   # 使用 pnpm 作为包管理器
+   # 推荐使用 pnpm 作为包管理器
    pnpm install
    ```
 
