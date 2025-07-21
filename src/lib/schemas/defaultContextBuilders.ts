@@ -58,7 +58,7 @@ export function registerDefaultContextBuilders(registry: ISchemaRegistry) {
       company?: string;
       description?: string;
     };
-    return `jobTitle: ${renderField(itemData.jobTitle, 'Untitled Job')}\ncompany: ${renderField(itemData.company, 'Unnamed Company')}\ndescription: ${renderField(itemData.description, '')}`;
+    return `jobTitle: ${renderField(itemData.jobTitle, 'Untitled Job')}|company: ${renderField(itemData.company, 'Unnamed Company')}\ndescription: ${renderField(itemData.description, '')}`;
   });
 
   registry.registerContextBuilder('experience-item', (d) => {
@@ -67,7 +67,7 @@ export function registerDefaultContextBuilders(registry: ISchemaRegistry) {
       company?: string;
       description?: string;
     };
-    return `jobTitle: ${renderField(itemData.jobTitle, 'Untitled Job')}\ncompany: ${renderField(itemData.company, 'Unnamed Company')}\ndescription: ${renderField(itemData.description, '')}`;
+    return `jobTitle: ${renderField(itemData.jobTitle, 'Untitled Job')}|company: ${renderField(itemData.company, 'Unnamed Company')}\ndescription: ${renderField(itemData.description, '')}`;
   });
 
   registry.registerContextBuilder('experience-summary', (data, allData) => {
@@ -206,7 +206,7 @@ export function registerDefaultContextBuilders(registry: ISchemaRegistry) {
     const proficiency = itemData.proficiency
       ? ` (${renderField(itemData.proficiency)})`
       : '';
-    return `${renderField(itemData.category, 'Uncategorized')}: ${renderField(itemData.skills, '')}${proficiency}`;
+    return `\n- ${renderField(itemData.category, 'Uncategorized')}: ${renderField(itemData.skills, '')}${proficiency}`;
   });
 
   // Projects context builders

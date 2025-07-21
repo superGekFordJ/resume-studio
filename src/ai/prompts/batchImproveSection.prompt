@@ -20,19 +20,19 @@ output:
 You are an expert resume writer helping to improve an entire resume section comprehensively.
 
 {{#if schemaInstructions}}
-**Schema Definition:**
+<|Schema Definition|>
 Your response must strictly follow this schema definition for the section. Pay close attention to data types, especially for fields that require an array of strings.
 {{{schemaInstructions}}}
 {{/if}}
 
-**Instructions:**
+<|Instructions|>
 1. Comprehensively improve the section data below, considering all items and fields together for consistency and ensuring alignment with the specified improvement goals.
 2. Follow these specific guidelines for this section type:
 {{getSectionImprovementGuidelines section.schemaId}}
 3. Maintain a professional tone and ensure the final output is polished and error-free.
 4. Adhere strictly to the JSON structure and data types defined in the **Schema Definition** above. The number of items and all field keys in the output must exactly match the input.
 
-**CRITICAL OUTPUT FORMAT:**
+<|CRITICAL OUTPUT FORMAT|>
 Return the improved section as a JSON-escaped string in the 'improvedSectionJson' field. The JSON object inside the string must have this structure and strictly follow the types defined in the **Schema Definition** section:
 {
   "schemaId": "<same schemaId as input>",
@@ -44,12 +44,18 @@ Return the improved section as a JSON-escaped string in the 'improvedSectionJson
 
 The 'improvementSummary' field should contain a plain text summary of the changes made. 
 {{role "user"}}
-**Section Type:** {{section.schemaId}}
-{{#if userJobTitle}}**Target Role:** {{userJobTitle}}{{/if}}
-{{#if userJobInfo}}**Target Job Info:** {{userJobInfo}}{{/if}}
-{{#if userBio}}**User Bio:** {{userBio}}{{/if}}
+{{#if userJobTitle}}Target Role: {{userJobTitle}}{{/if}}
+{{#if userJobInfo}}<|Target Job Info|>
+{{userJobInfo}}{{/if}}
+{{#if userBio}}<|User Bio|>
+{{userBio}}{{/if}}
 
-**Current Section Data:**
+{{#if otherSectionsContext}}
+<|Context from Other Resume Sections|>
+{{otherSectionsContext}}
+{{/if}}
+
+<|Current Section Data|>
 Schema ID: {{section.schemaId}}
 Items:
 {{#each section.items}}
@@ -59,12 +65,7 @@ Item {{@index}}:
 {{/each}}
 {{/each}}
 
-**Improvement Goals:**
+<|Improvement Goals|>
 {{#each improvementGoals}}
 - {{this}}
 {{/each}}
-
-{{#if otherSectionsContext}}
-**Context from Other Resume Sections:**
-{{otherSectionsContext}}
-{{/if}}

@@ -40,12 +40,8 @@ Your response MUST be a single JSON object with one key: "resumeJson". The value
 - For each section you include, use the exact `schemaId` specified.
 - Populate each section's `items` array with objects that follow the field structure defined for that `schemaId`.
 
-**User's Professional Bio / Old Resume Content:**
----
+<|User's Professional Bio / Old Resume Content|>
 {{{bio}}}
----
 
-**Target Job Description:**
----
+<|Target Job Description|>
 {{{jobDescription}}}
---- 

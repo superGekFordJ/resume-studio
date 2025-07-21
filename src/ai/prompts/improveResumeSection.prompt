@@ -28,33 +28,50 @@ You are an expert resume writer. Your task is to rewrite a specific field from a
 {{#if context.userJobInfo}}Target job info: {{context.userJobInfo}}{{/if}}
 {{#if context.userBio}}User Bio: {{context.userBio}}{{/if}}
 
-<Other sections in resume>
+<|Other sections in resume|>
 {{context.otherSectionsContext}}
-</Other sections in resume>
 
-Guidelines for improvement:
+<|Guidelines for field improvement|>
 {{#if (eq sectionType 'experience')}}
-- For experience sections: Add quantifiable results, use strong action verbs, highlight impact and achievements
-{{/if}}
-{{#if (eq sectionType 'skills')}}
-- For skills sections: Organize logically, include relevant technologies, consider current market trends
-{{/if}}
-{{#if (eq sectionType 'education')}}
-- For education sections: Include relevant coursework, projects, achievements, and GPA if strong
+- **Goal:** Make the content more impactful and results-oriented.
+- **Action:** Rewrite descriptions to include quantifiable results (e.g., "increased sales by 20%"), use strong action verbs (e.g., "Led," "Architected," "Implemented"), and focus on achievements over duties. Ensure job titles and company names are formal.
 {{/if}}
 {{#if (eq sectionType 'summary')}}
-- For summary sections: Create compelling, concise statements that highlight unique value proposition
+- **Goal:** Create a compelling, concise statement that highlights unique value.
+- **Action:** Rewrite to be a powerful opening statement. Integrate keywords from the target job description. Focus on 2-3 key qualifications and expertise areas.
+{{/if}}
+{{#if (eq sectionType 'skills')}}
+- **Goal:** Make the skill representation more descriptive and professional.
+- **Action:** Rewrite to be more specific. If it's a single skill, expand on it with related technologies or a proficiency level (e.g., rewrite "JavaScript" to "JavaScript (ES6+), React, Node.js").
+{{/if}}
+{{#if (eq sectionType 'education')}}
+- **Goal:** Highlight academic achievements relevant to the job.
+- **Action:** Rewrite to include relevant coursework, academic projects, honors, or a strong GPA. Ensure degree and institution names are written out fully and formally.
 {{/if}}
 {{#if (eq sectionType 'projects')}}
-- For projects sections: Include relevant technologies, outcomes, and impact
+- **Goal:** Showcase technical skills and project impact.
+- **Action:** Rewrite descriptions to focus on outcomes and impact. Mention key technologies used and quantify results where possible (e.g., "built a website" becomes "Developed and launched a responsive e-commerce site using Next.js, resulting in a 30% increase in user engagement").
 {{/if}}
 {{#if (eq sectionType 'cover-letter')}}
-- For cover letter sections: Tailor the content directly to the `Target Role` and `Job Info`.
+- **Goal:** Directly connect the user's experience to the company's needs.
+- **Action:** Rewrite the text to be highly tailored to the `Target Role` and `Job Info`, clearly articulating how the user's skills solve a problem for the employer.
 {{/if}}
-- Always maintain professional tone and proper formatting
-- Ensure content is ATS-friendly with relevant keywords
+{{#if (eq sectionType 'certifications')}}
+- **Goal:** Present certifications clearly and professionally.
+- **Action:** Rewrite to ensure the full, official name of the certification is used, and include the issuing organization (e.g., "PMP" becomes "Project Management Professional (PMP) from PMI").
+{{/if}}
+{{#if (eq sectionType 'volunteer')}}
+- **Goal:** Highlight transferable skills from volunteer experience.
+- **Action:** Rewrite the description to focus on results and skills that are relevant to the target job (e.g., "helped at an event" becomes "Coordinated a fundraising event for 100+ attendees, managing 10 volunteers").
+{{/if}}
+{{#if (eq sectionType 'customText')}}
+- **Goal:** Improve clarity, professionalism, and impact.
+- **Action:** Rewrite the text to be more concise and professional, while maintaining the original intent. Correct any grammatical errors or awkward phrasing.
+{{/if}}
+- Always maintain professional tone and proper formatting.
+- Ensure content is ATS-friendly with relevant keywords.
 
-Respond only with the improved resume section content. Ensure it's well-written and directly addresses the user's prompt. 
+Respond only with the improved resume field content. Ensure it's well-written and directly addresses the user's prompt. 
 
 Rewrite the following resume field content based on the user's prompt provided. Adhere to any instructions within the prompt.
 {{#if sectionType}}Section type: {{sectionType}}{{/if}}
@@ -62,7 +79,7 @@ Rewrite the following resume field content based on the user's prompt provided. 
 Current item being improved(related to the field you need to improve):
 {{context.currentItemContext}}{{/if}}
 
-**Original resume field content to improve:**
+<|Original resume field content to improve|>
 {{{resumeSection}}}
 {{role "user"}}
 {{{prompt}}}

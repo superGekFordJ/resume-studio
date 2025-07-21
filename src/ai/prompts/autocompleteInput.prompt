@@ -70,16 +70,18 @@ Guidelines for Prediction and Enhancement by Current Section Type:
 Respond with the insertion text only.
 
 {{role "user"}}
-**My Context:**
-{{#if context.userJobTitle}}- Target Role: {{context.userJobTitle}}{{/if}}
-{{#if context.userJobInfo}}- Job Info: {{context.userJobInfo}}{{/if}}
-{{#if context.userBio}}- My Bio: {{context.userBio}}{{/if}}
+<|My Context|>
+{{#if context.userJobTitle}}Target Role: {{context.userJobTitle}}{{/if}}
+{{#if context.userJobInfo}}<|Job Info|>
+{{context.userJobInfo}}{{/if}}
+{{#if context.userBio}}<|My Bio|>
+{{context.userBio}}{{/if}}
 
-**Other sections in my resume:**
+<|Other sections in my resume|>
 {{context.otherSectionsContext}}
 
-**I'm currently editing the `{{sectionType}}` section:**
+<|I'm currently editing the `{{sectionType}}` section|>
 {{context.currentItemContext}}
 
-**Here is the text I'm writing:**
+<|Here is the text I'm writing|>
 {{{inputText}}}<CURSOR>{{{textAfterCursor}}}
