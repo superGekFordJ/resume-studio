@@ -37,6 +37,7 @@ export const useResumeStore = create<ResumeState & ResumeActions>()(
       versionSnapshots: [],
       isGeneratingSnapshot: false,
       isGeneratingCoverLetter: false,
+      isExtractingJobInfo: false,
 
       // Actions from slices
       ...createDataActions(set, get, api),

@@ -53,6 +53,7 @@ export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
   const {
     aiConfig,
     isGeneratingSnapshot,
+    isExtractingJobInfo,
     updateAIConfig,
     extractJobInfoFromImage,
     updateUserBioFromFile,
@@ -224,6 +225,7 @@ export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
                 value={aiConfig.targetJobInfo || ''}
                 onChange={handleTargetJobInfoChange}
                 onImageUpload={handleImageFile}
+                isLoading={isExtractingJobInfo}
                 rows={4}
               />
               <p className="text-sm text-muted-foreground">

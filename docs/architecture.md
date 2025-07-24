@@ -334,6 +334,14 @@ interface ResumeState {
   aiPrompt: string; // 通用AI提示词
   aiConfig: AIConfig;
 
+  // AI 操作Loading状态 (Updated 2025-07-25)
+  isExtractingJobInfo: boolean; // 图片职位信息提取
+  isGeneratingSnapshot: boolean; // 简历快照生成
+  isGeneratingCoverLetter: boolean; // 求职信生成
+
+  // 版本快照管理
+  versionSnapshots: VersionSnapshot[];
+
   // 已移除: 旧的强制建议流程 (v2)
   // SingleFieldImproveDialog.tsx 已删除
   // 相关 store 状态已清理
@@ -502,6 +510,16 @@ interface ResumeActions {
 - **错误处理**: 不暴露敏感信息的错误处理
 - **CORS**: 适当的跨域资源共享配置
 
+## 错误处理和加载状态 (Updated 2025-07-25)
+
+应用程序采用了一套统一的机制来处理异步操作（尤其是AI交互）的加载状态和潜在错误，以确保流畅和可预测的用户体验。
+
+- **集中式状态管理**: 所有异步操作的加载状态（如 `isExtractingJobInfo`, `isGeneratingSnapshot`）都在 `resumeStore` 中进行管理。这使得UI组件可以轻松订阅这些状态并显示加载指示器（如spinners）或禁用相关控件。
+
+- **统一的错误反馈**: 我们创建了一个中心化的工具函数 `mapErrorToToast` (`src/lib/utils.ts`)，它将来自后端的各种技术性错误（如HTTP状态码或Genkit错误代码）转换为对用户友好的、可操作的Toast通知。
+
+- **可靠的工作流程**: 在 `aiActions.ts` 中，每个异步Action都遵循 `try...catch...finally` 模式。`try` 块执行核心逻辑，`catch` 块使用 `mapErrorToToast` 来报告错误，而 `finally` 块确保加载状态在操作结束后（无论成功或失败）都被重置为 `false`，从而避免了UI卡在加载状态。
+
 ## AI Services
 
 - **Purpose**: Provide intelligent assistance for resume writing
@@ -541,89 +559,6 @@ The application now features a sophisticated AI provider system:
    - Google AI (Gemini) - fully implemented
    - Ollama (local) - prepared for integration
    - Anthropic (Claude) - prepared for integration
-
-## Schema-Driven Architecture (Updated 2025-06-19)
-
-### Current State
-
-The application has successfully transitioned to a pure Schema-driven architecture where:
-
-1. **SchemaRegistry as Single Source of Truth**
-   - All section structures defined in schemas
-   - All AI context building centralized
-   - All business logic contained in the registry
-
-2. **Pure UI Components**
-   - `SectionEditor` no longer contains type-specific rendering logic
-   - All fields rendered through `DynamicFieldRenderer`
-   - UI components are "dumb" renderers driven by schemas
-
-3. **Unified AI Service Layer**
-   - All AI operations go through `SchemaRegistry` methods:
-     - `improveField()` - Field improvement
-     - `getAutocomplete()` - Auto-completion
-     - `batchImproveSection()` - Batch improvements
-     - `reviewResume()` - Full resume review
-   - No direct AI Flow calls from UI components
-
-4. **Proven Extensibility**
-   - New section types (e.g., "Certifications") can be added by only:
-     - Registering a schema in SchemaRegistry
-     - Adding context builders
-   - Zero UI code changes required
-
-### Architecture Flow
-
-```
-Schema Definition → SchemaRegistry → UI Components
-                          ↓
-                    AI Service Layer
-                          ↓
-                      AI Flows
-```
-
-## State Management with Zustand (Updated 2025-06-23)
-
-### Overview
-
-The application now uses Zustand for centralized state management, replacing the previous prop-drilling approach:
-
-1. **Single Source of Truth**: All UI state lives in `resumeStore.ts`
-2. **Automatic Persistence**: State is automatically saved to localStorage
-3. **Direct Component Access**: Components subscribe directly to state slices
-4. **Hydration Safety**: Custom hook prevents SSR/client mismatches
-5. **Business Logic Centralization**: All data manipulation and AI interaction logic now resides in store actions
-
-### Migration Benefits
-
-- **Eliminated Prop Drilling**: No more passing state through multiple layers
-- **Improved Performance**: Components only re-render when their subscribed state changes
-- **Better Developer Experience**: Clear separation between UI state and business logic
-- **User Experience**: Work is automatically saved and restored between sessions
-- **Simplified Components**: UI components are now pure presentation, focused only on rendering
-
-## Hybrid Rendering Model (Updated 2025-06-20)
-
-### Overview
-
-The hybrid rendering model provides a perfect balance between convention and flexibility:
-
-1. **Convention Through Defaults**
-   - Each schema defines a `defaultRenderType` suggesting the best way to render that section
-   - Provides consistency across different templates
-   - Makes it easy to add new sections with sensible defaults
-
-2. **Flexibility Through Overrides**
-   - Templates can override any section's rendering through `templateLayoutMap`
-   - Allows templates to maintain their unique character
-   - No need to modify schemas when creating specialized templates
-
-3. **Reusability Through Atomic Components**
-   - Shared atomic rendering components ensure consistency
-   - Templates focus on layout decisions, not implementation details
-   - Easy to add new rendering styles by creating new atomic components
-
-This architecture ensures maximum flexibility and maintainability while keeping the codebase clean and organized.
 
 ## Template System (Updated 2025-06-19)
 

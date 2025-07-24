@@ -81,3 +81,94 @@ export function stableHash(obj: unknown): string {
 
   return `{${parts.join(',')}}`;
 }
+
+/**
+ * Maps error objects to user-friendly toast configurations
+ * @param error - Error object to map
+ * @returns Toast configuration object
+ */
+export function mapErrorToToast(error: unknown): {
+  title: string;
+  description: string;
+  variant?: 'default' | 'destructive';
+} {
+  const showVerbose = process.env.NEXT_PUBLIC_SHOW_VERBOSE_AI_ERRORS === 'true';
+
+  let title = 'An Unknown Error Occurred';
+  let description = "We've logged the issue. Please feel free to try again.";
+
+  // Type guard for error objects with status property
+  if (typeof error === 'object' && error !== null && 'code' in error) {
+    const code = (error as { code: number }).code;
+
+    switch (code) {
+      case 400:
+        title = 'Request Error';
+        description =
+          'The request seems to be malformed. Please try again later.';
+        break;
+      case 403:
+        title = 'Authentication Failed';
+        description = 'Please check if your API key is configured correctly.';
+        break;
+      case 429:
+        title = 'Rate Limit Exceeded';
+        description =
+          "You're making too many requests. Please wait a moment and try again.";
+        break;
+      case 500:
+        title = 'AI Service Error';
+        description =
+          'The AI service encountered an internal issue. Please try again later.';
+        break;
+      case 503:
+        title = 'AI Service Unavailable';
+        description =
+          'The AI service is currently overloaded. Please try again later.';
+        break;
+    }
+  }
+
+  // Type guard for error objects with code property
+  if (typeof error === 'object' && error !== null && 'status' in error) {
+    const status = (error as { status: string }).status;
+
+    switch (status) {
+      case 'INVALID_ARGUMENT':
+        title = 'Request Error';
+        description =
+          'The request seems to be malformed. Please try again later.';
+        break;
+      case 'PERMISSION_DENIED':
+        title = 'Authentication Failed';
+        description = 'Please check if your API key is configured correctly.';
+        break;
+      case 'RESOURCE_EXHAUSTED':
+        title = 'Rate Limit Exceeded';
+        description =
+          "You're making too many requests. Please wait a moment and try again.";
+        break;
+      case 'INTERNAL':
+        title = 'AI Service Error';
+        description =
+          'The AI service encountered an internal issue. Please try again later.';
+        break;
+      case 'UNAVAILABLE':
+        title = 'AI Service Unavailable';
+        description =
+          'The AI service is currently overloaded. Please try again later.';
+        break;
+    }
+  }
+
+  // Add verbose details if enabled
+  if (showVerbose && error instanceof Error) {
+    description += ` (${error.message})`;
+  }
+
+  return {
+    title,
+    description,
+    variant: 'destructive',
+  };
+}

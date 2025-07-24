@@ -3,6 +3,8 @@ import { ResumeState, ResumeActions } from '../types';
 import { SchemaRegistry } from '@/lib/schemaRegistry';
 import { AIDataBridge } from '@/lib/aiDataBridge';
 import type { DynamicResumeSection } from '@/types/schema';
+import { toast } from '@/hooks/use-toast';
+import { mapErrorToToast } from '@/lib/utils';
 
 // Helper function to read file as Base64
 const fileToBase64 = (file: File): Promise<string> => {
@@ -126,6 +128,7 @@ export const createAIActions: StateCreator<
       }
     } catch (error) {
       console.error('AI improvement error:', error);
+      toast(mapErrorToToast(error));
       set({
         aiImprovement: null,
         isImprovingFieldId: null,
@@ -238,6 +241,7 @@ export const createAIActions: StateCreator<
       }
     } catch (error) {
       console.error('Batch improvement error:', error);
+      toast(mapErrorToToast(error));
       set({ batchImprovementReview: null });
     }
   },
@@ -452,10 +456,16 @@ export const createAIActions: StateCreator<
   // NEW: AI-powered data import action
   extractJobInfoFromImage: async (file) => {
     if (!file.type.startsWith('image/')) {
-      console.error('Invalid file type. Please upload an image.');
-      // Optionally, add user-facing feedback, e.g., a toast notification.
+      toast({
+        title: 'Invalid File Type',
+        description: 'Please upload an image file.',
+        variant: 'destructive',
+      });
       return;
     }
+
+    // Set loading state to true at the start
+    set({ isExtractingJobInfo: true });
 
     try {
       const dataUri = await fileToBase64(file);
@@ -466,13 +476,26 @@ export const createAIActions: StateCreator<
 
       if (extractedText) {
         get().updateAIConfig({ targetJobInfo: extractedText });
+        // Add success toast when extractedText is received
+        toast({
+          title: 'Success',
+          description: 'Job information extracted successfully.',
+        });
       } else {
         console.error('AI failed to extract text from the image.');
-        // Optionally, add user-facing feedback.
+        toast({
+          title: 'Extraction Failed',
+          description:
+            'AI could not extract text from the image. Please try a different image.',
+          variant: 'destructive',
+        });
       }
     } catch (error) {
       console.error('Error processing image for job info extraction:', error);
-      // Optionally, add user-facing feedback.
+      toast(mapErrorToToast(error));
+    } finally {
+      // Set loading state to false in both success and error cases
+      set({ isExtractingJobInfo: false });
     }
   },
 

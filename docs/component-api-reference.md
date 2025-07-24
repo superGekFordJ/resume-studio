@@ -586,5 +586,63 @@ const ComponentWithErrorHandling = () => {
 };
 ```
 
-_最后更新: 2025-06-24_
-_文档版本: v2.1.0_
+---
+
+### 18. ImageUploadArea
+
+支持图片上传的增强型文本域组件，集成了拖拽、粘贴和加载状态功能。主要用于设置面板中的职位信息提取功能。
+
+#### Props
+
+```typescript
+interface ImageUploadAreaProps
+  extends Omit<
+    React.TextareaHTMLAttributes<HTMLTextAreaElement>,
+    'onChange' | 'value'
+  > {
+  onImageUpload: (file: File) => void; // 图片上传回调
+  value: string; // 文本内容
+  onChange: (value: string) => void; // 文本变化回调
+  id?: string; // HTML id属性
+  isLoading?: boolean; // 加载状态，显示spinner和禁用交互
+}
+```
+
+#### 使用示例
+
+```tsx
+const {
+  isExtractingJobInfo,
+  extractJobInfoFromImage,
+  updateAIConfig,
+  aiConfig,
+} = useResumeStore();
+
+<ImageUploadArea
+  value={aiConfig.targetJobInfo || ''}
+  onChange={(value) => updateAIConfig({ targetJobInfo: value })}
+  onImageUpload={extractJobInfoFromImage}
+  isLoading={isExtractingJobInfo}
+  placeholder="描述目标职位或拖拽职位截图..."
+  rows={4}
+/>;
+```
+
+#### 特性
+
+- **多种输入方式**: 支持文本输入、图片拖拽、图片粘贴
+- **加载状态**: 当`isLoading=true`时显示spinner，禁用所有交互
+- **文件类型验证**: 自动验证上传文件是否为图片格式
+- **响应式交互**: 拖拽时提供视觉反馈
+- **Toast集成**: 自动显示错误提示（文件类型错误等）
+
+#### 集成的Store Actions
+
+- 组件通常与`extractJobInfoFromImage` action配合使用
+- 该action会自动管理`isExtractingJobInfo`状态
+- 错误处理通过`mapErrorToToast`统一管理
+
+---
+
+_最后更新: 2025-07-25_
+_文档版本: v2.2.0_

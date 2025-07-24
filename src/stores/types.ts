@@ -69,6 +69,7 @@ export interface ResumeState {
   versionSnapshots: VersionSnapshot[]; // NEW: Version snapshots
   isGeneratingSnapshot: boolean; // For resume generation loading state
   isGeneratingCoverLetter?: boolean; // NEW: For cover letter generation
+  isExtractingJobInfo: boolean; // For image job info extraction loading state
 }
 
 // Actions interface

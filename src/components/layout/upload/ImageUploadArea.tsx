@@ -6,7 +6,7 @@ import React, {
   useRef,
 } from 'react';
 import { Textarea } from '@/components/ui/textarea';
-import { UploadCloud } from 'lucide-react';
+import { UploadCloud, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -19,6 +19,7 @@ interface ImageUploadAreaProps
   value: string;
   onChange: (value: string) => void;
   id?: string;
+  isLoading?: boolean;
 }
 
 export const ImageUploadArea = React.forwardRef<
@@ -26,7 +27,7 @@ export const ImageUploadArea = React.forwardRef<
   ImageUploadAreaProps
 >(
   (
-    { onImageUpload, value, onChange, id, className, ...props },
+    { onImageUpload, value, onChange, id, className, isLoading, ...props },
     forwardedRef
   ) => {
     const [isDragging, setIsDragging] = useState(false);
@@ -125,9 +126,23 @@ export const ImageUploadArea = React.forwardRef<
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder=" "
-          className="bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+          className={cn(
+            'bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0',
+            isLoading && 'pointer-events-none'
+          )}
+          disabled={isLoading}
           {...props}
         />
+        {/* Loading overlay */}
+        {isLoading && (
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center z-10">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="mt-2 text-sm font-medium text-foreground">
+              Processing image...
+            </p>
+          </div>
+        )}
+
         <div className="absolute top-0 left-0 right-0 bottom-0 flex flex-col items-center justify-center p-4 pointer-events-none text-center">
           {isDragging ? (
             <div className="text-primary">
@@ -135,7 +150,8 @@ export const ImageUploadArea = React.forwardRef<
               <p className="mt-2 text-sm font-semibold">Release to upload</p>
             </div>
           ) : (
-            !value && (
+            !value &&
+            !isLoading && (
               <div className="text-muted-foreground">
                 <UploadCloud className="mx-auto h-8 w-8" />
                 <p className="mt-2 text-sm">
