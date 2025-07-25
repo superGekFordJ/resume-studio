@@ -44,7 +44,7 @@ const improveResumeSectionFlow = ai.defineFlow(
     const prompt = ai.prompt<
       typeof ImproveResumeSectionInputSchema,
       typeof ImproveResumeSectionOutputSchema
-    >('improveResumeSection');
+    >('improveResumeSection', { variant: '25pro' });
     const { output } = await prompt(input);
     if (!output) {
       throw new Error('Improve resume section failed to produce an output.');

@@ -34,7 +34,7 @@ const autocompleteInputFlow = ai.defineFlow(
     const autocompletePrompt = ai.prompt<
       typeof AutocompleteInputSchema,
       typeof AutocompleteOutputSchema
-    >('autocompleteInput');
+    >('autocompleteInput', { variant: '' });
     const { output } = await autocompletePrompt(input);
 
     if (!output) {

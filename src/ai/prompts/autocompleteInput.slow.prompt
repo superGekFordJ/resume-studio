@@ -7,7 +7,7 @@ config:
   temperature: 0.1
   topP: 0.85
   thinkingConfig:
-    thinkingBudget: 0
+    thinkingBudget: -1
 
 # 定义此 prompt 模板所需的输入变量。
 # `schema` 指向一个已注册的 Zod schema 名称。

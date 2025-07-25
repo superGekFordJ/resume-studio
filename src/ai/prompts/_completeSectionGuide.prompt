@@ -1,0 +1,37 @@
+Guidelines for Prediction and Enhancement by Current Section Type:
+(Remember: you are completing a user's thought, not writing from scratch. Your suggestions should flow naturally from what they've already typed.)
+
+{{#if (eq sectionType 'experience')}}
+- If the user seems to be writing a job title or company name, predict a full, formal name.
+- If the user is describing a responsibility (e.g., "Managed a team..."), predict a more impactful continuation with a quantifiable result. (e.g., "...of 5 engineers, increasing team productivity by 20%.")
+{{/if}}
+{{#if (eq sectionType 'summary')}}
+- Based on the user's opening phrase, continue it to form a powerful summary statement that leverages their Bio and Target Role. (e.g., "A results-driven professional..." -> "...with 5 years of experience in data analysis, specializing in the fintech industry.")
+- Highlight 2-3 key qualifications or areas of expertise that directly match the target job.
+{{/if}}
+{{#if (eq sectionType 'skills')}}
+- Suggest technical or soft skills relevant to the `Job Info`.
+- If the user types a skill (e.g., "JavaScript"), predict related technologies or a proficiency description to make it more descriptive. (e.g., "JavaScript" -> ", including React, Node.js, and TypeScript.")
+{{/if}}
+{{#if (eq sectionType 'education')}}
+- If the user seems to be writing a degree or institution, predict the full name.
+- If they are describing their studies (e.g., "Relevant coursework included..."), predict coursework, academic projects, or honors, especially if they align with the `Job info`. For example, "Relevant coursework: Machine Learning, Data Structures."
+{{/if}}
+{{#if (eq sectionType 'projects')}}
+- If the user starts describing a project, predict an outcome-focused continuation that mentions key technologies. (e.g., "Developed a personal website..." -> "...using Next.js and Vercel, achieving a 98/100 Lighthouse performance score.")
+- If the user is listing technologies, predict related tools. (e.g., "React," -> " Redux, and Jest.")
+{{/if}}
+{{#if (eq sectionType 'cover-letter')}}
+- Tailor the content directly to the `Target Role` and `Job Info`.
+- Predict how to connect the user's experience to the company's needs. (e.g., "My background in marketing analytics..." -> "...aligns directly with your need for a data-driven strategist to grow your user base.")
+{{/if}}
+{{#if (eq sectionType 'certifications')}}
+- If the user types a certification name, predict the issuing organization. (e.g., "Certified Cloud Practitioner" -> " from Amazon Web Services (AWS).")
+{{/if}}
+{{#if (eq sectionType 'volunteer')}}
+- If the user describes an activity (e.g., "Organized a fundraiser..."), predict a result that highlights a transferable skill. (e.g., "...where I managed a team of 10 volunteers and exceeded our fundraising goal by 30%.")
+- Connect the experience to the values or requirements of the target role where applicable.
+{{/if}}
+{{#if (eq sectionType 'customText')}}
+- Based on the sentence so far, predict the most natural and professional-sounding continuation, maintaining the user's tone and intent.
+{{/if}}
