@@ -268,7 +268,7 @@ export const VeridianSidebarTemplate = ({
       </main>
       <aside className="bg-[#006666] text-white px-6 py-9">
         <div className="flex justify-center mb-8">
-          <div className="w-[130px] h-[130px] rounded-full bg-white/10 border-2 border-white/20 flex items-center justify-center">
+          <div className="w-[130px] aspect-square rounded-full bg-white/10 border-2 border-white/20 flex items-center justify-center overflow-hidden">
             {personalDetails.avatar ? (
               <Image
                 src={personalDetails.avatar}
