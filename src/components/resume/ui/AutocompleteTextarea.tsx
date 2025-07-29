@@ -7,7 +7,7 @@ import { useCallback, useRef } from 'react';
 import { autocompleteInput } from '@/ai/flows/autocomplete-input';
 import { schemaRegistry } from '@/lib/schemaRegistry';
 import { useResumeStore } from '@/stores/resumeStore';
-import type { ResumeState } from '@/stores/types';
+import type { AutocompleteModel, ResumeState } from '@/stores/types';
 import { cn } from '@/lib/utils';
 import type { DynamicResumeSection, DynamicSectionItem } from '@/types/schema';
 
@@ -22,6 +22,7 @@ interface AutocompleteTextareaProps
   allResumeSections?: DynamicResumeSection[];
   currentSectionId?: string | null;
   isAutocompleteEnabledGlobally: boolean;
+  autocompleteModel: AutocompleteModel;
   itemId?: string;
 }
 
@@ -31,6 +32,7 @@ export default function AutocompleteTextarea({
   sectionType,
   currentSectionId,
   isAutocompleteEnabledGlobally,
+  autocompleteModel,
   itemId,
   className,
   ...props
@@ -85,6 +87,7 @@ export default function AutocompleteTextarea({
           textAfterCursor: data.textAfterCursor,
           context: context,
           sectionType: sectionType,
+          autocompleteModel: autocompleteModel,
         });
 
         const completion = (result.completion || '').trim();
@@ -111,6 +114,7 @@ export default function AutocompleteTextarea({
       isAutocompleteEnabledGlobally,
       sectionType,
       aiConfig,
+      autocompleteModel,
     ]
   );
 

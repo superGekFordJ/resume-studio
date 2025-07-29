@@ -70,6 +70,9 @@ export default function AIFieldWrapper({
   const isImprovingFieldId = useResumeStore(
     (state) => state.isImprovingFieldId
   );
+  const autocompleteModel = useResumeStore(
+    (state) => state.aiConfig.autocompleteModel
+  );
 
   // Local state for improvement prompt
   const [improvementPrompt, setImprovementPrompt] = React.useState('');
@@ -129,6 +132,7 @@ export default function AIFieldWrapper({
         allResumeSections={allResumeSections}
         currentSectionId={currentSectionId}
         isAutocompleteEnabledGlobally={isAutocompleteEnabled}
+        autocompleteModel={autocompleteModel}
         itemId={itemId}
       />
 

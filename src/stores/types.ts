@@ -11,6 +11,8 @@ export interface VersionSnapshot {
 }
 
 // AI Config interface
+export type AutocompleteModel = 'lite' | 'smart' | 'slow';
+
 export interface AIConfig {
   provider: 'google' | 'ollama' | 'anthropic';
   model: string;
@@ -18,6 +20,7 @@ export interface AIConfig {
   targetJobInfo?: string;
   userBio?: string;
   ollamaServerAddress?: string; // For Ollama users
+  autocompleteModel: AutocompleteModel;
 }
 
 // NEW: Batch improvement review state
@@ -135,6 +138,7 @@ export interface ResumeActions {
   acceptSingleFieldImprovement: () => void;
   rejectSingleFieldImprovement: () => void;
   updateAIConfig: (config: Partial<AIConfig>) => void;
+  setAutocompleteModel: (model: AutocompleteModel) => void;
   // DEPRECATED: Will be replaced by startBatchImprovement
   batchImproveSection: (sectionId: string, prompt: string) => Promise<void>;
   // NEW: Version snapshot actions

@@ -31,10 +31,12 @@ const autocompleteInputFlow = ai.defineFlow(
     outputSchema: AutocompleteOutputSchema,
   },
   async (input: AutocompleteInput) => {
+    const modelVariant = input.autocompleteModel || 'lite';
+
     const autocompletePrompt = ai.prompt<
       typeof AutocompleteInputSchema,
       typeof AutocompleteOutputSchema
-    >('autocompleteInput', { variant: '' });
+    >('autocompleteInput', { variant: modelVariant });
     const { output } = await autocompletePrompt(input);
 
     if (!output) {

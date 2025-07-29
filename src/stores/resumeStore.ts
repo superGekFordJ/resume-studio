@@ -33,6 +33,7 @@ export const useResumeStore = create<ResumeState & ResumeActions>()(
         targetJobInfo: '',
         userBio: '',
         ollamaServerAddress: 'http://127.0.0.1:11434',
+        autocompleteModel: 'default',
       },
       versionSnapshots: [],
       isGeneratingSnapshot: false,
@@ -44,6 +45,12 @@ export const useResumeStore = create<ResumeState & ResumeActions>()(
       ...createAIActions(set, get, api),
       ...createSnapshotActions(set, get, api),
       ...createUIActions(set, get, api),
+
+      // New action for setting the autocomplete model
+      setAutocompleteModel: (model) =>
+        set((state) => ({
+          aiConfig: { ...state.aiConfig, autocompleteModel: model },
+        })),
     }),
     {
       name: 'resume-studio-storage',

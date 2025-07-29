@@ -62,6 +62,12 @@ export const AutocompleteInputSchema = ai.defineSchema(
       .string()
       .optional()
       .describe('The type of resume section being edited'),
+    autocompleteModel: z
+      .enum(['lite', 'smart', 'slow'])
+      .optional()
+      .describe(
+        'The desired model variant for autocompletion. "smart" for high-quality, "slow" for more detailed, "lite" for standard.'
+      ),
   })
 );
 

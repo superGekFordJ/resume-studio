@@ -24,6 +24,13 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { Accordion } from '@/components/ui/accordion';
+import AutocompleteModelSelector from './AutocompleteModelSelector';
+import { Portal as HoverCardPortal } from '@radix-ui/react-hover-card';
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from '@/components/ui/hover-card';
 
 export default function SectionEditor() {
   const { toast } = useToast();
@@ -302,21 +309,35 @@ export default function SectionEditor() {
         </h2>
         <div className="flex items-center space-x-4">
           {editingTarget !== 'personalDetails' && (
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="autocomplete-toggle-nav"
-                className="autocomplete-toggle-switch data-[state=checked]:bg-[#FF9800]"
-                checked={isAutocompleteEnabled}
-                onCheckedChange={toggleAutocomplete}
-                aria-label="Toggle Autocomplete"
-              />
-              <Label
-                htmlFor="autocomplete-toggle-nav"
-                className="text-xs cursor-pointer"
-              >
-                AI Autocomplete
-              </Label>
-            </div>
+            <HoverCard>
+              <HoverCardTrigger asChild>
+                <div className="flex items-center space-x-2 cursor-pointer">
+                  <Switch
+                    id="autocomplete-toggle-nav"
+                    className="autocomplete-toggle-switch data-[state=checked]:bg-[#FF9800]"
+                    checked={isAutocompleteEnabled}
+                    onCheckedChange={toggleAutocomplete}
+                    aria-label="Toggle Autocomplete"
+                  />
+                  <Label
+                    htmlFor="autocomplete-toggle-nav"
+                    className="text-xs cursor-pointer"
+                  >
+                    AI Autocomplete
+                  </Label>
+                </div>
+              </HoverCardTrigger>
+              <HoverCardPortal>
+                <HoverCardContent className="w-72">
+                  <div className="flex justify-between items-center space-x-4">
+                    <span className="text-xs font-medium">
+                      Completion&nbsp;Mode
+                    </span>
+                    <AutocompleteModelSelector className="w-[220px]" />
+                  </div>
+                </HoverCardContent>
+              </HoverCardPortal>
+            </HoverCard>
           )}
           {editingTarget !== 'personalDetails' &&
             canBatchImprove &&
