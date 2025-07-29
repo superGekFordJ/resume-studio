@@ -168,7 +168,7 @@ interface SidebarNavigatorProps {
 
 ### 6. AutocompleteTextarea
 
-集成了 `copilot-react-kit` 的、支持 AI 自动补全的 Schema 驱动文本输入组件。
+集成了 `copilot-react-kit` 的、支持 AI 自动补全的 Schema 驱动文本输入组件。它现在可以与 `AutocompleteModelSelector` 配合使用，允许用户选择不同的 AI 模型。
 
 #### Props
 
@@ -213,10 +213,33 @@ _注意：其他用于构建AI上下文的内部props（如`sectionType`, `itemI
 - 无缝集成来自Store的"强制建议"（AI改进建议）。
 - Tab键接受建议。
 - Escape键拒绝强制建议。
+- **支持AI模型选择**：与 `AutocompleteModelSelector` 配合使用，允许用户选择不同的自动补全模型。
 
 ---
 
-### 7. AIReviewDialog
+### 7. AutocompleteModelSelector
+
+用于选择 AI 自动补全模型的组件。
+
+#### Props
+
+该组件没有外部 props。它直接与 `resumeStore` 交互，读取 `aiConfig.autocompleteModel` 并调用 `updateAIConfig` action 来更新选定的模型。
+
+#### 使用示例
+
+```tsx
+<AutocompleteModelSelector />
+```
+
+#### 特性
+
+- 提供不同的 AI 模型选项（如 '智能模式', '精简模式'）。
+- 视觉反馈显示当前选定的模型。
+- 通过 `resumeStore` 进行状态管理和更新。
+
+---
+
+### 8. AIReviewDialog
 
 AI 简历评审对话框组件。其API保持不变。
 

@@ -45,6 +45,22 @@
   - **动态计数**: 对话框的页脚和标题部分会动态显示已选择待应用的改进数量 (e.g., `Accept Improvements (2)`)。
   - **健壮的滚动**: 对话框内容区 (`ScrollArea`) 确保在条目过多时能够流畅地垂直滚动，同时解决了横向内容溢出的问题。
 
+### 3. AI 自动补全: 悬浮卡片与模型选择器 (`AutocompleteTextarea`, `AutocompleteModelSelector`)
+
+为了增强自动补全的灵活性和用户控制，我们为 `AutocompleteTextarea` 集成了悬浮卡片和可选的模型选择功能。
+
+- **触发**: 用户在支持 AI 自动补全的文本区域 (`AutocompleteTextarea`) 输入时，AI 会在后台生成建议。
+- **行为**:
+  - **内联幽灵文本**: 实时展示 AI 的自动补全建议作为幽灵文本。
+  - **悬浮卡片**: 当用户与幽灵文本交互（如悬停）或在特定条件下，一个轻量级的悬浮卡片会出现在文本区域附近。
+    - **信息展示**: 卡片可以显示当前 AI 模型的名称、建议的来源或提供快速操作。
+    - **模型切换**: 悬浮卡片内部或附近会提供一个模型选择器 (`AutocompleteModelSelector`)，允许用户在不同的 AI 自动补全模型之间切换（例如，"智能模式"、"精简模式"）。
+- **UI 设计**:
+  - **非侵入式**: 悬浮卡片设计旨在不中断用户输入流程，仅在需要时出现。
+  - **上下文相关**: 根据当前编辑字段和 AI 建议的类型，提供相关信息和操作。
+  - **清晰的模型标识**: 模型选择器清晰显示当前选定的模型，并提供易于理解的选项。
+  - **快捷键支持**: 继续支持 Tab 键接受建议，Esc 键取消建议。
+
 ## 组件实现
 
 ### `AISuggestionCard.tsx`
@@ -63,6 +79,12 @@
 - **关键修复**:
   - **HTML 嵌套错误**: 通过直接使用 Radix UI 的 `AccordionPrimitive`，重构了 `AccordionTrigger` 的 DOM 结构，将 `Checkbox` 与其作为兄弟节点而非子节点，解决了 `<button>` 不能嵌套 `<button>` 的 hydration 错误。
   - **CSS 溢出**: 通过为 `DiffViewer` 的内容应用 `white-space: pre-wrap` 和 `word-break: break-word` 样式，彻底解决了长单词或链接导致的水平溢出问题。
+
+### `AutocompleteModelSelector.tsx`
+
+- **位置**: `src/components/resume/editor/AutocompleteModelSelector.tsx`
+- **职责**: 允许用户选择用于自动补全的 AI 模型，并通常与 `resumeStore` 中的 `aiConfig` 相关联。
+- **交互**: 通过调用 `resumeStore` 的 `updateAIConfig` 等 action 来更新选定的模型。
 
 ---
 
