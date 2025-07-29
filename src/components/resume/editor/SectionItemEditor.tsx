@@ -87,8 +87,8 @@ export default function SectionItemEditor({
   // For single type sections, don't use accordion wrapper
   if (sectionSchema.type === 'single') {
     return (
-      <div className="my-4 p-4 space-y-2 bg-muted/50 rounded-lg border border-[#3F51B5]/20">
-        <div className="space-y-3">
+      <div className="border border-[#3F51B5]/20 rounded-lg my-2">
+        <div className="px-4 pb-4 pt-4 space-y-3">
           {sectionSchema.fields.map((field) => {
             const uniqueFieldId = constructUniqueFieldId(
               field.id,

@@ -1,0 +1,37 @@
+name: Create Release from package.json
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      # IMPORTANT: Adjust this path to match the location
+      # of your package.json from the root of the repository.
+      - 'resume-studio/package.json'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      # This permission is required for the action to create a release and tag.
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get version from package.json
+        id: get_version
+        run: |
+          # The output is named 'version' and can be used in subsequent steps.
+          echo "version=$(node -p "require('./resume-studio-dev/package.json').version")" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          # The tag will be 'v' followed by the version, e.g., v1.2.0
+          tag_name: "v${{ steps.get_version.outputs.version }}"
+          # The release title will also include the version.
+          name: "v${{ steps.get_version.outputs.version }}"
+          # This will automatically create release notes based on the commits
+          # since the last release. This is a fantastic feature!
+          generate_release_notes: true
