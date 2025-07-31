@@ -7,7 +7,7 @@ on:
     paths:
       # IMPORTANT: Adjust this path to match the location
       # of your package.json from the root of the repository.
-      - 'resume-studio/package.json'
+      - 'package.json'
 
 jobs:
   release:
@@ -23,7 +23,7 @@ jobs:
         id: get_version
         run: |
           # The output is named 'version' and can be used in subsequent steps.
-          echo "version=$(node -p "require('./resume-studio/package.json').version")" >> $GITHUB_OUTPUT
+          echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
