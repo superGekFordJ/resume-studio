@@ -10,7 +10,6 @@ import AutocompleteTextarea from '@/components/resume/ui/AutocompleteTextarea';
 import AISuggestionCard from '@/components/resume/ui/AISuggestionCard';
 import { cn } from '@/lib/utils';
 import { useResumeStore } from '@/stores/resumeStore';
-import type { DynamicResumeSection, DynamicSectionItem } from '@/types/schema';
 
 interface AIFieldWrapperProps {
   uniqueFieldId: string;
@@ -21,11 +20,7 @@ interface AIFieldWrapperProps {
   sectionId: string;
   itemId?: string;
   isPersonalDetails?: boolean;
-  userJobTitle?: string;
   sectionType?: string; // Now just a string for schema ID or 'personalDetailsField'
-  currentItem?: DynamicSectionItem | { fieldName: string };
-  allResumeSections?: DynamicResumeSection[];
-  currentSectionId?: string | null;
   className?: string;
   placeholder?: string;
   isAutocompleteEnabled: boolean;
@@ -40,11 +35,7 @@ export default function AIFieldWrapper({
   sectionId,
   itemId,
   isPersonalDetails = false,
-  userJobTitle,
   sectionType,
-  currentItem,
-  allResumeSections,
-  currentSectionId,
   className,
   placeholder,
   isAutocompleteEnabled,
@@ -97,6 +88,7 @@ export default function AIFieldWrapper({
       return;
     }
 
+    // Note: We will get resumeData inside the action itself to avoid prop drilling
     await startSingleFieldImprovement({
       uniqueFieldId,
       sectionId,
@@ -126,13 +118,10 @@ export default function AIFieldWrapper({
         onValueChange={onValueChange}
         className={cn('min-h-[80px]', className)}
         placeholder={placeholder || `Enter ${label.toLowerCase()}...`}
-        userJobTitle={userJobTitle}
         sectionType={sectionType}
-        currentItem={currentItem}
-        allResumeSections={allResumeSections}
-        currentSectionId={currentSectionId}
         isAutocompleteEnabledGlobally={isAutocompleteEnabled}
         autocompleteModel={autocompleteModel}
+        sectionId={sectionId}
         itemId={itemId}
       />
 

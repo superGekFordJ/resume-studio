@@ -33,7 +33,7 @@ export const useResumeStore = create<ResumeState & ResumeActions>()(
         targetJobInfo: '',
         userBio: '',
         ollamaServerAddress: 'http://127.0.0.1:11434',
-        autocompleteModel: 'default',
+        autocompleteModel: 'lite',
       },
       versionSnapshots: [],
       isGeneratingSnapshot: false,

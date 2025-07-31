@@ -14,7 +14,6 @@ export default function PersonalDetailsEditor({
   personalDetails,
 }: PersonalDetailsEditorProps) {
   const updateField = useResumeStore((state) => state.updateField);
-  const resumeData = useResumeStore((state) => state.resumeData);
   const isAutocompleteEnabled = useResumeStore(
     (state) => state.isAutocompleteEnabled
   );
@@ -69,11 +68,7 @@ export default function PersonalDetailsEditor({
                 fieldId={key}
                 sectionId=""
                 isPersonalDetails={true}
-                userJobTitle={resumeData.personalDetails.jobTitle}
                 sectionType="personalDetailsField"
-                currentItem={{ fieldName: key }}
-                allResumeSections={resumeData.sections}
-                currentSectionId={null}
                 className={
                   key === 'fullName' ||
                   key === 'jobTitle' ||

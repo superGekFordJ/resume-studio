@@ -14,31 +14,19 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { Combobox } from '@/components/ui/combobox';
-import {
-  FieldSchema,
-  DynamicResumeSection,
-  DynamicSectionItem,
-} from '@/types/schema';
+import { FieldSchema } from '@/types/schema';
 import AutocompleteTextarea from '@/components/resume/ui/AutocompleteTextarea';
 
 interface DynamicFieldRendererProps {
   field: FieldSchema;
   value: string | string[] | undefined;
   onChange: (value: string | string[] | undefined) => void;
-  // AI-related props
-  userJobTitle?: string;
-  currentItem?: DynamicSectionItem | { fieldName: string };
-  allResumeSections?: DynamicResumeSection[];
-  currentSectionId?: string | null;
   isAutocompleteEnabled?: boolean;
-  // AI improvement props
   onImproveField?: (fieldId: string, currentValue: string) => void;
   isImproving?: boolean;
   className?: string;
-  // NEW: Item ID for SchemaRegistry context building
   itemId?: string;
-  // NEW: SchemaRegistry and IDs for AI operations
-  schemaRegistry?: unknown; // Using any to avoid circular dependency
+  schemaRegistry?: unknown;
   sectionId?: string;
   fieldId?: string;
 }
@@ -47,13 +35,10 @@ export default function DynamicFieldRenderer({
   field,
   value,
   onChange,
-  userJobTitle,
-  currentItem,
-  allResumeSections,
-  currentSectionId,
   isAutocompleteEnabled = false,
   className,
   itemId,
+  sectionId,
 }: DynamicFieldRendererProps) {
   const localFieldId = field.id;
   const isRequired = field.required || false;
@@ -94,21 +79,22 @@ export default function DynamicFieldRenderer({
 
       case 'textarea':
         if (aiEnabled) {
+          // NOTE: AutocompleteTextarea now fetches its own context data.
+          // We only need to pass the essential IDs.
           return (
             <AutocompleteTextarea
               value={(value as string) || ''}
               onValueChange={onChange}
               placeholder={field.uiProps?.placeholder}
               rows={field.uiProps?.rows || 3}
-              userJobTitle={userJobTitle}
-              sectionType={currentSectionId || field.id} // Use field.id as fallback for dynamic schema ID
-              currentItem={currentItem}
-              allResumeSections={allResumeSections}
-              currentSectionId={currentSectionId}
               isAutocompleteEnabledGlobally={isAutocompleteEnabled}
               className={className}
-              name={field.id} // Pass field ID as name for context building
-              itemId={itemId} // NEW: Pass itemId for SchemaRegistry context building
+              name={field.id}
+              sectionId={sectionId || ''}
+              itemId={itemId}
+              // The autocompleteModel is fetched from the store inside the component
+              // so we don't need to pass it down.
+              autocompleteModel="lite"
             />
           );
         } else {

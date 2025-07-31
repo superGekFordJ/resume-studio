@@ -7,22 +7,18 @@ import { useCallback, useRef } from 'react';
 import { autocompleteInput } from '@/ai/flows/autocomplete-input';
 import { schemaRegistry } from '@/lib/schemaRegistry';
 import { useResumeStore } from '@/stores/resumeStore';
-import type { AutocompleteModel, ResumeState } from '@/stores/types';
+import type { AutocompleteModel } from '@/stores/types';
 import { cn } from '@/lib/utils';
-import type { DynamicResumeSection, DynamicSectionItem } from '@/types/schema';
 
-// This interface is kept largely the same to minimize changes in parent components.
+// Interface updated to remove large, unnecessary data props.
 interface AutocompleteTextareaProps
   extends Omit<React.ComponentProps<'textarea'>, 'onChange' | 'value'> {
   value: string;
   onValueChange: (value: string) => void;
-  userJobTitle?: string;
   sectionType?: string; // Allow dynamic schema IDs
-  currentItem?: DynamicSectionItem | { fieldName: string };
-  allResumeSections?: DynamicResumeSection[];
-  currentSectionId?: string | null;
   isAutocompleteEnabledGlobally: boolean;
   autocompleteModel: AutocompleteModel;
+  sectionId: string;
   itemId?: string;
 }
 
@@ -30,16 +26,13 @@ export default function AutocompleteTextarea({
   value,
   onValueChange,
   sectionType,
-  currentSectionId,
   isAutocompleteEnabledGlobally,
   autocompleteModel,
+  sectionId,
   itemId,
   className,
   ...props
 }: AutocompleteTextareaProps) {
-  const resumeData = useResumeStore((state: ResumeState) => state.resumeData);
-  const aiConfig = useResumeStore((state: ResumeState) => state.aiConfig);
-
   // useRef to solve the timing issue: When a suggestion is accepted via Tab key,
   // the component's text updates, triggering another suggestion call.
   // Standard state/props are too slow to update and block this second call.
@@ -69,11 +62,14 @@ export default function AutocompleteTextarea({
       }
 
       try {
+        // NEW: Get fresh data from the store inside the callback, preventing re-renders.
+        const { resumeData, aiConfig } = useResumeStore.getState();
+
         // 1. Build context using our existing SchemaRegistry
         const context = schemaRegistry.buildAIContext({
           resumeData,
           task: 'autocomplete',
-          sectionId: currentSectionId || '',
+          sectionId: sectionId,
           fieldId: props.name || '',
           itemId: itemId,
           aiConfig: aiConfig,
@@ -107,13 +103,11 @@ export default function AutocompleteTextarea({
       }
     },
     [
-      resumeData,
-      currentSectionId,
+      sectionId,
       props.name,
       itemId,
       isAutocompleteEnabledGlobally,
       sectionType,
-      aiConfig,
       autocompleteModel,
     ]
   );

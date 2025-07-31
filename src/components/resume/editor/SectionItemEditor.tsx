@@ -33,7 +33,6 @@ export default function SectionItemEditor({
 }: SectionItemEditorProps) {
   const schemaRegistry = SchemaRegistry.getInstance();
   const updateField = useResumeStore((state) => state.updateField);
-  const resumeData = useResumeStore((state) => state.resumeData);
   const isAutocompleteEnabled = useResumeStore(
     (state) => state.isAutocompleteEnabled
   );
@@ -112,11 +111,7 @@ export default function SectionItemEditor({
                   fieldId={field.id}
                   sectionId={section.id}
                   itemId={item.id}
-                  userJobTitle={resumeData.personalDetails.jobTitle}
                   sectionType={section.schemaId}
-                  currentItem={item}
-                  allResumeSections={resumeData.sections}
-                  currentSectionId={section.id}
                   className={
                     field.uiProps?.rows === 1 || field.type === 'text'
                       ? 'min-h-[40px]'
@@ -135,10 +130,6 @@ export default function SectionItemEditor({
                 field={field}
                 value={currentValue as string}
                 onChange={(value) => handleFieldChange(field.id, value)}
-                userJobTitle={resumeData.personalDetails.jobTitle}
-                currentItem={item}
-                allResumeSections={resumeData.sections}
-                currentSectionId={section.id}
                 isAutocompleteEnabled={isAutocompleteEnabled}
                 itemId={item.id}
                 schemaRegistry={schemaRegistry}
@@ -231,11 +222,7 @@ export default function SectionItemEditor({
                 fieldId={field.id}
                 sectionId={section.id}
                 itemId={item.id}
-                userJobTitle={resumeData.personalDetails.jobTitle}
                 sectionType={section.schemaId}
-                currentItem={item}
-                allResumeSections={resumeData.sections}
-                currentSectionId={section.id}
                 className={
                   field.uiProps?.rows === 1 || field.type === 'text'
                     ? 'min-h-[40px]'
@@ -254,10 +241,6 @@ export default function SectionItemEditor({
               field={field}
               value={currentValue as string}
               onChange={(value) => handleFieldChange(field.id, value)}
-              userJobTitle={resumeData.personalDetails.jobTitle}
-              currentItem={item}
-              allResumeSections={resumeData.sections}
-              currentSectionId={section.id}
               isAutocompleteEnabled={isAutocompleteEnabled}
               itemId={item.id}
               schemaRegistry={schemaRegistry}
