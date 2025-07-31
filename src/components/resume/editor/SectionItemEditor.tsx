@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { Trash2, GripVertical } from 'lucide-react';
 import { SchemaRegistry } from '@/lib/schemaRegistry';
 import { useResumeStore } from '@/stores/resumeStore';
@@ -25,7 +26,7 @@ interface SectionItemEditorProps {
   onRemove: () => void;
 }
 
-export default function SectionItemEditor({
+function SectionItemEditor({
   item,
   section,
   index,
@@ -253,3 +254,5 @@ export default function SectionItemEditor({
     </AccordionItem>
   );
 }
+
+export default React.memo(SectionItemEditor);

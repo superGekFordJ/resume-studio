@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { PersonalDetails } from '@/types/resume';
 import { Label } from '@/components/ui/label';
 import { useResumeStore } from '@/stores/resumeStore';
@@ -10,7 +11,7 @@ interface PersonalDetailsEditorProps {
   personalDetails: PersonalDetails;
 }
 
-export default function PersonalDetailsEditor({
+function PersonalDetailsEditor({
   personalDetails,
 }: PersonalDetailsEditorProps) {
   const updateField = useResumeStore((state) => state.updateField);
@@ -86,3 +87,5 @@ export default function PersonalDetailsEditor({
     </>
   );
 }
+
+export default React.memo(PersonalDetailsEditor);

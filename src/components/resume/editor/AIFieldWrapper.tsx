@@ -26,7 +26,7 @@ interface AIFieldWrapperProps {
   isAutocompleteEnabled: boolean;
 }
 
-export default function AIFieldWrapper({
+function AIFieldWrapper({
   uniqueFieldId,
   label,
   value,
@@ -171,3 +171,5 @@ export default function AIFieldWrapper({
     </div>
   );
 }
+
+export default React.memo(AIFieldWrapper);

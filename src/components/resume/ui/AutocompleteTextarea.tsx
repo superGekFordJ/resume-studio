@@ -144,6 +144,8 @@ export default function AutocompleteTextarea({
         onKeyDown={handleKeyDown}
         debounceTime={500}
         disableWhenEmpty={false}
+        showGenerateShortcut={true}
+        shortcut="Ctrl+Shift+K"
         placeholder={isDisplayingForcedSuggestion ? '' : props.placeholder}
         textareaPurpose="resume-field"
         // Pass through our standard shadcn/ui textarea styles
