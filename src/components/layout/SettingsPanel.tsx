@@ -7,6 +7,12 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import {
@@ -126,169 +132,204 @@ export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
           </SheetDescription>
         </SheetHeader>
 
-        <div className="mt-6 space-y-6">
-          {/* AI Provider Settings */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">AI Provider Configuration</h3>
+        <div className="mt-6">
+          <Accordion
+            type="single"
+            collapsible
+            className="w-full space-y-4"
+            defaultValue="global-context"
+          >
+            {/* Card 1: AI Provider Configuration */}
+            <AccordionItem
+              value="ai-provider"
+              className="border rounded-lg data-[state=closed]:border-b"
+            >
+              <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                <h3 className="text-lg font-semibold">
+                  AI Provider Configuration
+                </h3>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="pt-2 px-4 pb-4 space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="provider">AI Provider</Label>
+                    <Select
+                      value={aiConfig.provider}
+                      onValueChange={handleProviderChange}
+                    >
+                      <SelectTrigger id="provider">
+                        <SelectValue placeholder="Select AI provider" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {AI_PROVIDERS.map((provider) => (
+                          <SelectItem
+                            key={provider.value}
+                            value={provider.value}
+                          >
+                            {provider.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="provider">AI Provider</Label>
-              <Select
-                value={aiConfig.provider}
-                onValueChange={handleProviderChange}
-              >
-                <SelectTrigger id="provider">
-                  <SelectValue placeholder="Select AI provider" />
-                </SelectTrigger>
-                <SelectContent>
-                  {AI_PROVIDERS.map((provider) => (
-                    <SelectItem key={provider.value} value={provider.value}>
-                      {provider.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="model">Model</Label>
+                    <Select
+                      value={aiConfig.model}
+                      onValueChange={handleModelChange}
+                    >
+                      <SelectTrigger id="model">
+                        <SelectValue placeholder="Select model" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {selectedProvider?.models.map((model) => (
+                          <SelectItem key={model} value={model}>
+                            {model}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="model">Model</Label>
-              <Select value={aiConfig.model} onValueChange={handleModelChange}>
-                <SelectTrigger id="model">
-                  <SelectValue placeholder="Select model" />
-                </SelectTrigger>
-                <SelectContent>
-                  {selectedProvider?.models.map((model) => (
-                    <SelectItem key={model} value={model}>
-                      {model}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                  {aiConfig.provider !== 'ollama' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="apiKey">API Key</Label>
+                      <Input
+                        id="apiKey"
+                        type="password"
+                        value={aiConfig.apiKey || ''}
+                        onChange={(e) => handleApiKeyChange(e.target.value)}
+                        placeholder={`Enter your ${aiConfig.provider === 'google' ? 'Google' : 'Anthropic'} API key`}
+                      />
+                      {process.env.NODE_ENV === 'development' &&
+                        !aiConfig.apiKey && (
+                          <Alert>
+                            <Info className="h-4 w-4" />
+                            <AlertDescription>
+                              Currently, API keys must be configured through
+                              environment files (.env.local or .env.production).
+                              UI-based configuration is temporarily disabled due
+                              to Genkit lifecycle constraints.
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                    </div>
+                  )}
 
-            {aiConfig.provider !== 'ollama' && (
-              <div className="space-y-2">
-                <Label htmlFor="apiKey">API Key</Label>
-                <Input
-                  id="apiKey"
-                  type="password"
-                  value={aiConfig.apiKey || ''}
-                  onChange={(e) => handleApiKeyChange(e.target.value)}
-                  placeholder={`Enter your ${aiConfig.provider === 'google' ? 'Google' : 'Anthropic'} API key`}
-                />
-                {process.env.NODE_ENV === 'development' && !aiConfig.apiKey && (
+                  {aiConfig.provider === 'ollama' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="ollamaServer">
+                        Ollama Server Address
+                      </Label>
+                      <Input
+                        id="ollamaServer"
+                        type="text"
+                        value={aiConfig.ollamaServerAddress || ''}
+                        onChange={(e) =>
+                          handleOllamaServerAddressChange(e.target.value)
+                        }
+                        placeholder="http://127.0.0.1:11434"
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        Make sure Ollama is running on your local machine.
+                      </p>
+                    </div>
+                  )}
                   <Alert>
-                    <Info className="h-4 w-4" />
+                    <AlertCircle className="h-4 w-4" />
                     <AlertDescription>
-                      Currently, API keys must be configured through environment
-                      files (.env.local or .env.production). UI-based
-                      configuration is temporarily disabled due to Genkit
-                      lifecycle constraints.
+                      API keys are stored only in memory and never persisted.
+                      You&apos;ll need to re-enter them after refreshing the
+                      page.
                     </AlertDescription>
                   </Alert>
-                )}
-              </div>
-            )}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
 
-            {aiConfig.provider === 'ollama' && (
-              <div className="space-y-2">
-                <Label htmlFor="ollamaServer">Ollama Server Address</Label>
-                <Input
-                  id="ollamaServer"
-                  type="text"
-                  value={aiConfig.ollamaServerAddress || ''}
-                  onChange={(e) =>
-                    handleOllamaServerAddressChange(e.target.value)
-                  }
-                  placeholder="http://127.0.0.1:11434"
-                />
-                <p className="text-sm text-muted-foreground">
-                  Make sure Ollama is running on your local machine.
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Global AI Context */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Global AI Context</h3>
-            <p className="text-sm text-muted-foreground">
-              This information will be used by AI to provide more personalized
-              suggestions.
-            </p>
-
-            <div className="space-y-2">
-              <Label htmlFor="targetJob">Target Job Info</Label>
-              <ImageUploadArea
-                ref={targetJobTextAreaRef}
-                id="targetJob"
-                value={aiConfig.targetJobInfo || ''}
-                onChange={handleTargetJobInfoChange}
-                onImageUpload={handleImageFile}
-                isLoading={isExtractingJobInfo}
-                rows={4}
-              />
-              <p className="text-sm text-muted-foreground">
-                Describe the position you&apos;re applying for, or paste/drag an
-                image of the job post.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <Label htmlFor="userBio">Professional Bio</Label>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => bioFileInputRef.current?.click()}
-                >
-                  <UploadCloud className="mr-2 h-4 w-4" />
-                  Upload Doc/PDF
-                </Button>
-              </div>
-              <Input
-                id="bio-upload"
-                ref={bioFileInputRef}
-                type="file"
-                accept=".pdf,.docx"
-                onChange={handleBioFileUpload}
-                className="hidden"
-              />
-              <Textarea
-                id="userBio"
-                value={aiConfig.userBio || ''}
-                onChange={(e) => handleUserBioChange(e.target.value)}
-                placeholder="Brief description of your professional background, specialties, and career goals..."
-                rows={4}
-              />
-              <p className="text-sm text-muted-foreground">
-                Provide context about yourself that AI can use to tailor
-                suggestions.
-              </p>
-            </div>
-
-            <Button
-              onClick={() => generateResumeSnapshotFromBio()}
-              disabled={
-                !aiConfig.userBio ||
-                !aiConfig.targetJobInfo ||
-                isGeneratingSnapshot
-              }
-              className="w-full"
+            {/* Card 2: Global AI Context */}
+            <AccordionItem
+              value="global-context"
+              className="border rounded-lg data-[state=closed]:border-b"
             >
-              {isGeneratingSnapshot
-                ? 'Generating...'
-                : 'Generate Resume Snapshot with AI'}
-            </Button>
-          </div>
+              <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                <h3 className="text-lg font-semibold">Global AI Context</h3>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="pt-2 px-4 pb-4 space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    This information will be used by AI to provide more
+                    personalized suggestions.
+                  </p>
 
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              API keys are stored only in memory and never persisted.
-              You&apos;ll need to re-enter them after refreshing the page.
-            </AlertDescription>
-          </Alert>
+                  <div className="space-y-2">
+                    <Label htmlFor="targetJob">Target Job Info</Label>
+                    <ImageUploadArea
+                      ref={targetJobTextAreaRef}
+                      id="targetJob"
+                      value={aiConfig.targetJobInfo || ''}
+                      onChange={handleTargetJobInfoChange}
+                      onImageUpload={handleImageFile}
+                      isLoading={isExtractingJobInfo}
+                      rows={4}
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      Describe the position you&apos;re applying for, or
+                      paste/drag an image of the job post.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <Label htmlFor="userBio">Professional Bio</Label>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => bioFileInputRef.current?.click()}
+                      >
+                        <UploadCloud className="mr-2 h-4 w-4" />
+                        Upload Doc/PDF
+                      </Button>
+                    </div>
+                    <Input
+                      id="bio-upload"
+                      ref={bioFileInputRef}
+                      type="file"
+                      accept=".pdf,.docx"
+                      onChange={handleBioFileUpload}
+                      className="hidden"
+                    />
+                    <Textarea
+                      id="userBio"
+                      value={aiConfig.userBio || ''}
+                      onChange={(e) => handleUserBioChange(e.target.value)}
+                      placeholder="Brief description of your professional background, specialties, and career goals..."
+                      rows={4}
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      Provide context about yourself that AI can use to tailor
+                      suggestions.
+                    </p>
+                  </div>
+
+                  <Button
+                    onClick={() => generateResumeSnapshotFromBio()}
+                    disabled={
+                      !aiConfig.userBio ||
+                      !aiConfig.targetJobInfo ||
+                      isGeneratingSnapshot
+                    }
+                    className="w-full"
+                  >
+                    {isGeneratingSnapshot
+                      ? 'Generating...'
+                      : 'Generate Resume Snapshot with AI'}
+                  </Button>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
       </SheetContent>
     </Sheet>
