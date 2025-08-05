@@ -1,6 +1,7 @@
 // src/components/resume/ui/AutocompleteTextarea.tsx
 'use client';
 
+import React from 'react';
 import { CopilotTextarea } from 'copilot-react-textarea';
 import type { ChangeEvent, KeyboardEvent } from 'react';
 import { useCallback, useRef } from 'react';
@@ -20,9 +21,10 @@ interface AutocompleteTextareaProps
   autocompleteModel: AutocompleteModel;
   sectionId: string;
   itemId?: string;
+  isFocusMode?: boolean;
 }
 
-export default function AutocompleteTextarea({
+export default React.memo(function AutocompleteTextarea({
   value,
   onValueChange,
   sectionType,
@@ -31,6 +33,7 @@ export default function AutocompleteTextarea({
   sectionId,
   itemId,
   className,
+  isFocusMode,
   ...props
 }: AutocompleteTextareaProps) {
   // useRef to solve the timing issue: When a suggestion is accepted via Tab key,
@@ -137,15 +140,13 @@ export default function AutocompleteTextarea({
   const isDisplayingForcedSuggestion = false; // Never display forced suggestions in textarea
 
   return (
-    <div className="relative w-full">
+    <div className="relative w-full h-full">
       <CopilotTextarea
         value={displayValue}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
         debounceTime={500}
         disableWhenEmpty={false}
-        showGenerateShortcut={true}
-        shortcut="Ctrl+Shift+K"
         placeholder={isDisplayingForcedSuggestion ? '' : props.placeholder}
         textareaPurpose="resume-field"
         // Pass through our standard shadcn/ui textarea styles
@@ -154,6 +155,7 @@ export default function AutocompleteTextarea({
           isDisplayingForcedSuggestion
             ? 'text-muted-foreground caret-foreground'
             : 'text-foreground',
+          isFocusMode && 'h-full w-full overflow-y-auto',
           className
         )}
         // The core of the integration: hook up our AI logic
@@ -172,4 +174,4 @@ export default function AutocompleteTextarea({
       {/* REMOVED: forcedSuggestion UI hint - now using dialog-based approach */}
     </div>
   );
-}
+});
