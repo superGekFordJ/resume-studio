@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { Shrink } from 'lucide-react';
@@ -32,9 +32,9 @@ export const FocusView = React.memo(function FocusView({
 }: FocusViewProps) {
   const [value, setValue] = useState(textareaProps.initialValue);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     onClose(value);
-  };
+  }, [onClose, value]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -46,7 +46,7 @@ export const FocusView = React.memo(function FocusView({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
+  }, [handleClose]);
 
   return createPortal(
     <div className="fixed inset-0 flex items-center justify-center">

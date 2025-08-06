@@ -58,6 +58,7 @@
     "date-fns": "^3.6.0",
     "docx-preview": "^0.3.5",
     "dotenv": "^16.5.0",
+    "framer-motion": "^12.23.12",
     "genkit": "^1.15.1",
     "idb-keyval": "^6.2.2",
     "import-in-the-middle": "^1.14.2",
