@@ -33,12 +33,17 @@ jobs:
         uses: TriPSs/conventional-changelog-action@v5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          output-file: false # We want the output as a variable, not a file
+          output-file: false
+          # Prevent the action from creating commits or tags
+          skip-commit: true
+          skip-tag: true
+          skip-version-file: true
+
 
       - name: Check for pre-release tag in version
         id: check_prerelease
         run: |
-          if [[ "${{ steps.get_version.outputs.version }}" == *alpha* || "${{ steps.get_version.outputs.version }}" == *beta* || "${{ steps.get_version.outputs.version }}" == *rc* ]]; then
+          if [[ "${{ steps.get_version.outputs.version }}" == *alpha* || "${{ steps.get_version.outputs.version }}" == *beta* ]]; then
             echo "is_prerelease=true" >> $GITHUB_OUTPUT
           else
             echo "is_prerelease=false" >> $GITHUB_OUTPUT
@@ -47,7 +52,10 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          # Use the exact version from package.json for the tag and release name
           tag_name: "v${{ steps.get_version.outputs.version }}"
           name: "v${{ steps.get_version.outputs.version }}"
+          # Use the generated changelog text as the release body
           body: ${{ steps.changelog.outputs.changelog }}
+          # Correctly mark as pre-release based on the version from package.json
           prerelease: ${{ steps.check_prerelease.outputs.is_prerelease }}
