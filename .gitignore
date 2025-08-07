@@ -38,7 +38,12 @@ yarn-error.log*
 next-env.d.ts
 
 .genkit/*
+.env
 .env.local
+.env.development
+.env.test
+.env.production
+.env.staging
 .augment-guidelines
 .serena
 

@@ -5,33 +5,49 @@ on:
     branches:
       - master
     paths:
-      # IMPORTANT: Adjust this path to match the location
-      # of your package.json from the root of the repository.
       - 'package.json'
 
 jobs:
   release:
     runs-on: ubuntu-latest
     permissions:
-      # This permission is required for the action to create a release and tag.
       contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          # Fetch all history so conventional-changelog-action can read all commits
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
       - name: Get version from package.json
         id: get_version
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog
+        id: changelog
+        uses: TriPSs/conventional-changelog-action@v5
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          output-file: false # We want the output as a variable, not a file
+
+      - name: Check for pre-release tag in version
+        id: check_prerelease
         run: |
-          # The output is named 'version' and can be used in subsequent steps.
-          echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+          if [[ "${{ steps.get_version.outputs.version }}" == *alpha* || "${{ steps.get_version.outputs.version }}" == *beta* || "${{ steps.get_version.outputs.version }}" == *rc* ]]; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          # The tag will be 'v' followed by the version, e.g., v1.2.0
           tag_name: "v${{ steps.get_version.outputs.version }}"
-          # The release title will also include the version.
           name: "v${{ steps.get_version.outputs.version }}"
-          # This will automatically create release notes based on the commits
-          # since the last release. This is a fantastic feature!
-          generate_release_notes: true
+          body: ${{ steps.changelog.outputs.changelog }}
+          prerelease: ${{ steps.check_prerelease.outputs.is_prerelease }}
