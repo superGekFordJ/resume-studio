@@ -24,7 +24,13 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, Info, UploadCloud } from 'lucide-react';
+import {
+  AlertCircle,
+  Info,
+  UploadCloud,
+  Settings,
+  ClipboardListIcon,
+} from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ImageUploadArea } from './upload/ImageUploadArea';
 
@@ -145,9 +151,12 @@ export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
               className="border rounded-lg data-[state=closed]:border-b"
             >
               <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                <h3 className="text-lg font-semibold">
-                  AI Provider Configuration
-                </h3>
+                <div className="flex items-center gap-2">
+                  <Settings className="h-5 w-5 text-muted-foreground" />
+                  <h3 className="text-lg font-semibold">
+                    AI Provider Configuration
+                  </h3>
+                </div>
               </AccordionTrigger>
               <AccordionContent>
                 <div className="pt-2 px-4 pb-4 space-y-4">
@@ -254,7 +263,10 @@ export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
               className="border rounded-lg data-[state=closed]:border-b"
             >
               <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                <h3 className="text-lg font-semibold">Global AI Context</h3>
+                <div className="flex items-center gap-2">
+                  <ClipboardListIcon className="h-5 w-5 text-muted-foreground" />
+                  <h3 className="text-lg font-semibold">Global AI Context</h3>
+                </div>
               </AccordionTrigger>
               <AccordionContent>
                 <div className="pt-2 px-4 pb-4 space-y-4">

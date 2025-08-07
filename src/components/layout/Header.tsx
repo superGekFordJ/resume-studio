@@ -1,7 +1,6 @@
 import { Button } from '@/components/ui/button';
 import {
   Download,
-  Sparkles,
   Printer,
   ChevronDown,
   Settings,
@@ -21,7 +20,11 @@ import { schemaRegistry } from '@/lib/schemaRegistry';
 import { useToast } from '@/hooks/use-toast';
 import { SettingsPanel } from './SettingsPanel';
 import VersionSnapshotDialog from '@/components/ui/VersionSnapshotDialog';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+
+/* New: AIHubButton (icon-only, gradient+glow). Placed under layout per architecture */
+import AIHubButton from './AIHubButton';
+import AIHubHoverMenu from './AIHubHoverMenu';
 
 interface HeaderProps {
   onExportPdf: () => void;
@@ -32,6 +35,8 @@ export default function Header({ onExportPdf, onPrint }: HeaderProps) {
   const { toast } = useToast();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isVersionsOpen, setIsVersionsOpen] = useState(false);
+  const [isAiMenuVisible, setIsAiMenuVisible] = useState(false);
+  const aiMenuTimerRef = useRef<NodeJS.Timeout | null>(null);
   const resumeData = useResumeStore((state) => state.resumeData);
   const aiConfig = useResumeStore((state) => state.aiConfig);
   const setIsReviewDialogOpen = useResumeStore(
@@ -44,6 +49,24 @@ export default function Header({ onExportPdf, onPrint }: HeaderProps) {
   const exportCurrentSchema = useResumeStore(
     (state) => state.exportCurrentSchema
   );
+
+  const handleAiMenuMouseEnter = () => {
+    if (aiMenuTimerRef.current) {
+      clearTimeout(aiMenuTimerRef.current);
+    }
+    aiMenuTimerRef.current = setTimeout(() => {
+      setIsAiMenuVisible(true);
+    }, 150); // Delay before showing
+  };
+
+  const handleAiMenuMouseLeave = () => {
+    if (aiMenuTimerRef.current) {
+      clearTimeout(aiMenuTimerRef.current);
+    }
+    aiMenuTimerRef.current = setTimeout(() => {
+      setIsAiMenuVisible(false);
+    }, 300); // Longer delay before hiding
+  };
 
   const handleReviewResume = async () => {
     setIsReviewLoading(true);
@@ -76,14 +99,38 @@ export default function Header({ onExportPdf, onPrint }: HeaderProps) {
   return (
     <>
       <header className="bg-card border-b sticky top-0 z-40 no-print">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        {/* Three-section layout: Left brand | Center AI icon | Right utilities */}
+        {/* Use CSS Grid for robust three-column centering */}
+        <div className="container mx-auto px-4 h-16 grid grid-cols-[1fr_auto_1fr] items-center">
+          {/* Left: Brand (aligns to the start of the first column) */}
+          <div className="flex items-center gap-2 justify-self-start">
             <Logo className="h-8 w-8" />
             <h1 className="text-2xl font-headline font-semibold text-foreground">
               Resume Studio
             </h1>
           </div>
-          <div className="flex items-center gap-2">
+
+          {/* Center: AI icon-only (truly centered in the middle column) */}
+          <div
+            className="justify-self-center relative"
+            onMouseEnter={handleAiMenuMouseEnter}
+            onMouseLeave={handleAiMenuMouseLeave}
+          >
+            <AIHubButton
+              ariaLabel="AI Assistant"
+              // Keep a primary click action, e.g., open review directly
+              onClick={handleReviewResume}
+              size="md"
+            />
+            <AIHubHoverMenu
+              isVisible={isAiMenuVisible}
+              onReviewClick={handleReviewResume}
+              // onAgentClick would be wired here in the future
+            />
+          </div>
+
+          {/* Right: Utilities (aligns to the end of the third column) */}
+          <div className="flex items-center gap-2 justify-self-end">
             <Button
               variant="outline"
               size="sm"
@@ -102,15 +149,14 @@ export default function Header({ onExportPdf, onPrint }: HeaderProps) {
               Settings
             </Button>
 
-            <Button variant="outline" size="sm" onClick={handleReviewResume}>
-              <Sparkles className="mr-2 h-4 w-4" />
-              AI Review
-            </Button>
-
-            <Button variant="outline" size="sm" onClick={exportCurrentSchema}>
-              <Code className="mr-2 h-4 w-4" />
-              Export Schema
-            </Button>
+            {/* Dev-only: Export Schema */}
+            {(process.env.NODE_ENV === 'development' ||
+              process.env.NEXT_PUBLIC_ENABLE_SCHEMA_EXPORT === 'true') && (
+              <Button variant="outline" size="sm" onClick={exportCurrentSchema}>
+                <Code className="mr-2 h-4 w-4" />
+                Export Schema
+              </Button>
+            )}
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

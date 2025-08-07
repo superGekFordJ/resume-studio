@@ -14,6 +14,103 @@
 @tailwind components;
 @tailwind utilities;
 
+/* === AI Hub: gradient, glow and motion tokens ===
+   These variables and keyframes power the center AI icon-only button.
+   Colorway is inspired by modern AI UIs (multi-hue gradient + soft glow),
+   with reduced-motion friendly fallbacks.
+*/
+:root {
+  /* Gradient stops for AI hub (light) */
+  --ai-1: 259 100% 64%; /* #675CFF */
+  --ai-2: 191 100% 50%; /* #00D4FF */
+  --ai-3: 335 100% 58%; /* #FF4D95 */
+  --ai-4: 95 100% 75%; /* #A8FF78 */
+
+  /* Glow colors */
+  --ai-glow: 259 100% 64%; /* base glow hue */
+  --ai-glow-alpha: 0.22;
+
+  /* Animation timing */
+  --ai-hue-duration: 6s;
+  --ai-pulse-duration: 2400ms;
+  --ai-hover-scale: 1.03;
+  --ai-active-scale: 0.97;
+}
+
+.dark {
+  /* Slightly brighter in dark to keep perceived luminance */
+  --ai-1: 259 100% 70%;
+  --ai-2: 191 100% 55%;
+  --ai-3: 335 100% 64%;
+  --ai-4: 95 100% 78%;
+  --ai-glow-alpha: 0.26;
+}
+
+/* Utility classes for the AI hub button */
+.aihub-btn {
+  /* conic gradient disc */
+  background: conic-gradient(
+    from 0deg,
+    hsl(var(--ai-1)),
+    hsl(var(--ai-2)),
+    hsl(var(--ai-3)),
+    hsl(var(--ai-4)),
+    hsl(var(--ai-1))
+  );
+  box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+}
+
+/* Subtle continuous hue drift (reduced-motion aware below) */
+.aihub-glow {
+  will-change: filter, box-shadow, transform;
+}
+
+/* Busy state: adds soft breathing glow */
+.aihub-pulse {
+  will-change: box-shadow;
+}
+
+/* Prefer reduced motion: disable keyframe animations */
+@media (prefers-reduced-motion: reduce) {
+  .aihub-glow,
+  .aihub-pulse {
+    animation: none !important;
+  }
+}
+
+/* Normal motion: gentle hue drift + pulse */
+@media (prefers-reduced-motion: no-preference) {
+  .aihub-glow {
+    animation: aihubHue var(--ai-hue-duration) ease-in-out infinite alternate;
+  }
+  .aihub-pulse {
+    animation:
+      aihubHue var(--ai-hue-duration) ease-in-out infinite alternate,
+      aihubPulse var(--ai-pulse-duration) ease-in-out infinite;
+  }
+
+  @keyframes aihubHue {
+    0% {
+      filter: hue-rotate(0deg);
+    }
+    100% {
+      filter: hue-rotate(16deg);
+    }
+  }
+
+  @keyframes aihubPulse {
+    0% {
+      box-shadow: 0 0 0 0 hsla(var(--ai-glow), 0);
+    }
+    50% {
+      box-shadow: 0 0 20px 8px hsla(var(--ai-glow), var(--ai-glow-alpha));
+    }
+    100% {
+      box-shadow: 0 0 0 0 hsla(var(--ai-glow), 0);
+    }
+  }
+}
+
 @layer base {
   :root {
     --background: 220 29% 95%; /* Light Gray #F0F2F5 */
@@ -113,6 +210,14 @@
   }
   .font-sans {
     font-family: 'PT Sans', sans-serif;
+  }
+
+  /* Hover micro-interaction helpers for AI hub (scale + ring separation) */
+  .aihub-btn:hover {
+    transform: scale(var(--ai-hover-scale));
+  }
+  .aihub-btn:active {
+    transform: scale(var(--ai-active-scale));
   }
 }
 
