@@ -68,6 +68,16 @@ export default function Header({ onExportPdf, onPrint }: HeaderProps) {
     }, 300); // Longer delay before hiding
   };
 
+  // New: Click handler for the AI button to toggle the menu
+  const handleAiButtonClick = () => {
+    // Clear any pending timers
+    if (aiMenuTimerRef.current) {
+      clearTimeout(aiMenuTimerRef.current);
+    }
+    // Toggle the menu visibility
+    setIsAiMenuVisible((prev) => !prev);
+  };
+
   const handleReviewResume = async () => {
     setIsReviewLoading(true);
     setReviewContent(null);
@@ -118,8 +128,8 @@ export default function Header({ onExportPdf, onPrint }: HeaderProps) {
           >
             <AIHubButton
               ariaLabel="AI Assistant"
-              // Keep a primary click action, e.g., open review directly
-              onClick={handleReviewResume}
+              // The primary click now opens the menu, not the LLM call
+              onClick={handleAiButtonClick}
               size="md"
             />
             <AIHubHoverMenu

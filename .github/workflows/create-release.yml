@@ -38,6 +38,7 @@ jobs:
           skip-commit: true
           skip-tag: true
           skip-version-file: true
+          skip-bump: true
 
 
       - name: Check for pre-release tag in version

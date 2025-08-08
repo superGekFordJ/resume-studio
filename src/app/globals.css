@@ -94,7 +94,7 @@
       filter: hue-rotate(0deg);
     }
     100% {
-      filter: hue-rotate(16deg);
+      filter: hue-rotate(270deg);
     }
   }
 
