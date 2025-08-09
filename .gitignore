@@ -53,11 +53,7 @@ next-env.d.ts
 .idx/
 docs/FIXES_SUMMARY.md
 docs/blueprint.md
-public/image.jpg
-public/image (4).jpg
-public/image (3).jpg
-public/image (2).jpg
-public/image (1).jpg
+.windsurf/rules 
 demo/autocomplete_zh.gif
 
 # Gemini generated files

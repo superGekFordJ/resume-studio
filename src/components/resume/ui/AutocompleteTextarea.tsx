@@ -10,6 +10,7 @@ import { schemaRegistry } from '@/lib/schemaRegistry';
 import { useResumeStore } from '@/stores/resumeStore';
 import type { AutocompleteModel } from '@/stores/types';
 import { cn } from '@/lib/utils';
+import MarkdownFloatingToolbar from './MarkdownFloatingToolbar';
 
 // Interface updated to remove large, unnecessary data props.
 interface AutocompleteTextareaProps
@@ -170,6 +171,7 @@ export default React.memo(function AutocompleteTextarea({
         disabled={props.disabled}
         rows={props.rows}
         cols={props.cols}
+        insideSlateChildren={<MarkdownFloatingToolbar enableAIModifyButton />}
       />
       {/* REMOVED: forcedSuggestion UI hint - now using dialog-based approach */}
     </div>
