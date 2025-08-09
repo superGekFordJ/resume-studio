@@ -134,13 +134,13 @@ if (!apiKeyToUse && process.env.NODE_ENV === 'development') {
 
 #### `AutocompleteTextarea.tsx` 实现说明
 
-`AutocompleteTextarea.tsx` 组件已被完全重构，以使用 `copilot-react-kit` 库，提供了更优越的、光标感知的内联自动补全体验。
+`AutocompleteTextarea.tsx` 组件已被完全重构，以使用 `copilot-react-textarea` 库，提供了更优越的、光标感知的内联自动补全体验。
 
 关键实现细节：
 
-- **适配器模式**: 该组件作为 `copilot-react-kit` 的一个"智能包装器"。
+- **适配器模式**: 该组件作为 `copilot-react-textarea` 的一个"智能包装器"。
 - **"热路径"调用**: 为了将延迟降至最低，该组件**不通过Zustand Store**来发起AI调用，而是直接 `await` 调用 `autocompleteInput` 这个Genkit Flow。
-- **防抖机制**: 组件利用 `copilot-react-kit` 原生的 `debounceTime` prop 来控制 AI 建议的请求频率。
+- **防抖机制**: 组件利用 `copilot-react-textarea` 原生的 `debounceTime` prop 来控制 AI 建议的请求频率。
 - **竞态条件处理**: 使用一个基于 `useRef` 的标志 (`suggestionJustAccepted`) 来解决用户接受建议时可能触发冗余调用的问题。
 - **v3 简化**: 随着 v3 改进系统的实施，旧的、基于 `forcedSuggestion` prop 的**双重建议系统已被移除**。组件现在只专注于处理其自身的内联自动补全逻辑，代码更简洁、职责更单一。
 

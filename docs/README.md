@@ -14,6 +14,12 @@
 
 - **[AI 集成指南](./ai-integration-guide.md)** - AI功能实现、统一服务层和最佳实践
 
+### 🖼️ UI 组件与交互
+
+- **[Markdown 浮动工具栏](./ui/markdown-floating-toolbar.md)** - 选区触发的 Markdown 格式化工具栏与实现要点
+- **[Markdown 工具栏：已知问题与 TODO](./ui/markdown-toolbar-issues.md)**
+- **[Focus Mode 文本域](./ui/focus-mode-textarea.md)** - 通过 Portal 和动画实现沉浸式编辑
+
 ### 🧩 组件参考
 
 - **[组件 API 参考](./component-api-reference.md)** - 详细的组件接口和使用方法

@@ -168,52 +168,81 @@ interface SidebarNavigatorProps {
 
 ### 6. AutocompleteTextarea
 
-集成了 `copilot-react-kit` 的、支持 AI 自动补全的 Schema 驱动文本输入组件。它现在可以与 `AutocompleteModelSelector` 配合使用，允许用户选择不同的 AI 模型。
+集成了 `copilot-react-textarea` 的、支持 AI 自动补全的 Schema 驱动文本输入组件。它现在可以与 `AutocompleteModelSelector` 配合使用，允许用户选择不同的 AI 模型。
 
 #### Props
 
 ```typescript
 interface AutocompleteTextareaProps
   extends Omit<React.ComponentProps<'textarea'>, 'onChange' | 'value'> {
-  // --- Core Functionality ---
+  // --- Core ---
   value: string;
   onValueChange: (value: string) => void;
 
-  // --- AI Context (from parent) ---
+  // --- AI Context ---
   isAutocompleteEnabledGlobally: boolean;
-  uniqueFieldId: string; // 用于唯一标识textarea实例
+  autocompleteModel: AutocompleteModel;
+  sectionId: string;
+  itemId?: string;
+  sectionType?: string; // 可选：用于跳过特定字段类型（如 personalDetailsField）
 
-  // --- AI Suggestions (from store) ---
-  forcedSuggestion?: string | null;
-  onForcedSuggestionAccepted?: () => void;
-  onForcedSuggestionRejected?: () => void;
+  // --- 视图 ---
+  isFocusMode?: boolean;
 }
 ```
 
-_注意：其他用于构建AI上下文的内部props（如`sectionType`, `itemId`, `name`）被视为 `AIFieldWrapper` 的实现细节，在此处省略以简化API文档。_
+_注意：标准 textarea 属性（如 `id`, `name`, `placeholder`, `rows`, `cols`, `disabled`, `className` 等）作为透传 props 支持，此处省略。强制建议（forced suggestion）相关 props 已移除，行为改为通过对话框承载。_
 
 #### 使用示例
 
 ```tsx
-// 在 AIFieldWrapper.tsx 内部使用
+// 在 AIFieldWrapper.tsx 内部使用（节选）
 <AutocompleteTextarea
   id={uniqueFieldId}
+  name={fieldId}
+  sectionType={schemaId}
+  sectionId={sectionId}
+  itemId={itemId}
   value={value}
   onValueChange={handleValueChange}
   placeholder={field.uiProps?.placeholder}
   isAutocompleteEnabledGlobally={isAutocompleteEnabled}
+  autocompleteModel={autocompleteModel}
 />
 ```
 
 #### 特性
 
 - 由 `SchemaRegistry` 驱动的上下文感知自动补全。
-- 使用 `copilot-react-kit` 提供高性能的内联建议 ("幽灵文本")。
-- "热路径"优化：为降低延迟，直接调用AI服务，不通过Store Action。
-- 无缝集成来自Store的"强制建议"（AI改进建议）。
-- Tab键接受建议。
-- Escape键拒绝强制建议。
-- **支持AI模型选择**：与 `AutocompleteModelSelector` 配合使用，允许用户选择不同的自动补全模型。
+- 使用 `copilot-react-textarea` 提供高性能的内联建议 ("幽灵文本")。
+- "热路径"优化：为降低延迟，直接调用 AI 服务，不通过 Store Action。
+- 强制建议改为对话框呈现，不在文本域内联显示。
+- Tab 键接受建议（由 CopilotTextarea 处理）。
+- **支持 AI 模型选择**：与 `AutocompleteModelSelector` 配合使用，允许用户选择不同的自动补全模型。
+
+#### Markdown 浮动工具栏集成
+
+- 通过 `insideSlateChildren` 插槽向上游 `CopilotTextarea` 注入 Markdown 工具栏（仅在选区非折叠时显示）。
+- 下游注入，避免入侵式修改上游 HoveringToolbar（保留 Cmd/Ctrl+K 的 AI 悬浮框）。
+- 工具栏通过 React Portal 渲染到 `document.body`，避免被父容器裁剪。
+
+使用示例（节选）：
+
+```tsx
+<CopilotTextarea
+  /* 其他 props */
+  insideSlateChildren={<MarkdownFloatingToolbar />}
+/>
+```
+
+详见：`docs/ui/markdown-floating-toolbar.md` 与已知问题 `docs/ui/markdown-toolbar-issues.md`。
+
+##### 内部实现与扩展插槽
+
+- `insideSlateChildren` 插槽定义：`packages/src/types/base/base-copilot-textarea-props.tsx` 中的 `BaseCopilotTextareaProps.insideSlateChildren?: ReactNode`。
+- 插槽渲染位置：`packages/src/components/base-copilot-textarea/base-copilot-textarea.tsx` 内，渲染于 Slate Provider 内、`Editable` 之前。
+- 向上游转发：`packages/src/components/copilot-textarea/copilot-textarea.tsx` 使用 `...forwardedProps` 将 `insideSlateChildren` 透传给 `BaseCopilotTextarea`。
+- 本项目集成点：`src/components/resume/ui/AutocompleteTextarea.tsx` 通过 `insideSlateChildren={<MarkdownFloatingToolbar />}` 挂载 Toolbar。
 
 ---
 
