@@ -10,13 +10,14 @@
 
 - [x] 组件模块化：已抽取为独立文件 `src/components/resume/ui/MarkdownFloatingToolbar.tsx`，并通过 `insideSlateChildren` 注入。公共子组件与样式常量的进一步沉淀可在需要时进行。
 
-- [x] “AI Modify”按钮（可选）：已加入可选按钮（默认关闭），点击派发 `resume:openHoveringEditor` 自定义事件；上层可监听后打开 Hovering Editor。为保持解耦，未直接引用内部 Hook。
+- [x] “AI Modify”按钮（可选）：已加入可选按钮（默认关闭），点击时模拟 Cmd/Ctrl+K（派发 `keydown/keyup`），统一触发上层 Copilot Suggestion Card；为保持解耦，不直接调用 AI，也不依赖内部 Hook；Toolbar 在捕获阶段监听并先行关闭，避免 UI 冲突。
 
 - [ ] A11y 与快捷键：
   - 为 Toolbar 增加键盘导航（Tab/Shift+Tab）与 `aria-pressed` 状态；
   - 按钮快捷键（Ctrl/Cmd + B/I/`）与选中状态高亮（检测是否被 Markdown 包裹）。
 
-- [ ] 定位鲁棒性（进一步）：已具备基本翻转与夹取。可评估引入 Floating UI/Popper 以覆盖更多边界（如滚动容器嵌套、碰撞避让）。
+- [x] 定位鲁棒性（基础）：已迁移至 Floating UI，采用 `inline()` + `flip/shift/offset` 中间件、`fixed` strategy 与 Portal，并缓存 lastRect；虚拟锚点实现 `getClientRects()` 以提升多行选区定位。
+- [ ] 定位鲁棒性（进一步）：针对嵌套滚动容器、极端窗口缩放与高频 `autoUpdate` 场景进行压力测试，必要时调优中间件顺序、`padding` 与更新节流。
 
 - [x] 性能与抖动：已通过 `selectionchange`/`scroll`/`resize` + rAF 轻节流，并在隐藏/卸载时移除监听。仍需在长文档场景做压力测试。
 
