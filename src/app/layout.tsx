@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
+import I18nProvider from '@/providers/I18nProvider';
 
 export const metadata: Metadata = {
   title: 'Resume Studio',
@@ -18,7 +19,7 @@ export default function RootLayout({
         {/* Fonts are now self-hosted via Fontsource in globals.css */}
       </head>
       <body className="font-body antialiased">
-        {children}
+        <I18nProvider>{children}</I18nProvider>
         <Toaster />
       </body>
     </html>

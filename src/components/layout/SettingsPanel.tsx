@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useResumeStore } from '@/stores/resumeStore';
 import {
   Sheet,
@@ -30,6 +31,7 @@ import {
   UploadCloud,
   Settings,
   ClipboardListIcon,
+  Languages,
 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ImageUploadArea } from './upload/ImageUploadArea';
@@ -62,6 +64,7 @@ const AI_PROVIDERS = [
 ] as const;
 
 export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
+  const { i18n } = useTranslation();
   const {
     aiConfig,
     isGeneratingSnapshot,
@@ -145,6 +148,39 @@ export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
             className="w-full space-y-4"
             defaultValue="global-context"
           >
+            {/* Card 3: Language & Appearance */}
+            <AccordionItem
+              value="language-appearance"
+              className="border rounded-lg data-[state=closed]:border-b"
+            >
+              <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                <div className="flex items-center gap-2">
+                  <Languages className="h-5 w-5 text-muted-foreground" />
+                  <h3 className="text-lg font-semibold">
+                    Language & Appearance
+                  </h3>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="pt-2 px-4 pb-4 space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="language">Language</Label>
+                    <Select
+                      value={i18n.language.split('-')[0]}
+                      onValueChange={(lang) => i18n.changeLanguage(lang)}
+                    >
+                      <SelectTrigger id="language">
+                        <SelectValue placeholder="Select language" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="en">English</SelectItem>
+                        <SelectItem value="zh">简体中文</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
             {/* Card 1: AI Provider Configuration */}
             <AccordionItem
               value="ai-provider"
@@ -334,7 +370,7 @@ export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
                     }
                     className="w-full"
                   >
-                    {isGeneratingSnapshot
+                    {isGenerating.snapshot
                       ? 'Generating...'
                       : 'Generate Resume Snapshot with AI'}
                   </Button>

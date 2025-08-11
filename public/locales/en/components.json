@@ -1,0 +1,15 @@
+{
+  "Header": {
+    "resumeStudio": "Resume Studio",
+    "versions": "Versions",
+    "settings": "Settings",
+    "exportSchema": "Export Schema",
+    "export": "Export",
+    "downloadPdf": "Download PDF",
+    "printResume": "Print Resume",
+    "error": "Error",
+    "failedToGetAiReview": "Failed to get AI review.",
+    "errorFetchingReview": "Error fetching review.",
+    "pleaseTryAgain": "Please try again."
+  }
+}

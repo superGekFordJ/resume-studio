@@ -1,0 +1,15 @@
+{
+  "Header": {
+    "resumeStudio": "简历工作室",
+    "versions": "版本",
+    "settings": "设置",
+    "exportSchema": "导出结构",
+    "export": "导出",
+    "downloadPdf": "下载 PDF",
+    "printResume": "打印简历",
+    "error": "错误",
+    "failedToGetAiReview": "获取 AI 评审失败。",
+    "errorFetchingReview": "获取评审时出错。",
+    "pleaseTryAgain": "请再试一次。"
+  }
+}

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import {
   Download,
@@ -32,6 +33,7 @@ interface HeaderProps {
 }
 
 export default function Header({ onExportPdf, onPrint }: HeaderProps) {
+  const { t } = useTranslation('components');
   const { toast } = useToast();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isVersionsOpen, setIsVersionsOpen] = useState(false);
@@ -94,12 +96,12 @@ export default function Header({ onExportPdf, onPrint }: HeaderProps) {
       console.error('AI Review error:', error);
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to get AI review.',
+        title: t('Header.error'),
+        description: t('Header.failedToGetAiReview'),
       });
       setReviewContent({
-        overallQuality: 'Error fetching review.',
-        suggestions: 'Please try again.',
+        overallQuality: t('Header.errorFetchingReview'),
+        suggestions: t('Header.pleaseTryAgain'),
       });
     } finally {
       setIsReviewLoading(false);
@@ -116,7 +118,7 @@ export default function Header({ onExportPdf, onPrint }: HeaderProps) {
           <div className="flex items-center gap-2 justify-self-start">
             <Logo className="h-8 w-8" />
             <h1 className="text-2xl font-headline font-semibold text-foreground">
-              Resume Studio
+              {t('Header.resumeStudio')}
             </h1>
           </div>
 
@@ -147,7 +149,7 @@ export default function Header({ onExportPdf, onPrint }: HeaderProps) {
               onClick={() => setIsVersionsOpen(true)}
             >
               <History className="mr-2 h-4 w-4" />
-              Versions
+              {t('Header.versions')}
             </Button>
 
             <Button
@@ -156,7 +158,7 @@ export default function Header({ onExportPdf, onPrint }: HeaderProps) {
               onClick={() => setIsSettingsOpen(true)}
             >
               <Settings className="mr-2 h-4 w-4" />
-              Settings
+              {t('Header.settings')}
             </Button>
 
             {/* Dev-only: Export Schema */}
@@ -164,7 +166,7 @@ export default function Header({ onExportPdf, onPrint }: HeaderProps) {
               process.env.NEXT_PUBLIC_ENABLE_SCHEMA_EXPORT === 'true') && (
               <Button variant="outline" size="sm" onClick={exportCurrentSchema}>
                 <Code className="mr-2 h-4 w-4" />
-                Export Schema
+                {t('Header.exportSchema')}
               </Button>
             )}
 
@@ -172,19 +174,19 @@ export default function Header({ onExportPdf, onPrint }: HeaderProps) {
               <DropdownMenuTrigger asChild>
                 <Button variant="default" size="sm">
                   <Download className="mr-2 h-4 w-4" />
-                  Export
+                  {t('Header.export')}
                   <ChevronDown className="ml-1 h-3 w-3" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => onExportPdf()}>
                   <Download className="mr-2 h-4 w-4" />
-                  Download PDF
+                  {t('Header.downloadPdf')}
                 </DropdownMenuItem>
                 {onPrint && (
                   <DropdownMenuItem onClick={() => onPrint()}>
                     <Printer className="mr-2 h-4 w-4" />
-                    Print Resume
+                    {t('Header.printResume')}
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
