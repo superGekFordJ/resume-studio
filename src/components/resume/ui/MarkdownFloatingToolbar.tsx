@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { createPortal } from 'react-dom';
 import { Editor, Range, Transforms } from 'slate';
 import { useSlate, useSlateSelection } from 'slate-react';
 import {
@@ -19,6 +18,8 @@ import {
   toggleBulletedList,
   toggleNumberedList,
 } from '@/lib/markdownTextTransforms';
+import { FloatingLayer } from '@/components/ui/floating/FloatingLayer';
+import type { VirtualElement } from '@floating-ui/react';
 
 export interface MarkdownFloatingToolbarProps {
   enableAIModifyButton?: boolean;
@@ -27,21 +28,42 @@ export interface MarkdownFloatingToolbarProps {
 export default function MarkdownFloatingToolbar({
   enableAIModifyButton = false,
 }: MarkdownFloatingToolbarProps) {
-  const ref = React.useRef<HTMLDivElement | null>(null);
   const editor = useSlate();
   const selection = useSlateSelection();
   const [isClient, setIsClient] = React.useState(false);
   React.useEffect(() => setIsClient(true), []);
+  // Debounce display until selection settles (approx after mouseup)
+  const [allowShow, setAllowShow] = React.useState(false);
+  React.useEffect(() => {
+    setAllowShow(false);
+    const id = window.setTimeout(() => setAllowShow(true), 120);
+    return () => window.clearTimeout(id);
+  }, [selection]);
+  // Allow outside-press to close without mutating Slate selection
+  const [forceClosed, setForceClosed] = React.useState(false);
+  React.useEffect(() => {
+    // any selection change re-enables show
+    setForceClosed(false);
+  }, [selection]);
 
   const isNonCollapsedSelection =
     !!selection && !Range.isCollapsed(selection as Range);
-  const isShown = isClient && isNonCollapsedSelection;
+  const isShown =
+    isClient && isNonCollapsedSelection && allowShow && !forceClosed;
+
+  type VirtualElementWithClientRects = VirtualElement & {
+    getClientRects: () => DOMRect[];
+  };
 
   const replaceSelectionWith = React.useCallback(
     (newText: string) => {
       if (!selection) return;
-      Transforms.delete(editor, { at: selection });
-      Transforms.insertText(editor, newText, { at: selection });
+      const at = selection as Range;
+      const insertPoint = Range.start(at);
+      Editor.withoutNormalizing(editor, () => {
+        Transforms.delete(editor, { at });
+        Transforms.insertText(editor, newText, { at: insertPoint });
+      });
     },
     [editor, selection]
   );
@@ -79,113 +101,103 @@ export default function MarkdownFloatingToolbar({
     () => withSelectedText(toggleNumberedList),
     [withSelectedText]
   );
+  // Schedule transforms after current mouse event to avoid selection races
+  const schedule = React.useCallback((fn: () => void) => {
+    setTimeout(fn, 0);
+  }, []);
+  // Persist last non-zero rect to avoid jumping to (0,0) while closing
+  const lastRectRef = React.useRef<DOMRect | null>(null);
+  const virtualRef = React.useMemo(() => {
+    return {
+      getBoundingClientRect: () => {
+        const sel = window.getSelection();
+        const range = sel && sel.rangeCount > 0 ? sel.getRangeAt(0) : null;
+        const r = range ? range.getBoundingClientRect() : null;
+        if (r && (r.width > 0 || r.height > 0)) {
+          lastRectRef.current = r;
+          return r;
+        }
+        return lastRectRef.current ?? new DOMRect(0, 0, 0, 0);
+      },
+      getClientRects: () => {
+        const sel = window.getSelection();
+        const range = sel && sel.rangeCount > 0 ? sel.getRangeAt(0) : null;
+        if (range) {
+          const list = range.getClientRects();
+          if (list && list.length > 0) return Array.from(list);
+        }
+        return lastRectRef.current ? [lastRectRef.current] : [];
+      },
+    } as VirtualElementWithClientRects; // satisfies VirtualElement shape and adds getClientRects
+  }, []);
 
-  const recalcPosition = React.useCallback(() => {
-    const el = ref.current;
-    if (!el || !isShown) return;
-
-    const dom = window.getSelection();
-    if (!dom || dom.rangeCount === 0) return;
-    const range = dom.getRangeAt(0);
-
-    // Use client rects to better handle multi-line selections
-    const rects = range.getClientRects();
-    let baseRect: DOMRect | null = null;
-    if (rects && rects.length > 0) {
-      // pick the top-most rect
-      let topRect = rects[0];
-      for (let i = 1; i < rects.length; i++) {
-        if (rects[i].top < topRect.top) topRect = rects[i];
+  // 监听 Cmd/Ctrl+K：当 Copilot Suggestion Card 即将显示时，先关闭本浮条，避免重叠
+  React.useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.code === 'KeyK')) {
+        setForceClosed(true);
       }
-      // Create a DOMRect-like object for consistency
-      baseRect = new DOMRect(
-        topRect.left,
-        topRect.top,
-        topRect.width,
-        topRect.height
-      );
-    } else {
-      const r = range.getBoundingClientRect();
-      baseRect = new DOMRect(r.left, r.top, r.width, r.height);
-    }
-
-    if (!baseRect) return;
-    if (
-      baseRect.top === 0 &&
-      baseRect.left === 0 &&
-      baseRect.width === 0 &&
-      baseRect.height === 0
-    )
-      return;
-
-    const offset = 8;
-
-    // Preferred above selection
-    const aboveTop = baseRect.top + window.scrollY - el.offsetHeight - offset;
-    const belowTop = baseRect.bottom + window.scrollY + offset;
-
-    let top = aboveTop;
-    if (top < offset) {
-      // flip below if not enough space above
-      top = belowTop;
-    }
-
-    const centerX = baseRect.left + baseRect.width / 2 + window.scrollX;
-    let left = centerX - el.offsetWidth / 2;
-
-    // clamp horizontally
-    const minX = offset;
-    const maxX = window.innerWidth - el.offsetWidth - offset;
-    if (left < minX) left = minX;
-    if (left > maxX) left = Math.max(minX, maxX);
-
-    el.style.opacity = '1';
-    el.style.position = 'absolute';
-    el.style.top = `${top}px`;
-    el.style.left = `${left}px`;
-  }, [isShown]);
-
-  // Recalc on mount/show and on selection change
-  React.useLayoutEffect(() => {
-    if (!isShown) return;
-    recalcPosition();
-
-    let raf = 0;
-    const onScroll = () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(recalcPosition);
     };
-    const onResize = onScroll;
-    const onSelectionChange = onScroll;
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, []);
 
-    window.addEventListener('scroll', onScroll, true);
-    window.addEventListener('resize', onResize);
-    document.addEventListener('selectionchange', onSelectionChange);
-
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener('scroll', onScroll, true);
-      window.removeEventListener('resize', onResize);
-      document.removeEventListener('selectionchange', onSelectionChange);
+  const simulateCtrlK = React.useCallback(() => {
+    const isMac =
+      typeof navigator !== 'undefined' &&
+      /Mac|iPhone|iPad/.test(navigator.platform);
+    const init: KeyboardEventInit = {
+      key: 'k',
+      code: 'KeyK',
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+      ...(isMac ? { metaKey: true } : { ctrlKey: true }),
     };
-  }, [isShown, recalcPosition]);
+    // Prefer dispatching on the currently focused editable element,
+    // because many listeners are attached to the element or document, not window.
+    const activeEl =
+      (document.activeElement as HTMLElement | null) ?? undefined;
+    if (activeEl) {
+      activeEl.dispatchEvent(new KeyboardEvent('keydown', init));
+      activeEl.dispatchEvent(new KeyboardEvent('keyup', init));
+    }
+    // Also dispatch on document and window as a fallback to reach capture/bubble listeners.
+    document.dispatchEvent(new KeyboardEvent('keydown', init));
+    document.dispatchEvent(new KeyboardEvent('keyup', init));
+    window.dispatchEvent(new KeyboardEvent('keydown', init));
+    window.dispatchEvent(new KeyboardEvent('keyup', init));
+  }, []);
 
   if (!isShown) return null;
 
-  return createPortal(
-    <div
-      ref={ref}
-      className="copilot-kit-textarea-css-scope p-2 absolute z-20 top-[-10000px] left-[-10000px] mt-[-6px] transition-opacity duration-150 bg-white/90 backdrop-blur-lg rounded-lg shadow-lg border border-gray-200/50"
+  return (
+    <FloatingLayer
+      open={isShown}
+      onOpenChange={(open) => {
+        if (!open) setForceClosed(true);
+      }}
+      virtualRef={virtualRef}
+      placement="top"
+      offset={8}
+      matchWidth={false}
+      strategy="fixed"
+      withInline
+      className="copilot-kit-textarea-css-scope p-2 z-[65] mt-[-6px] bg-white/90 backdrop-blur-lg shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 data-[side=top]:origin-bottom data-[side=bottom]:origin-top"
       role="toolbar"
-      aria-label="Formatting"
-      onMouseDown={(e) => e.preventDefault()}
+      withFocusManager={false}
+      closeOnOutsidePress
+      closeOnEsc
     >
-      <div className="flex items-center gap-1.5">
+      <div
+        className="flex items-center gap-1.5"
+        onMouseDown={(e) => e.preventDefault()}
+      >
         <button
           type="button"
           onMouseDown={(e) => {
             e.preventDefault();
-            onBold();
+            schedule(onBold);
           }}
           className="p-1.5 rounded hover:bg-gray-100"
           aria-label="Bold"
@@ -197,7 +209,7 @@ export default function MarkdownFloatingToolbar({
           type="button"
           onMouseDown={(e) => {
             e.preventDefault();
-            onItalic();
+            schedule(onItalic);
           }}
           className="p-1.5 rounded hover:bg-gray-100"
           aria-label="Italic"
@@ -209,7 +221,7 @@ export default function MarkdownFloatingToolbar({
           type="button"
           onMouseDown={(e) => {
             e.preventDefault();
-            onBulletedList();
+            schedule(onBulletedList);
           }}
           className="p-1.5 rounded hover:bg-gray-100"
           aria-label="Bulleted list"
@@ -221,7 +233,7 @@ export default function MarkdownFloatingToolbar({
           type="button"
           onMouseDown={(e) => {
             e.preventDefault();
-            onNumberedList();
+            schedule(onNumberedList);
           }}
           className="p-1.5 rounded hover:bg-gray-100"
           aria-label="Numbered list"
@@ -233,7 +245,7 @@ export default function MarkdownFloatingToolbar({
           type="button"
           onMouseDown={(e) => {
             e.preventDefault();
-            onCode();
+            schedule(onCode);
           }}
           className="p-1.5 rounded hover:bg-gray-100"
           aria-label="Inline code"
@@ -245,7 +257,7 @@ export default function MarkdownFloatingToolbar({
           type="button"
           onMouseDown={(e) => {
             e.preventDefault();
-            onLink();
+            schedule(onLink);
           }}
           className="p-1.5 rounded hover:bg-gray-100"
           aria-label="Link"
@@ -260,11 +272,10 @@ export default function MarkdownFloatingToolbar({
               type="button"
               onMouseDown={(e) => {
                 e.preventDefault();
-                window.dispatchEvent(
-                  new CustomEvent('resume:openHoveringEditor', {
-                    detail: { source: 'markdown-toolbar' },
-                  })
-                );
+                schedule(() => {
+                  setForceClosed(true);
+                  simulateCtrlK();
+                });
               }}
               className="p-1.5 rounded hover:bg-gray-100"
               aria-label="AI Modify"
@@ -275,7 +286,6 @@ export default function MarkdownFloatingToolbar({
           </>
         )}
       </div>
-    </div>,
-    document.body
+    </FloatingLayer>
   );
 }
