@@ -168,5 +168,16 @@
     "aiReview": "AI Review",
     "dialogueAgent": "Dialogue Agent",
     "dialogueAgentComingSoon": "Dialogue Agent (coming soon)"
+  },
+  "VersionSnapshotDialog": {
+    "title": "Version History",
+    "description": "Save and restore different versions of your resume. Each version includes all your content and settings.",
+    "restoreConfirm": "Are you sure you want to restore this version? Your current work will be replaced.",
+    "deleteConfirm": "Are you sure you want to delete this version? This action cannot be undone.",
+    "placeholder": "Enter version name...",
+    "saveButton": "Save Current Version",
+    "noVersions": "No versions saved yet. Create your first snapshot above.",
+    "schemaVersion": "Schema v{{version}}",
+    "restore": "Restore"
   }
 }

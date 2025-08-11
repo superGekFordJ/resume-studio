@@ -23,6 +23,7 @@ import {
   X,
 } from 'lucide-react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { formatDistanceToNow } from 'date-fns';
 import type { VersionSnapshot } from '@/stores/types';
 
@@ -35,6 +36,7 @@ export default function VersionSnapshotDialog({
   open,
   onOpenChange,
 }: VersionSnapshotDialogProps) {
+  const { t } = useTranslation(['components', 'common']);
   const versionSnapshots = useResumeStore((state) => state.versionSnapshots);
   const createSnapshot = useResumeStore((state) => state.createSnapshot);
   const restoreSnapshot = useResumeStore((state) => state.restoreSnapshot);
@@ -55,22 +57,14 @@ export default function VersionSnapshotDialog({
   };
 
   const handleRestoreSnapshot = (snapshotId: string) => {
-    if (
-      confirm(
-        'Are you sure you want to restore this version? Your current work will be replaced.'
-      )
-    ) {
+    if (confirm(t('VersionSnapshotDialog.restoreConfirm'))) {
       restoreSnapshot(snapshotId);
       onOpenChange(false);
     }
   };
 
   const handleDeleteSnapshot = (snapshotId: string) => {
-    if (
-      confirm(
-        'Are you sure you want to delete this version? This action cannot be undone.'
-      )
-    ) {
+    if (confirm(t('VersionSnapshotDialog.deleteConfirm'))) {
       deleteSnapshot(snapshotId);
     }
   };
@@ -99,18 +93,17 @@ export default function VersionSnapshotDialog({
         <DialogHeader className="px-6 pt-6 flex-shrink-0">
           <DialogTitle className="font-headline text-2xl flex items-center">
             <History className="mr-2 h-6 w-6 text-primary" />
-            Version History
+            {t('VersionSnapshotDialog.title')}
           </DialogTitle>
           <DialogDescription>
-            Save and restore different versions of your resume. Each version
-            includes all your content and settings.
+            {t('VersionSnapshotDialog.description')}
           </DialogDescription>
         </DialogHeader>
 
         <div className="px-6 pt-4 flex-shrink-0">
           <div className="flex gap-2">
             <Input
-              placeholder="Enter version name..."
+              placeholder={t('VersionSnapshotDialog.placeholder')}
               value={newSnapshotName}
               onChange={(e) => setNewSnapshotName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleCreateSnapshot()}
@@ -122,7 +115,7 @@ export default function VersionSnapshotDialog({
               className="flex items-center gap-2"
             >
               <Save className="h-4 w-4" />
-              Save Current Version
+              {t('VersionSnapshotDialog.saveButton')}
             </Button>
           </div>
         </div>
@@ -131,7 +124,7 @@ export default function VersionSnapshotDialog({
           <div className="py-4 space-y-3">
             {versionSnapshots.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">
-                No versions saved yet. Create your first snapshot above.
+                {t('VersionSnapshotDialog.noVersions')}
               </p>
             ) : (
               versionSnapshots
@@ -186,7 +179,9 @@ export default function VersionSnapshotDialog({
                             })}
                           </span>
                           <span className="text-xs">
-                            Schema v{snapshot.schemaVersion}
+                            {t('VersionSnapshotDialog.schemaVersion', {
+                              version: snapshot.schemaVersion,
+                            })}
                           </span>
                         </div>
                       </div>
@@ -198,7 +193,7 @@ export default function VersionSnapshotDialog({
                           className="h-8 px-3"
                         >
                           <RotateCcw className="h-4 w-4 mr-1" />
-                          Restore
+                          {t('VersionSnapshotDialog.restore')}
                         </Button>
                         {editingId !== snapshot.id && (
                           <Button
@@ -229,7 +224,7 @@ export default function VersionSnapshotDialog({
 
         <DialogFooter className="px-6 pb-6 pt-4 border-t flex-shrink-0">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Close
+            {t('dialog.close', { ns: 'common' })}
           </Button>
         </DialogFooter>
       </DialogContent>
