@@ -6,6 +6,7 @@ import { Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { InclusiveGhostTextbox } from '@/components/ui/InclusiveGhostTextbox';
 import { Button } from '@/components/ui/button';
+import { FloatingLayer } from '@/components/ui/floating/FloatingLayer';
 import {
   Command,
   CommandEmpty,
@@ -32,6 +33,8 @@ interface ComboboxProps {
   // Ghost text specific props
   enableGhostText?: boolean;
   debounceTime?: number;
+  // Dropdown render mode
+  dropdownMode?: 'inline' | 'floating';
 }
 
 export function Combobox({
@@ -45,6 +48,7 @@ export function Combobox({
   disabled = false,
   enableGhostText = true,
   debounceTime = 300,
+  dropdownMode = 'inline',
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const [inputValue, setInputValue] = React.useState(value || '');
@@ -55,19 +59,20 @@ export function Combobox({
     setInputValue(value || '');
   }, [value]);
 
-  // Close dropdown when clicking outside
+  // Close dropdown when clicking outside (only for inline mode)
   React.useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
+    if (dropdownMode !== 'inline' || !open) return;
+    const handleClickOutside = (e: MouseEvent) => {
       if (
         wrapperRef.current &&
         !wrapperRef.current.contains(e.target as Node)
       ) {
         setOpen(false);
       }
-    }
+    };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [dropdownMode, open]);
 
   /**
    * Pre-process lowercase caches once per `options` list.
@@ -183,57 +188,117 @@ export function Combobox({
         <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
       </Button>
 
-      {open && (
-        <div className="absolute left-0 right-0 mt-1 z-50 rounded-md border bg-popover shadow-md">
-          <Command>
-            <CommandList>
-              {filteredOptions.length === 0 ? (
-                <CommandEmpty>
-                  {allowCustomValue && inputValue.trim() ? (
-                    <div className="p-2">
-                      <div className="text-sm text-muted-foreground mb-2">
+      {open &&
+        (dropdownMode === 'inline' ? (
+          <div className="absolute left-0 right-0 mt-1 z-50 rounded-md border bg-popover shadow-md">
+            <Command>
+              <CommandList>
+                {filteredOptions.length === 0 ? (
+                  <CommandEmpty>
+                    {allowCustomValue && inputValue.trim() ? (
+                      <div className="p-2">
+                        <div className="text-sm text-muted-foreground mb-2">
+                          {emptyText}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start text-sm"
+                          onClick={() => handleSelect(inputValue.trim())}
+                        >
+                          <Check className="mr-2 h-4 w-4" />
+                          Use &quot;{inputValue.trim()}&quot;
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="p-4 text-sm text-muted-foreground">
                         {emptyText}
                       </div>
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-start text-sm"
-                        onClick={() => handleSelect(inputValue.trim())}
+                    )}
+                  </CommandEmpty>
+                ) : (
+                  <CommandGroup>
+                    {filteredOptions.map((option) => (
+                      <CommandItem
+                        key={option.value}
+                        value={option.value}
+                        onSelect={() => handleSelect(option.value)}
                       >
-                        <Check className="mr-2 h-4 w-4" />
-                        Use &quot;{inputValue.trim()}&quot;
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="p-4 text-sm text-muted-foreground">
-                      {emptyText}
-                    </div>
-                  )}
-                </CommandEmpty>
-              ) : (
-                <CommandGroup>
-                  {filteredOptions.map((option) => (
-                    <CommandItem
-                      key={option.value}
-                      value={option.value}
-                      onSelect={() => handleSelect(option.value)}
-                    >
-                      <Check
-                        className={cn(
-                          'mr-2 h-4 w-4',
-                          inputValue === option.value
-                            ? 'opacity-100'
-                            : 'opacity-0'
-                        )}
-                      />
-                      {option.label}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              )}
-            </CommandList>
-          </Command>
-        </div>
-      )}
+                        <Check
+                          className={cn(
+                            'mr-2 h-4 w-4',
+                            inputValue === option.value
+                              ? 'opacity-100'
+                              : 'opacity-0'
+                          )}
+                        />
+                        {option.label}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )}
+              </CommandList>
+            </Command>
+          </div>
+        ) : (
+          <FloatingLayer
+            open={open}
+            onOpenChange={setOpen}
+            anchorRef={wrapperRef as React.RefObject<HTMLElement>}
+            placement="bottom-start"
+            offset={4}
+            role="listbox"
+            withFocusManager={false}
+            className="mt-1 p-0"
+          >
+            <Command>
+              <CommandList>
+                {filteredOptions.length === 0 ? (
+                  <CommandEmpty>
+                    {allowCustomValue && inputValue.trim() ? (
+                      <div className="p-2">
+                        <div className="text-sm text-muted-foreground mb-2">
+                          {emptyText}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start text-sm"
+                          onClick={() => handleSelect(inputValue.trim())}
+                        >
+                          <Check className="mr-2 h-4 w-4" />
+                          Use &quot;{inputValue.trim()}&quot;
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="p-4 text-sm text-muted-foreground">
+                        {emptyText}
+                      </div>
+                    )}
+                  </CommandEmpty>
+                ) : (
+                  <CommandGroup>
+                    {filteredOptions.map((option) => (
+                      <CommandItem
+                        key={option.value}
+                        value={option.value}
+                        onSelect={() => handleSelect(option.value)}
+                      >
+                        <Check
+                          className={cn(
+                            'mr-2 h-4 w-4',
+                            inputValue === option.value
+                              ? 'opacity-100'
+                              : 'opacity-0'
+                          )}
+                        />
+                        {option.label}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )}
+              </CommandList>
+            </Command>
+          </FloatingLayer>
+        ))}
     </div>
   );
 }
