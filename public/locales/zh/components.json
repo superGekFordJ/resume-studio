@@ -112,7 +112,10 @@
       "email": "电子邮件",
       "phone": "电话",
       "address": "地址",
-      "website": "网站"
+      "website": "网站",
+      "linkedin": "领英",
+      "github": "GitHub",
+      "portfolio": "个人作品集"
     }
   },
   "SectionEditor": {

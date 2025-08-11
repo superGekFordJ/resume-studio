@@ -158,7 +158,7 @@ export default function SectionManager() {
     const newDynamicSection: DynamicResumeSection = {
       id: newSectionId,
       schemaId: schemaId,
-      title: sectionSchema.name,
+      title: tSchema(sectionSchema.name),
       visible: true,
       items:
         sectionSchema.type === 'single'

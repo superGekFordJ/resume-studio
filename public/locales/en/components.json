@@ -112,7 +112,10 @@
       "email": "Email",
       "phone": "Phone",
       "address": "Address",
-      "website": "Website"
+      "website": "Website",
+      "linkedin": "LinkedIn",
+      "github": "GitHub",
+      "portfolio": "Portfolio"
     }
   },
   "SectionEditor": {
