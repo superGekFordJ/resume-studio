@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Trash2, GripVertical } from 'lucide-react';
 import { SchemaRegistry } from '@/lib/schemaRegistry';
 import { useResumeStore } from '@/stores/resumeStore';
@@ -32,6 +33,8 @@ function SectionItemEditor({
   index,
   onRemove,
 }: SectionItemEditorProps) {
+  const { t: tSchema } = useTranslation('schemas');
+  const { t: tComp } = useTranslation('components');
   const schemaRegistry = SchemaRegistry.getInstance();
   const updateField = useResumeStore((state) => state.updateField);
   const isAutocompleteEnabled = useResumeStore(
@@ -119,7 +122,11 @@ function SectionItemEditor({
                       : 'min-h-[80px]'
                   }
                   isAutocompleteEnabled={isAutocompleteEnabled}
-                  placeholder={field.uiProps?.placeholder}
+                  placeholder={
+                    field.uiProps?.placeholder
+                      ? tSchema(field.uiProps.placeholder)
+                      : undefined
+                  }
                 />
               );
             }
@@ -153,7 +160,7 @@ function SectionItemEditor({
         return title;
       }
     }
-    return `Item ${index + 1}`;
+    return tComp('BatchImprovementDialog.item', { index: index + 1 });
   };
 
   return (
@@ -230,7 +237,11 @@ function SectionItemEditor({
                     : 'min-h-[80px]'
                 }
                 isAutocompleteEnabled={isAutocompleteEnabled}
-                placeholder={field.uiProps?.placeholder}
+                placeholder={
+                  field.uiProps?.placeholder
+                    ? tSchema(field.uiProps.placeholder)
+                    : undefined
+                }
               />
             );
           }

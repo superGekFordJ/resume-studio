@@ -154,5 +154,19 @@
     "improving": "Improving...",
     "suggested": "Suggested",
     "improve": "Improve"
+  },
+  "MarkdownFloatingToolbar": {
+    "bold": "Bold",
+    "italic": "Italic",
+    "bulletedList": "Bulleted list",
+    "numberedList": "Numbered list",
+    "inlineCode": "Inline code",
+    "link": "Link",
+    "aiModify": "AI Modify"
+  },
+  "AIHubHoverMenu": {
+    "aiReview": "AI Review",
+    "dialogueAgent": "Dialogue Agent",
+    "dialogueAgentComingSoon": "Dialogue Agent (coming soon)"
   }
 }

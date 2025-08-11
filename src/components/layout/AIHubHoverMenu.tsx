@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { ThumbsUp, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -18,6 +19,7 @@ export function AIHubHoverMenu({
   className,
   isVisible,
 }: AIHubHoverMenuProps) {
+  const { t } = useTranslation('components');
   return (
     <div
       className={cn(
@@ -37,7 +39,7 @@ export function AIHubHoverMenu({
         tabIndex={isVisible ? 0 : -1}
       >
         <ThumbsUp className="mr-2 h-4 w-4" />
-        AI Review
+        {t('AIHubHoverMenu.aiReview')}
       </Button>
       <Button
         variant="outline"
@@ -47,11 +49,11 @@ export function AIHubHoverMenu({
         tabIndex={isVisible ? 0 : -1}
         disabled
         aria-disabled="true"
-        title="Dialogue Agent is coming soon"
-        aria-label="Dialogue Agent (coming soon)"
+        title={t('AIHubHoverMenu.dialogueAgentComingSoon')}
+        aria-label={t('AIHubHoverMenu.dialogueAgentComingSoon')}
       >
         <MessageSquare className="mr-2 h-4 w-4" />
-        Dialogue Agent
+        {t('AIHubHoverMenu.dialogueAgent')}
       </Button>
     </div>
   );

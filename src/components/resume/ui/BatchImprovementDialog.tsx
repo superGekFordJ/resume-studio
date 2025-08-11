@@ -49,6 +49,7 @@ function ItemDiff({
   onCheckedChange,
 }: ItemDiffProps) {
   const { t } = useTranslation('components');
+  const { t: tSchema } = useTranslation('schemas');
   const schemaRegistry = SchemaRegistry.getInstance();
   const sectionSchema = schemaRegistry.getSectionSchema(original.schemaId);
 
@@ -70,9 +71,9 @@ function ItemDiff({
       const value = itemData[field.id];
       if (value !== undefined && value !== '') {
         if (Array.isArray(value)) {
-          lines.push(`${field.label}: ${value.join(', ')}`);
+          lines.push(`${tSchema(field.label)}: ${value.join(', ')}`);
         } else {
-          lines.push(`${field.label}: ${value}`);
+          lines.push(`${tSchema(field.label)}: ${value}`);
         }
       }
     }

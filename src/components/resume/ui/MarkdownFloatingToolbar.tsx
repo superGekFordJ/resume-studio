@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Editor, Range, Transforms } from 'slate';
 import { useSlate, useSlateSelection } from 'slate-react';
 import {
@@ -28,6 +29,7 @@ export interface MarkdownFloatingToolbarProps {
 export default function MarkdownFloatingToolbar({
   enableAIModifyButton = false,
 }: MarkdownFloatingToolbarProps) {
+  const { t } = useTranslation('components');
   const editor = useSlate();
   const selection = useSlateSelection();
   const [isClient, setIsClient] = React.useState(false);
@@ -200,8 +202,8 @@ export default function MarkdownFloatingToolbar({
             schedule(onBold);
           }}
           className="p-1.5 rounded hover:bg-gray-100"
-          aria-label="Bold"
-          title="Bold"
+          aria-label={t('MarkdownFloatingToolbar.bold')}
+          title={t('MarkdownFloatingToolbar.bold')}
         >
           <Bold className="h-4 w-4" />
         </button>
@@ -212,8 +214,8 @@ export default function MarkdownFloatingToolbar({
             schedule(onItalic);
           }}
           className="p-1.5 rounded hover:bg-gray-100"
-          aria-label="Italic"
-          title="Italic"
+          aria-label={t('MarkdownFloatingToolbar.italic')}
+          title={t('MarkdownFloatingToolbar.italic')}
         >
           <Italic className="h-4 w-4" />
         </button>
@@ -224,8 +226,8 @@ export default function MarkdownFloatingToolbar({
             schedule(onBulletedList);
           }}
           className="p-1.5 rounded hover:bg-gray-100"
-          aria-label="Bulleted list"
-          title="Bulleted list"
+          aria-label={t('MarkdownFloatingToolbar.bulletedList')}
+          title={t('MarkdownFloatingToolbar.bulletedList')}
         >
           <List className="h-4 w-4" />
         </button>
@@ -236,8 +238,8 @@ export default function MarkdownFloatingToolbar({
             schedule(onNumberedList);
           }}
           className="p-1.5 rounded hover:bg-gray-100"
-          aria-label="Numbered list"
-          title="Numbered list"
+          aria-label={t('MarkdownFloatingToolbar.numberedList')}
+          title={t('MarkdownFloatingToolbar.numberedList')}
         >
           <ListOrdered className="h-4 w-4" />
         </button>
@@ -248,8 +250,8 @@ export default function MarkdownFloatingToolbar({
             schedule(onCode);
           }}
           className="p-1.5 rounded hover:bg-gray-100"
-          aria-label="Inline code"
-          title="Inline code"
+          aria-label={t('MarkdownFloatingToolbar.inlineCode')}
+          title={t('MarkdownFloatingToolbar.inlineCode')}
         >
           <CodeIcon className="h-4 w-4" />
         </button>
@@ -260,8 +262,8 @@ export default function MarkdownFloatingToolbar({
             schedule(onLink);
           }}
           className="p-1.5 rounded hover:bg-gray-100"
-          aria-label="Link"
-          title="Link"
+          aria-label={t('MarkdownFloatingToolbar.link')}
+          title={t('MarkdownFloatingToolbar.link')}
         >
           <LinkIcon className="h-4 w-4" />
         </button>
@@ -278,8 +280,8 @@ export default function MarkdownFloatingToolbar({
                 });
               }}
               className="p-1.5 rounded hover:bg-gray-100"
-              aria-label="AI Modify"
-              title="AI Modify"
+              aria-label={t('MarkdownFloatingToolbar.aiModify')}
+              title={t('MarkdownFloatingToolbar.aiModify')}
             >
               <Sparkles className="h-4 w-4" />
             </button>

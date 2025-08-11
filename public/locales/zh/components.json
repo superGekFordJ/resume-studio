@@ -154,5 +154,19 @@
     "improving": "改进中...",
     "suggested": "已建议",
     "improve": "改进"
+  },
+  "MarkdownFloatingToolbar": {
+    "bold": "加粗",
+    "italic": "斜体",
+    "bulletedList": "项目符号列表",
+    "numberedList": "编号列表",
+    "inlineCode": "行内代码",
+    "link": "链接",
+    "aiModify": "AI 修改"
+  },
+  "AIHubHoverMenu": {
+    "aiReview": "AI 评审",
+    "dialogueAgent": "对话代理",
+    "dialogueAgentComingSoon": "对话代理 (即将推出)"
   }
 }
