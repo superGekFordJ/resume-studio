@@ -5,6 +5,7 @@ import React, {
   ClipboardEvent,
   useRef,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Textarea } from '@/components/ui/textarea';
 import { UploadCloud, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -30,6 +31,7 @@ export const ImageUploadArea = React.forwardRef<
     { onImageUpload, value, onChange, id, className, isLoading, ...props },
     forwardedRef
   ) => {
+    const { t } = useTranslation('components');
     const [isDragging, setIsDragging] = useState(false);
     const { toast } = useToast();
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
@@ -54,13 +56,13 @@ export const ImageUploadArea = React.forwardRef<
           onImageUpload(file);
         } else if (file) {
           toast({
-            title: 'Invalid File Type',
-            description: 'Please upload an image file.',
+            title: t('ImageUploadArea.invalidFileType'),
+            description: t('ImageUploadArea.pleaseUploadImage'),
             variant: 'destructive',
           });
         }
       },
-      [onImageUpload, toast]
+      [onImageUpload, toast, t]
     );
 
     const handleDragEnter = (e: DragEvent<HTMLDivElement>) => {
@@ -138,7 +140,7 @@ export const ImageUploadArea = React.forwardRef<
           <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center z-10">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <p className="mt-2 text-sm font-medium text-foreground">
-              Processing image...
+              {t('ImageUploadArea.processingImage')}
             </p>
           </div>
         )}
@@ -147,7 +149,9 @@ export const ImageUploadArea = React.forwardRef<
           {isDragging ? (
             <div className="text-primary">
               <UploadCloud className="mx-auto h-8 w-8" />
-              <p className="mt-2 text-sm font-semibold">Release to upload</p>
+              <p className="mt-2 text-sm font-semibold">
+                {t('ImageUploadArea.releaseToUpload')}
+              </p>
             </div>
           ) : (
             !value &&
@@ -156,9 +160,9 @@ export const ImageUploadArea = React.forwardRef<
                 <UploadCloud className="mx-auto h-8 w-8" />
                 <p className="mt-2 text-sm">
                   <span className="font-semibold text-primary">
-                    Click to type
+                    {t('ImageUploadArea.clickToType')}
                   </span>
-                  , paste, or drag & drop a job post screenshot.
+                  {t('ImageUploadArea.pasteOrDrag')}
                 </p>
               </div>
             )

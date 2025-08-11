@@ -1,3 +1,11 @@
 {
-  "hello": "Hello"
+  "hello": "Hello",
+  "combobox": {
+    "searchPlaceholder": "Type to search or select...",
+    "noOptionFound": "No option found.",
+    "useValue": "Use \"{{inputValue}}\""
+  },
+  "dialog": {
+    "close": "Close"
+  }
 }

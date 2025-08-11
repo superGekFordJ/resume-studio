@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -16,6 +17,7 @@ import remarkGfm from 'remark-gfm';
 import { useResumeStore } from '@/stores/resumeStore';
 
 export default function AIReviewDialog() {
+  const { t } = useTranslation(['components', 'common']);
   const isOpen = useResumeStore((state) => state.isReviewDialogOpen);
   const reviewContent = useResumeStore((state) => state.reviewContent);
   const isLoading = useResumeStore((state) => state.isReviewLoading);
@@ -29,11 +31,10 @@ export default function AIReviewDialog() {
         <DialogHeader className="px-6 pt-6 flex-shrink-0">
           <DialogTitle className="font-headline text-2xl flex items-center">
             <ThumbsUp className="mr-2 h-6 w-6 text-primary" />
-            AI Resume Review
+            {t('AIReviewDialog.title')}
           </DialogTitle>
           <DialogDescription>
-            Here&apos;s an AI-powered analysis of your resume with suggestions
-            for improvement.
+            {t('AIReviewDialog.description')}
           </DialogDescription>
         </DialogHeader>
         <div className="flex-1 overflow-y-auto px-6 min-h-0">
@@ -60,7 +61,7 @@ export default function AIReviewDialog() {
                 <div>
                   <h3 className="font-semibold text-lg mb-2 flex items-center">
                     <AlertTriangle className="mr-2 h-5 w-5 text-primary" />
-                    Overall Quality Assessment
+                    {t('AIReviewDialog.overallQuality')}
                   </h3>
                   <div className="text-foreground space-y-2 [&>p]:leading-relaxed [&>ul]:ml-6 [&>ul]:list-disc [&>ul]:space-y-1 [&>ol]:ml-6 [&>ol]:list-decimal [&>ol]:space-y-1 [&>blockquote]:border-l-2 [&>blockquote]:pl-4 [&>blockquote]:italic [&>pre]:bg-muted [&>pre]:p-3 [&>pre]:rounded-md [&>pre]:overflow-x-auto [&>code]:bg-muted [&>code]:px-1 [&>code]:py-0.5 [&>code]:rounded">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -71,7 +72,7 @@ export default function AIReviewDialog() {
                 <div>
                   <h3 className="font-semibold text-lg mb-2 flex items-center">
                     <Lightbulb className="mr-2 h-5 w-5 text-accent" />
-                    Actionable Suggestions
+                    {t('AIReviewDialog.actionableSuggestions')}
                   </h3>
                   <div className="text-foreground space-y-2 [&>p]:leading-relaxed [&>ul]:ml-6 [&>ul]:list-disc [&>ul]:space-y-1 [&>ol]:ml-6 [&>ol]:list-decimal [&>ol]:space-y-1 [&>blockquote]:border-l-2 [&>blockquote]:pl-4 [&>blockquote]:italic [&>pre]:bg-muted [&>pre]:p-3 [&>pre]:rounded-md [&>pre]:overflow-x-auto [&>code]:bg-muted [&>code]:px-1 [&>code]:py-0.5 [&>code]:rounded">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -83,13 +84,15 @@ export default function AIReviewDialog() {
             )}
             {!isLoading && !reviewContent && (
               <p className="text-muted-foreground">
-                No review content available. Please try again.
+                {t('AIReviewDialog.noContent')}
               </p>
             )}
           </div>
         </div>
         <DialogFooter className="px-6 pb-6 pt-4 border-t flex-shrink-0">
-          <Button onClick={() => setIsReviewDialogOpen(false)}>Close</Button>
+          <Button onClick={() => setIsReviewDialogOpen(false)}>
+            {t('dialog.close', { ns: 'common' })}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

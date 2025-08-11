@@ -11,5 +11,56 @@
     "failedToGetAiReview": "Failed to get AI review.",
     "errorFetchingReview": "Error fetching review.",
     "pleaseTryAgain": "Please try again."
+  },
+  "SettingsPanel": {
+    "title": "Settings",
+    "description": "Configure AI provider settings and provide global context for AI operations.",
+    "aiProviderConfigTitle": "AI Provider Configuration",
+    "aiProviderLabel": "AI Provider",
+    "aiProviderPlaceholder": "Select AI provider",
+    "googleAiLabel": "Google AI (Gemini)",
+    "ollamaLabel": "Ollama (Local)",
+    "anthropicLabel": "Anthropic (Claude)",
+    "modelLabel": "Model",
+    "modelPlaceholder": "Select model",
+    "apiKeyLabel": "API Key",
+    "apiKeyPlaceholder": "Enter your {{provider}} API key",
+    "apiKeyWarning": "Currently, API keys must be configured through environment files (.env.local or .env.production). UI-based configuration is temporarily disabled due to Genkit lifecycle constraints.",
+    "ollamaServerAddressLabel": "Ollama Server Address",
+    "ollamaServerDescription": "Make sure Ollama is running on your local machine.",
+    "globalAiContextTitle": "Global AI Context",
+    "globalAiContextDescription": "This information will be used by AI to provide more personalized suggestions.",
+    "targetJobInfoLabel": "Target Job Info",
+    "targetJobInfoDescription": "Describe the position you're applying for, or paste/drag an image of the job post.",
+    "professionalBioLabel": "Professional Bio",
+    "uploadButton": "Upload Doc/PDF",
+    "professionalBioPlaceholder": "Brief description of your professional background, specialties, and career goals...",
+    "professionalBioDescription": "Provide context about yourself that AI can use to tailor suggestions.",
+    "generatingButton": "Generating...",
+    "generateSnapshotButton": "Generate Resume Snapshot with AI",
+    "apiKeyMemoryWarning": "API keys are stored only in memory and never persisted. You'll need to re-enter them after refreshing the page.",
+    "languageAppearanceTitle": "Language & Appearance",
+    "languageLabel": "Language",
+    "languagePlaceholder": "Select language",
+    "english": "English",
+    "simplifiedChinese": "简体中文"
+  },
+  "SidebarNavigator": {
+    "back": "Back"
+  },
+  "ImageUploadArea": {
+    "invalidFileType": "Invalid File Type",
+    "pleaseUploadImage": "Please upload an image file.",
+    "processingImage": "Processing image...",
+    "releaseToUpload": "Release to upload",
+    "clickToType": "Click to type",
+    "pasteOrDrag": ", paste, or drag & drop a job post screenshot."
+  },
+  "AIReviewDialog": {
+    "title": "AI Resume Review",
+    "description": "Here's an AI-powered analysis of your resume with suggestions for improvement.",
+    "overallQuality": "Overall Quality Assessment",
+    "actionableSuggestions": "Actionable Suggestions",
+    "noContent": "No review content available. Please try again."
   }
 }

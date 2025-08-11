@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -15,6 +16,7 @@ export default function SidebarNavigator({
   childrenStructure,
   childrenContent,
 }: SidebarNavigatorProps) {
+  const { t } = useTranslation('components');
   const isEditing = useResumeStore((state) => !!state.editingTarget);
   const setEditingTarget = useResumeStore((state) => state.setEditingTarget);
 
@@ -47,7 +49,7 @@ export default function SidebarNavigator({
               className="flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back
+              {t('SidebarNavigator.back')}
             </Button>
           </div>
         )}

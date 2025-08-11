@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { TFunction } from 'i18next';
 import { useResumeStore } from '@/stores/resumeStore';
 import {
   Sheet,
@@ -44,7 +45,7 @@ interface SettingsPanelProps {
 const AI_PROVIDERS = [
   {
     value: 'google',
-    label: 'Google AI (Gemini)',
+    getLabel: (t: TFunction) => t('SettingsPanel.googleAiLabel'),
     models: [
       'gemini-2.0-flash',
       'gemini-2.5-flash',
@@ -53,18 +54,18 @@ const AI_PROVIDERS = [
   },
   {
     value: 'ollama',
-    label: 'Ollama (Local)',
+    getLabel: (t: TFunction) => t('SettingsPanel.ollamaLabel'),
     models: ['llama3', 'mistral', 'phi'],
   },
   {
     value: 'anthropic',
-    label: 'Anthropic (Claude)',
+    getLabel: (t: TFunction) => t('SettingsPanel.anthropicLabel'),
     models: ['claude-4-opus', 'claude-4-sonnet'],
   },
 ] as const;
 
 export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation('components');
   const {
     aiConfig,
     isGeneratingSnapshot,
@@ -134,11 +135,8 @@ export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>Settings</SheetTitle>
-          <SheetDescription>
-            Configure AI provider settings and provide global context for AI
-            operations.
-          </SheetDescription>
+          <SheetTitle>{t('SettingsPanel.title')}</SheetTitle>
+          <SheetDescription>{t('SettingsPanel.description')}</SheetDescription>
         </SheetHeader>
 
         <div className="mt-6">
@@ -157,24 +155,32 @@ export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
                 <div className="flex items-center gap-2">
                   <Languages className="h-5 w-5 text-muted-foreground" />
                   <h3 className="text-lg font-semibold">
-                    Language & Appearance
+                    {t('SettingsPanel.languageAppearanceTitle')}
                   </h3>
                 </div>
               </AccordionTrigger>
               <AccordionContent>
                 <div className="pt-2 px-4 pb-4 space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="language">Language</Label>
+                    <Label htmlFor="language">
+                      {t('SettingsPanel.languageLabel')}
+                    </Label>
                     <Select
                       value={i18n.language.split('-')[0]}
                       onValueChange={(lang) => i18n.changeLanguage(lang)}
                     >
                       <SelectTrigger id="language">
-                        <SelectValue placeholder="Select language" />
+                        <SelectValue
+                          placeholder={t('SettingsPanel.languagePlaceholder')}
+                        />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="en">English</SelectItem>
-                        <SelectItem value="zh">简体中文</SelectItem>
+                        <SelectItem value="en">
+                          {t('SettingsPanel.english')}
+                        </SelectItem>
+                        <SelectItem value="zh">
+                          {t('SettingsPanel.simplifiedChinese')}
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -190,20 +196,24 @@ export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
                 <div className="flex items-center gap-2">
                   <Settings className="h-5 w-5 text-muted-foreground" />
                   <h3 className="text-lg font-semibold">
-                    AI Provider Configuration
+                    {t('SettingsPanel.aiProviderConfigTitle')}
                   </h3>
                 </div>
               </AccordionTrigger>
               <AccordionContent>
                 <div className="pt-2 px-4 pb-4 space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="provider">AI Provider</Label>
+                    <Label htmlFor="provider">
+                      {t('SettingsPanel.aiProviderLabel')}
+                    </Label>
                     <Select
                       value={aiConfig.provider}
                       onValueChange={handleProviderChange}
                     >
                       <SelectTrigger id="provider">
-                        <SelectValue placeholder="Select AI provider" />
+                        <SelectValue
+                          placeholder={t('SettingsPanel.aiProviderPlaceholder')}
+                        />
                       </SelectTrigger>
                       <SelectContent>
                         {AI_PROVIDERS.map((provider) => (
@@ -211,7 +221,7 @@ export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
                             key={provider.value}
                             value={provider.value}
                           >
-                            {provider.label}
+                            {provider.getLabel(t)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -219,13 +229,17 @@ export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="model">Model</Label>
+                    <Label htmlFor="model">
+                      {t('SettingsPanel.modelLabel')}
+                    </Label>
                     <Select
                       value={aiConfig.model}
                       onValueChange={handleModelChange}
                     >
                       <SelectTrigger id="model">
-                        <SelectValue placeholder="Select model" />
+                        <SelectValue
+                          placeholder={t('SettingsPanel.modelPlaceholder')}
+                        />
                       </SelectTrigger>
                       <SelectContent>
                         {selectedProvider?.models.map((model) => (
@@ -239,23 +253,26 @@ export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
 
                   {aiConfig.provider !== 'ollama' && (
                     <div className="space-y-2">
-                      <Label htmlFor="apiKey">API Key</Label>
+                      <Label htmlFor="apiKey">
+                        {t('SettingsPanel.apiKeyLabel')}
+                      </Label>
                       <Input
                         id="apiKey"
                         type="password"
                         value={aiConfig.apiKey || ''}
                         onChange={(e) => handleApiKeyChange(e.target.value)}
-                        placeholder={`Enter your ${aiConfig.provider === 'google' ? 'Google' : 'Anthropic'} API key`}
+                        placeholder={t('SettingsPanel.apiKeyPlaceholder', {
+                          provider:
+                            aiConfig.provider.charAt(0).toUpperCase() +
+                            aiConfig.provider.slice(1),
+                        })}
                       />
                       {process.env.NODE_ENV === 'development' &&
                         !aiConfig.apiKey && (
                           <Alert>
                             <Info className="h-4 w-4" />
                             <AlertDescription>
-                              Currently, API keys must be configured through
-                              environment files (.env.local or .env.production).
-                              UI-based configuration is temporarily disabled due
-                              to Genkit lifecycle constraints.
+                              {t('SettingsPanel.apiKeyWarning')}
                             </AlertDescription>
                           </Alert>
                         )}
@@ -265,7 +282,7 @@ export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
                   {aiConfig.provider === 'ollama' && (
                     <div className="space-y-2">
                       <Label htmlFor="ollamaServer">
-                        Ollama Server Address
+                        {t('SettingsPanel.ollamaServerAddressLabel')}
                       </Label>
                       <Input
                         id="ollamaServer"
@@ -277,16 +294,14 @@ export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
                         placeholder="http://127.0.0.1:11434"
                       />
                       <p className="text-sm text-muted-foreground">
-                        Make sure Ollama is running on your local machine.
+                        {t('SettingsPanel.ollamaServerDescription')}
                       </p>
                     </div>
                   )}
                   <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>
-                      API keys are stored only in memory and never persisted.
-                      You&apos;ll need to re-enter them after refreshing the
-                      page.
+                      {t('SettingsPanel.apiKeyMemoryWarning')}
                     </AlertDescription>
                   </Alert>
                 </div>
@@ -301,18 +316,21 @@ export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
               <AccordionTrigger className="px-4 py-3 hover:no-underline">
                 <div className="flex items-center gap-2">
                   <ClipboardListIcon className="h-5 w-5 text-muted-foreground" />
-                  <h3 className="text-lg font-semibold">Global AI Context</h3>
+                  <h3 className="text-lg font-semibold">
+                    {t('SettingsPanel.globalAiContextTitle')}
+                  </h3>
                 </div>
               </AccordionTrigger>
               <AccordionContent>
                 <div className="pt-2 px-4 pb-4 space-y-4">
                   <p className="text-sm text-muted-foreground">
-                    This information will be used by AI to provide more
-                    personalized suggestions.
+                    {t('SettingsPanel.globalAiContextDescription')}
                   </p>
 
                   <div className="space-y-2">
-                    <Label htmlFor="targetJob">Target Job Info</Label>
+                    <Label htmlFor="targetJob">
+                      {t('SettingsPanel.targetJobInfoLabel')}
+                    </Label>
                     <ImageUploadArea
                       ref={targetJobTextAreaRef}
                       id="targetJob"
@@ -323,21 +341,22 @@ export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
                       rows={4}
                     />
                     <p className="text-sm text-muted-foreground">
-                      Describe the position you&apos;re applying for, or
-                      paste/drag an image of the job post.
+                      {t('SettingsPanel.targetJobInfoDescription')}
                     </p>
                   </div>
 
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <Label htmlFor="userBio">Professional Bio</Label>
+                      <Label htmlFor="userBio">
+                        {t('SettingsPanel.professionalBioLabel')}
+                      </Label>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => bioFileInputRef.current?.click()}
                       >
                         <UploadCloud className="mr-2 h-4 w-4" />
-                        Upload Doc/PDF
+                        {t('SettingsPanel.uploadButton')}
                       </Button>
                     </div>
                     <Input
@@ -352,12 +371,13 @@ export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
                       id="userBio"
                       value={aiConfig.userBio || ''}
                       onChange={(e) => handleUserBioChange(e.target.value)}
-                      placeholder="Brief description of your professional background, specialties, and career goals..."
+                      placeholder={t(
+                        'SettingsPanel.professionalBioPlaceholder'
+                      )}
                       rows={4}
                     />
                     <p className="text-sm text-muted-foreground">
-                      Provide context about yourself that AI can use to tailor
-                      suggestions.
+                      {t('SettingsPanel.professionalBioDescription')}
                     </p>
                   </div>
 
@@ -370,9 +390,9 @@ export function SettingsPanel({ open, onOpenChange }: SettingsPanelProps) {
                     }
                     className="w-full"
                   >
-                    {isGenerating.snapshot
-                      ? 'Generating...'
-                      : 'Generate Resume Snapshot with AI'}
+                    {isGeneratingSnapshot
+                      ? t('SettingsPanel.generatingButton')
+                      : t('SettingsPanel.generateSnapshotButton')}
                   </Button>
                 </div>
               </AccordionContent>

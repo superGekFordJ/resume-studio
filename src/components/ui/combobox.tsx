@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Check, ChevronsUpDown } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -41,8 +42,8 @@ export function Combobox({
   options,
   value,
   onValueChange,
-  placeholder = 'Type to search or select...',
-  emptyText = 'No option found.',
+  placeholder,
+  emptyText,
   allowCustomValue = true,
   className,
   disabled = false,
@@ -50,9 +51,13 @@ export function Combobox({
   debounceTime = 300,
   dropdownMode = 'inline',
 }: ComboboxProps) {
+  const { t } = useTranslation('common');
   const [open, setOpen] = React.useState(false);
   const [inputValue, setInputValue] = React.useState(value || '');
   const wrapperRef = React.useRef<HTMLDivElement>(null);
+
+  const finalPlaceholder = placeholder ?? t('combobox.searchPlaceholder');
+  const finalEmptyText = emptyText ?? t('combobox.noOptionFound');
 
   // Sync external value ↔ internal input
   React.useEffect(() => {
@@ -171,7 +176,7 @@ export function Combobox({
         onFocus={() => setOpen(true)}
         onSuggestionAccepted={handleSuggestionAccepted}
         acceptSuggestionOnEnter={false} // Let cmdk handle Enter key
-        placeholder={placeholder}
+        placeholder={finalPlaceholder}
         disabled={disabled}
         rows={1}
         resize="none"
@@ -198,7 +203,7 @@ export function Combobox({
                     {allowCustomValue && inputValue.trim() ? (
                       <div className="p-2">
                         <div className="text-sm text-muted-foreground mb-2">
-                          {emptyText}
+                          {finalEmptyText}
                         </div>
                         <Button
                           variant="ghost"
@@ -206,12 +211,14 @@ export function Combobox({
                           onClick={() => handleSelect(inputValue.trim())}
                         >
                           <Check className="mr-2 h-4 w-4" />
-                          Use &quot;{inputValue.trim()}&quot;
+                          {t('combobox.useValue', {
+                            inputValue: inputValue.trim(),
+                          })}
                         </Button>
                       </div>
                     ) : (
                       <div className="p-4 text-sm text-muted-foreground">
-                        {emptyText}
+                        {finalEmptyText}
                       </div>
                     )}
                   </CommandEmpty>
@@ -257,7 +264,7 @@ export function Combobox({
                     {allowCustomValue && inputValue.trim() ? (
                       <div className="p-2">
                         <div className="text-sm text-muted-foreground mb-2">
-                          {emptyText}
+                          {finalEmptyText}
                         </div>
                         <Button
                           variant="ghost"
@@ -265,12 +272,14 @@ export function Combobox({
                           onClick={() => handleSelect(inputValue.trim())}
                         >
                           <Check className="mr-2 h-4 w-4" />
-                          Use &quot;{inputValue.trim()}&quot;
+                          {t('combobox.useValue', {
+                            inputValue: inputValue.trim(),
+                          })}
                         </Button>
                       </div>
                     ) : (
                       <div className="p-4 text-sm text-muted-foreground">
-                        {emptyText}
+                        {finalEmptyText}
                       </div>
                     )}
                   </CommandEmpty>
