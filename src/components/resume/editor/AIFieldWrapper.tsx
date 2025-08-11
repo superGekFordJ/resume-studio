@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -42,6 +43,8 @@ function AIFieldWrapper({
   placeholder,
   isAutocompleteEnabled,
 }: AIFieldWrapperProps) {
+  const { t } = useTranslation('components');
+  const { t: tSchema } = useTranslation('schemas');
   const { toast } = useToast();
 
   // NEW: Get dialog-based improvement state and actions from store
@@ -85,8 +88,8 @@ function AIFieldWrapper({
     if (!improvementPrompt.trim()) {
       toast({
         variant: 'destructive',
-        title: 'AI Prompt Empty',
-        description: 'Please provide a prompt for the AI.',
+        title: t('AIFieldWrapper.promptEmptyTitle'),
+        description: t('AIFieldWrapper.promptEmptyDescription'),
       });
       return;
     }
@@ -106,8 +109,14 @@ function AIFieldWrapper({
     setImprovementPrompt('');
   };
 
+  // Determine which t function to use for the label
+  const translatedLabel = label.startsWith('schemas:')
+    ? tSchema(label)
+    : t(label);
+
   // Extract field name from uniqueFieldId for AutocompleteTextarea
-  const fieldName = uniqueFieldId.split('_').pop() || label.toLowerCase();
+  const fieldName =
+    uniqueFieldId.split('_').pop() || translatedLabel.toLowerCase();
   const layoutId = `textarea-wrapper-${uniqueFieldId}`;
 
   const handleFocusViewClose = (finalValue: string) => {
@@ -119,7 +128,9 @@ function AIFieldWrapper({
     id: uniqueFieldId,
     name: fieldName,
     initialValue: hasAISuggestion ? aiImprovement.originalText : value,
-    placeholder: placeholder || `Enter ${label.toLowerCase()}...`,
+    placeholder:
+      placeholder ||
+      t('AIFieldWrapper.placeholder', { label: translatedLabel }),
     sectionType: sectionType,
     isAutocompleteEnabledGlobally: isAutocompleteEnabled,
     autocompleteModel: autocompleteModel,
@@ -130,7 +141,7 @@ function AIFieldWrapper({
   return (
     <div className="space-y-1 group relative">
       <Label htmlFor={uniqueFieldId} className="block mb-1">
-        {label}
+        {translatedLabel}
       </Label>
       <motion.div layoutId={layoutId} layout="position">
         <AutocompleteTextarea
@@ -139,7 +150,10 @@ function AIFieldWrapper({
           value={hasAISuggestion ? aiImprovement.originalText : value}
           onValueChange={onValueChange}
           className={cn('min-h-[80px]', className)}
-          placeholder={placeholder || `Enter ${label.toLowerCase()}...`}
+          placeholder={
+            placeholder ||
+            t('AIFieldWrapper.placeholder', { label: translatedLabel })
+          }
           sectionType={sectionType}
           isAutocompleteEnabledGlobally={isAutocompleteEnabled}
           autocompleteModel={autocompleteModel}
@@ -172,7 +186,7 @@ function AIFieldWrapper({
       <div className="flex items-center gap-2 mt-1">
         <Input
           type="text"
-          placeholder="AI Prompt (e.g., make it more concise)"
+          placeholder={t('AIFieldWrapper.promptPlaceholder')}
           value={improvementPrompt}
           onChange={(e) => setImprovementPrompt(e.target.value)}
           className="text-xs flex-grow h-8"
@@ -192,10 +206,10 @@ function AIFieldWrapper({
         >
           <Sparkles size={14} className="mr-1" />
           {isImproving || isImprovingInDialog
-            ? 'Improving...'
+            ? t('AIFieldWrapper.improving')
             : hasAISuggestion
-              ? 'Suggested'
-              : 'Improve'}
+              ? t('AIFieldWrapper.suggested')
+              : t('AIFieldWrapper.improve')}
         </Button>
       </div>
 
@@ -205,7 +219,7 @@ function AIFieldWrapper({
           originalValue={singleFieldReview.originalText}
           suggestedValue={singleFieldReview.improvedText}
           isLoading={singleFieldReview.isLoading}
-          fieldName={label}
+          fieldName={translatedLabel}
           prompt={singleFieldReview.prompt}
           onAccept={acceptSingleFieldImprovement}
           onReject={rejectSingleFieldImprovement}

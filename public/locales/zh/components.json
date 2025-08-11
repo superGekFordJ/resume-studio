@@ -142,5 +142,14 @@
     "show": "显示 {{title}}",
     "delete": "删除 {{title}}",
     "addNewSection": "添加新部分"
+  },
+  "AIFieldWrapper": {
+    "promptEmptyTitle": "AI 提示为空",
+    "promptEmptyDescription": "请输入提示以获取AI改进建议。",
+    "placeholder": "输入 {{label}}...",
+    "promptPlaceholder": "AI 提示 (例如，使其更简洁)",
+    "improving": "改进中...",
+    "suggested": "已建议",
+    "improve": "改进"
   }
 }

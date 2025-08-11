@@ -142,5 +142,14 @@
     "show": "Show {{title}}",
     "delete": "Delete {{title}}",
     "addNewSection": "Add New Section"
+  },
+  "AIFieldWrapper": {
+    "promptEmptyTitle": "AI Prompt Empty",
+    "promptEmptyDescription": "Please provide a prompt for the AI.",
+    "placeholder": "Enter {{label}}...",
+    "promptPlaceholder": "AI Prompt (e.g., make it more concise)",
+    "improving": "Improving...",
+    "suggested": "Suggested",
+    "improve": "Improve"
   }
 }
