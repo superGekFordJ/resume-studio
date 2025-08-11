@@ -16,7 +16,10 @@
 
 ### 🖼️ UI 组件与交互
 
+- **[Floating UI 迁移与规范](./ui/floating-ui-migration.md)** - 从引入到各组件迁移的完整说明与最佳实践
+- **[FloatingLayer 组件 API](./ui/floating-layer.md)** - 通用浮层容器的属性与用法
 - **[Markdown 浮动工具栏](./ui/markdown-floating-toolbar.md)** - 选区触发的 Markdown 格式化工具栏与实现要点
+- **[Combobox Ghost Text](./ui/combobox-ghost-text.md)** - 包容性 ghost text 与下拉联动行为
 - **[Markdown 工具栏：已知问题与 TODO](./ui/markdown-toolbar-issues.md)**
 - **[Focus Mode 文本域](./ui/focus-mode-textarea.md)** - 通过 Portal 和动画实现沉浸式编辑
 
@@ -225,5 +228,5 @@ pnpm start
 
 ---
 
-**最后更新**: 2025年7月4日
-**文档版本**: v2.1.0 - 编辑器UI/UX增强
+**最后更新**: 2025年8月11日
+**文档版本**: v2.2.0 - Floating UI 统一迁移
