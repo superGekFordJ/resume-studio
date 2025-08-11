@@ -13,12 +13,14 @@ import { WheelEvent } from 'react';
 
 interface AutocompleteModelSelectorProps {
   className?: string;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const models: AutocompleteModel[] = ['lite', 'smart', 'slow'];
 
 export default function AutocompleteModelSelector({
   className,
+  onOpenChange,
 }: AutocompleteModelSelectorProps) {
   const autocompleteModel = useResumeStore(
     (state) => state.aiConfig.autocompleteModel
@@ -42,6 +44,7 @@ export default function AutocompleteModelSelector({
       onValueChange={(value) =>
         setAutocompleteModel(value as AutocompleteModel)
       }
+      onOpenChange={onOpenChange}
     >
       <SelectTrigger
         className={`h-8 text-xs ${className || ''}`}

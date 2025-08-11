@@ -1,8 +1,7 @@
 // src/components/resume/SectionEditor.tsx
 'use client';
 
-import type { ChangeEvent } from 'react';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { PersonalDetails } from '@/types/resume';
 import type { DynamicResumeSection } from '@/types/schema';
 import { Button } from '@/components/ui/button';
@@ -25,12 +24,7 @@ import {
 } from '@dnd-kit/sortable';
 import { Accordion } from '@/components/ui/accordion';
 import AutocompleteModelSelector from './AutocompleteModelSelector';
-import { Portal as HoverCardPortal } from '@radix-ui/react-hover-card';
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from '@/components/ui/hover-card';
+import { FloatingLayer } from '@/components/ui/floating/FloatingLayer';
 
 export default function SectionEditor() {
   const { toast } = useToast();
@@ -169,6 +163,56 @@ export default function SectionEditor() {
     }
   };
 
+  const isCurrentlyEditingPersonalDetails = editingTarget === 'personalDetails';
+
+  // FloatingUI-based stable hover card for Autocomplete model selector
+  const hoverTriggerRef = useRef<HTMLDivElement>(null);
+  const [modelCardOpen, setModelCardOpen] = useState(false);
+  const openTimerRef = useRef<number | null>(null);
+  const closeTimerRef = useRef<number | null>(null);
+
+  // cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      if (openTimerRef.current) window.clearTimeout(openTimerRef.current);
+      if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
+    };
+  }, []);
+
+  const handleTriggerMouseEnter = () => {
+    if (closeTimerRef.current) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+    openTimerRef.current = window.setTimeout(() => setModelCardOpen(true), 100);
+  };
+
+  const handleTriggerMouseLeave = () => {
+    if (openTimerRef.current) {
+      window.clearTimeout(openTimerRef.current);
+      openTimerRef.current = null;
+    }
+    closeTimerRef.current = window.setTimeout(
+      () => setModelCardOpen(false),
+      120
+    );
+  };
+
+  const handleContentMouseEnter = () => {
+    if (closeTimerRef.current) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  };
+
+  const handleContentMouseLeave = () => {
+    closeTimerRef.current = window.setTimeout(
+      () => setModelCardOpen(false),
+      120
+    );
+  };
+
+  // If there is no currentEditingData, render a placeholder card
   if (!currentEditingData) {
     return (
       <Card className="sticky top-[calc(theme(spacing.16)+1rem)] h-fit no-print">
@@ -183,8 +227,6 @@ export default function SectionEditor() {
       </Card>
     );
   }
-
-  const isCurrentlyEditingPersonalDetails = editingTarget === 'personalDetails';
 
   const renderSectionForm = () => {
     if (!currentEditingData || !('title' in currentEditingData)) return null;
@@ -309,35 +351,51 @@ export default function SectionEditor() {
         </h2>
         <div className="flex items-center space-x-4">
           {editingTarget !== 'personalDetails' && (
-            <HoverCard>
-              <HoverCardTrigger asChild>
-                <div className="flex items-center space-x-2 cursor-pointer">
-                  <Switch
-                    id="autocomplete-toggle-nav"
-                    className="autocomplete-toggle-switch data-[state=checked]:bg-[#FF9800]"
-                    checked={isAutocompleteEnabled}
-                    onCheckedChange={toggleAutocomplete}
-                    aria-label="Toggle Autocomplete"
-                  />
-                  <Label
-                    htmlFor="autocomplete-toggle-nav"
-                    className="text-xs cursor-pointer"
-                  >
-                    AI Autocomplete
-                  </Label>
+            <>
+              <div
+                ref={hoverTriggerRef}
+                className="flex items-center space-x-2 cursor-pointer"
+                onMouseEnter={handleTriggerMouseEnter}
+                onMouseLeave={handleTriggerMouseLeave}
+              >
+                <Switch
+                  id="autocomplete-toggle-nav"
+                  className="autocomplete-toggle-switch data-[state=checked]:bg-[#FF9800]"
+                  checked={isAutocompleteEnabled}
+                  onCheckedChange={toggleAutocomplete}
+                  aria-label="Toggle Autocomplete"
+                />
+                <Label
+                  htmlFor="autocomplete-toggle-nav"
+                  className="text-xs cursor-pointer"
+                >
+                  AI Autocomplete
+                </Label>
+              </div>
+              <FloatingLayer
+                open={modelCardOpen}
+                onOpenChange={setModelCardOpen}
+                anchorRef={
+                  hoverTriggerRef as unknown as React.RefObject<HTMLElement>
+                }
+                placement="bottom-end"
+                offset={8}
+                matchWidth={false}
+                className="min-w-[200px] w-auto p-4 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[side=bottom]:origin-top-right data-[side=top]:origin-bottom-right"
+                role="region"
+                withFocusManager={false}
+                closeOnOutsidePress={false}
+                onMouseEnterContent={handleContentMouseEnter}
+                onMouseLeaveContent={handleContentMouseLeave}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-medium">
+                    Completion&nbsp;Mode
+                  </span>
+                  <AutocompleteModelSelector className="w-[100px]" />
                 </div>
-              </HoverCardTrigger>
-              <HoverCardPortal>
-                <HoverCardContent className="w-72">
-                  <div className="flex justify-between items-center space-x-4">
-                    <span className="text-xs font-medium">
-                      Completion&nbsp;Mode
-                    </span>
-                    <AutocompleteModelSelector className="w-[220px]" />
-                  </div>
-                </HoverCardContent>
-              </HoverCardPortal>
-            </HoverCard>
+              </FloatingLayer>
+            </>
           )}
           {editingTarget !== 'personalDetails' &&
             canBatchImprove &&

@@ -151,6 +151,7 @@ export default function DynamicFieldRenderer({
             emptyText={`No ${field.label.toLowerCase()} found.`}
             allowCustomValue={true}
             className={className}
+            dropdownMode="floating"
           />
         );
 
