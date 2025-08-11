@@ -128,3 +128,37 @@ function FrameworkSelector() {
     - 这是实现前缀补全 (prefix) 对齐的关键。当存在前缀时，我们需要将用户实际输入的文本向右推移，以避免与前缀重叠。
     - 我们使用一个隐藏的、具有相同字体样式的 `<span>` 来实时测量前缀文本的实际像素宽度。
     - 然后，通过 `useLayoutEffect` 将这个宽度动态地应用为 Slate 编辑器的 `padding-left`。这确保了无论前缀内容或字体如何变化，用户的输入始终能与 ghost text 完美衔接。
+
+## 4. 与 Floating UI 的集成（下拉定位）
+
+`Combobox` 的下拉列表统一通过通用容器 `FloatingLayer` 实现定位与边界避让：
+
+```tsx
+const inputRef = React.useRef<HTMLInputElement>(null);
+
+<div className="relative">
+  <input ref={inputRef} ... />
+
+  <FloatingLayer
+    open={open}
+    onOpenChange={setOpen}
+    anchorRef={inputRef}
+    placement="bottom-start"
+    matchWidth
+    offset={6}
+    withFocusManager={false}
+    closeOnOutsidePress
+    closeOnEsc
+    role="listbox"
+  >
+    <ComboboxList options={filtered} activeIndex={activeIndex} />
+  </FloatingLayer>
+</div>
+```
+
+实现要点：
+
+- **同宽**：`matchWidth=true`，保证下拉与输入框宽度一致。
+- **焦点**：`withFocusManager=false`，避免焦点陷阱，保留输入流畅性。
+- **关闭策略**：默认开启 `closeOnOutsidePress` 与 `closeOnEsc`；输入框失焦与外击均可关闭。
+- **性能**：只在 `open` 时启用 `autoUpdate`（组件内置），减少不必要的布局计算。
