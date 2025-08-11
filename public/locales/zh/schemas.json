@@ -1,2 +1,277 @@
 {
+  "summary": {
+    "name": "个人简介",
+    "fields": {
+      "content": {
+        "label": "个人简介",
+        "placeholder": "简要介绍您的专业背景...",
+        "prompts": {
+          "0": "使其更简洁",
+          "1": "增加可量化的成就",
+          "2": "突出关键技能",
+          "3": "根据目标职位定制"
+        }
+      }
+    },
+    "uiConfig": {
+      "addButtonText": "添加简介"
+    }
+  },
+  "experience": {
+    "name": "工作经历",
+    "fields": {
+      "jobTitle": {
+        "label": "职位名称"
+      },
+      "company": {
+        "label": "公司"
+      },
+      "startDate": {
+        "label": "开始日期"
+      },
+      "endDate": {
+        "label": "结束日期"
+      },
+      "description": {
+        "label": "描述",
+        "placeholder": "描述您的职责和成就...",
+        "prompts": {
+          "0": "增加可量化的结果",
+          "1": "使用动作动词",
+          "2": "突出成就",
+          "3": "包含相关关键词"
+        }
+      }
+    },
+    "uiConfig": {
+      "addButtonText": "添加经历"
+    }
+  },
+  "education": {
+    "name": "教育背景",
+    "fields": {
+      "degree": {
+        "label": "学位"
+      },
+      "institution": {
+        "label": "教育机构"
+      },
+      "graduationYear": {
+        "label": "毕业年份"
+      },
+      "details": {
+        "label": "详情",
+        "placeholder": "相关课程、项目、成就...",
+        "prompts": {
+          "0": "添加相关课程",
+          "1": "包括学术成就",
+          "2": "提及项目或论文",
+          "3": "如果GPA较高，可以添加"
+        }
+      }
+    },
+    "uiConfig": {
+      "addButtonText": "添加教育背景"
+    }
+  },
+  "skills": {
+    "name": "技能",
+    "fields": {
+      "name": {
+        "label": "技能",
+        "prompts": {
+          "0": "添加具体技术",
+          "1": "包括熟练程度",
+          "2": "对相关技能进行分组",
+          "3": "添加热门技能"
+        }
+      }
+    },
+    "uiConfig": {
+      "addButtonText": "添加技能"
+    }
+  },
+  "customText": {
+    "name": "自定义部分",
+    "fields": {
+      "content": {
+        "label": "内容",
+        "placeholder": "输入您的自定义内容...",
+        "prompts": {
+          "0": "提高清晰度",
+          "1": "使其更专业",
+          "2": "添加具体示例",
+          "3": "优化格式"
+        }
+      }
+    },
+    "uiConfig": {
+      "addButtonText": "添加内容"
+    }
+  },
+  "certifications": {
+    "name": "证书",
+    "fields": {
+      "name": {
+        "label": "证书名称"
+      },
+      "issuer": {
+        "label": "颁发机构"
+      },
+      "date": {
+        "label": "获得日期"
+      },
+      "expiryDate": {
+        "label": "到期日期 (如适用)"
+      },
+      "credentialId": {
+        "label": "证书ID"
+      },
+      "description": {
+        "label": "描述",
+        "placeholder": "简要描述证书及其相关性...",
+        "prompts": {
+          "0": "突出与目标职位的相关性",
+          "1": "添加涵盖的关键技能",
+          "2": "提及是否为行业认可",
+          "3": "包括续订状态"
+        }
+      }
+    },
+    "uiConfig": {
+      "addButtonText": "添加证书"
+    }
+  },
+  "volunteer": {
+    "name": "志愿服务经历",
+    "fields": {
+      "position": {
+        "label": "职位"
+      },
+      "organization": {
+        "label": "组织"
+      },
+      "startDate": {
+        "label": "开始日期"
+      },
+      "endDate": {
+        "label": "结束日期"
+      },
+      "impact": {
+        "label": "影响与贡献",
+        "placeholder": "描述您的志愿工作和影响...",
+        "prompts": {
+          "0": "突出社区影响",
+          "1": "添加志愿服务时长",
+          "2": "提及培养的技能",
+          "3": "包括获得的认可"
+        }
+      }
+    },
+    "uiConfig": {
+      "addButtonText": "添加志愿服务经历"
+    }
+  },
+  "projects": {
+    "name": "项目",
+    "fields": {
+      "name": {
+        "label": "项目名称"
+      },
+      "description": {
+        "label": "描述",
+        "placeholder": "描述项目、您的角色和主要成就...",
+        "prompts": {
+          "0": "增加可量化的结果",
+          "1": "突出解决的技术挑战",
+          "2": "强调业务影响",
+          "3": "包括使用的技术"
+        }
+      },
+      "technologies": {
+        "label": "使用的技术"
+      },
+      "url": {
+        "label": "项目URL",
+        "validation": {
+          "0": "必须是有效的URL"
+        }
+      },
+      "startDate": {
+        "label": "开始日期"
+      },
+      "endDate": {
+        "label": "结束日期"
+      }
+    },
+    "uiConfig": {
+      "addButtonText": "添加项目"
+    }
+  },
+  "advanced-skills": {
+    "name": "高级技能",
+    "fields": {
+      "category": {
+        "label": "类别",
+        "options": {
+          "0": "技术技能",
+          "1": "软技能",
+          "2": "语言",
+          "3": "证书",
+          "4": "工具与平台",
+          "5": "编程语言",
+          "6": "框架",
+          "7": "数据库",
+          "8": "云平台",
+          "9": "DevOps工具"
+        }
+      },
+      "skills": {
+        "label": "技能",
+        "prompts": {
+          "0": "添加行业相关技能",
+          "1": "包括熟练程度",
+          "2": "添加热门技术",
+          "3": "为ATS关键词优化"
+        }
+      },
+      "proficiency": {
+        "label": "熟练程度",
+        "options": {
+          "0": "初学者",
+          "1": "中级",
+          "2": "高级",
+          "3": "专家"
+        }
+      },
+      "yearsOfExperience": {
+        "label": "经验年限",
+        "validation": {
+          "0": "必须是数字"
+        }
+      }
+    },
+    "uiConfig": {
+      "addButtonText": "添加技能类别"
+    }
+  },
+  "cover-letter": {
+    "name": "求职信",
+    "fields": {
+      "content": {
+        "label": "求职信内容",
+        "placeholder": "您的个性化求职信内容将显示在此处...",
+        "prompts": {
+          "0": "使其更具说服力",
+          "1": "添加具体示例",
+          "2": "根据公司文化进行调整",
+          "3": "强化价值主张",
+          "4": "改善流程和可读性"
+        }
+      }
+    },
+    "uiConfig": {
+      "addButtonText": "添加求职信"
+    }
+  }
 }

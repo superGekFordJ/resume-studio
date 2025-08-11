@@ -7,6 +7,7 @@ import {
   FieldSchema,
   FieldRole,
 } from '@/types/schema';
+import { formatIdAsLabel } from './utils';
 
 // Interface for AI-friendly section data
 export interface AIBridgedSection {
@@ -40,7 +41,8 @@ export class AIDataBridge {
       for (const field of schema.fields) {
         let fieldType: string;
         let fieldDescription =
-          field.uiProps?.placeholder || `The ${field.label} for an item`;
+          field.uiProps?.placeholder ||
+          `The ${formatIdAsLabel(field.id)} for an item`;
 
         switch (field.type) {
           case 'text':
@@ -109,7 +111,8 @@ ${fieldDefinitions.join(',\n')}
     for (const field of schema.fields) {
       let fieldType: string;
       let fieldDescription =
-        field.uiProps?.placeholder || `The ${field.label} for an item`;
+        field.uiProps?.placeholder ||
+        `The ${formatIdAsLabel(field.id)} for an item`;
 
       switch (field.type) {
         case 'text':

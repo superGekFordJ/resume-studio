@@ -1,2 +1,277 @@
 {
+  "summary": {
+    "name": "Summary",
+    "fields": {
+      "content": {
+        "label": "Summary",
+        "placeholder": "A brief summary about your professional background...",
+        "prompts": {
+          "0": "Make it more concise",
+          "1": "Add quantifiable achievements",
+          "2": "Highlight key skills",
+          "3": "Tailor to target role"
+        }
+      }
+    },
+    "uiConfig": {
+      "addButtonText": "Add Summary"
+    }
+  },
+  "experience": {
+    "name": "Experience",
+    "fields": {
+      "jobTitle": {
+        "label": "Job Title"
+      },
+      "company": {
+        "label": "Company"
+      },
+      "startDate": {
+        "label": "Start Date"
+      },
+      "endDate": {
+        "label": "End Date"
+      },
+      "description": {
+        "label": "Description",
+        "placeholder": "Describe your responsibilities and achievements...",
+        "prompts": {
+          "0": "Add quantifiable results",
+          "1": "Use action verbs",
+          "2": "Highlight achievements",
+          "3": "Include relevant keywords"
+        }
+      }
+    },
+    "uiConfig": {
+      "addButtonText": "Add Experience"
+    }
+  },
+  "education": {
+    "name": "Education",
+    "fields": {
+      "degree": {
+        "label": "Degree"
+      },
+      "institution": {
+        "label": "Institution"
+      },
+      "graduationYear": {
+        "label": "Graduation Year"
+      },
+      "details": {
+        "label": "Details",
+        "placeholder": "Relevant coursework, projects, achievements...",
+        "prompts": {
+          "0": "Add relevant coursework",
+          "1": "Include academic achievements",
+          "2": "Mention projects or thesis",
+          "3": "Add GPA if impressive"
+        }
+      }
+    },
+    "uiConfig": {
+      "addButtonText": "Add Education"
+    }
+  },
+  "skills": {
+    "name": "Skills",
+    "fields": {
+      "name": {
+        "label": "Skill",
+        "prompts": {
+          "0": "Add specific technologies",
+          "1": "Include proficiency levels",
+          "2": "Group related skills",
+          "3": "Add trending skills"
+        }
+      }
+    },
+    "uiConfig": {
+      "addButtonText": "Add Skill"
+    }
+  },
+  "customText": {
+    "name": "Custom Section",
+    "fields": {
+      "content": {
+        "label": "Content",
+        "placeholder": "Enter your custom content...",
+        "prompts": {
+          "0": "Improve clarity",
+          "1": "Make it more professional",
+          "2": "Add specific examples",
+          "3": "Optimize formatting"
+        }
+      }
+    },
+    "uiConfig": {
+      "addButtonText": "Add Content"
+    }
+  },
+  "certifications": {
+    "name": "Certifications",
+    "fields": {
+      "name": {
+        "label": "Certification Name"
+      },
+      "issuer": {
+        "label": "Issuing Organization"
+      },
+      "date": {
+        "label": "Date Obtained"
+      },
+      "expiryDate": {
+        "label": "Expiry Date (if applicable)"
+      },
+      "credentialId": {
+        "label": "Credential ID"
+      },
+      "description": {
+        "label": "Description",
+        "placeholder": "Brief description of the certification and its relevance...",
+        "prompts": {
+          "0": "Highlight relevance to target role",
+          "1": "Add key skills covered",
+          "2": "Mention if it's industry-recognized",
+          "3": "Include renewal status"
+        }
+      }
+    },
+    "uiConfig": {
+      "addButtonText": "Add Certification"
+    }
+  },
+  "volunteer": {
+    "name": "Volunteer Experience",
+    "fields": {
+      "position": {
+        "label": "Position"
+      },
+      "organization": {
+        "label": "Organization"
+      },
+      "startDate": {
+        "label": "Start Date"
+      },
+      "endDate": {
+        "label": "End Date"
+      },
+      "impact": {
+        "label": "Impact & Contributions",
+        "placeholder": "Describe your volunteer work and impact...",
+        "prompts": {
+          "0": "Highlight community impact",
+          "1": "Add volunteer hours",
+          "2": "Mention skills developed",
+          "3": "Include recognition received"
+        }
+      }
+    },
+    "uiConfig": {
+      "addButtonText": "Add Volunteer Experience"
+    }
+  },
+  "projects": {
+    "name": "Projects",
+    "fields": {
+      "name": {
+        "label": "Project Name"
+      },
+      "description": {
+        "label": "Description",
+        "placeholder": "Describe the project, your role, and key achievements...",
+        "prompts": {
+          "0": "Add quantifiable results",
+          "1": "Highlight technical challenges solved",
+          "2": "Emphasize business impact",
+          "3": "Include technologies used"
+        }
+      },
+      "technologies": {
+        "label": "Technologies Used"
+      },
+      "url": {
+        "label": "Project URL",
+        "validation": {
+          "0": "Must be a valid URL"
+        }
+      },
+      "startDate": {
+        "label": "Start Date"
+      },
+      "endDate": {
+        "label": "End Date"
+      }
+    },
+    "uiConfig": {
+      "addButtonText": "Add Project"
+    }
+  },
+  "advanced-skills": {
+    "name": "Advanced Skills",
+    "fields": {
+      "category": {
+        "label": "Category",
+        "options": {
+          "0": "Technical Skills",
+          "1": "Soft Skills",
+          "2": "Languages",
+          "3": "Certifications",
+          "4": "Tools & Platforms",
+          "5": "Programming Languages",
+          "6": "Frameworks",
+          "7": "Databases",
+          "8": "Cloud Platforms",
+          "9": "DevOps Tools"
+        }
+      },
+      "skills": {
+        "label": "Skills",
+        "prompts": {
+          "0": "Add industry-relevant skills",
+          "1": "Include proficiency levels",
+          "2": "Add trending technologies",
+          "3": "Optimize for ATS keywords"
+        }
+      },
+      "proficiency": {
+        "label": "Proficiency Level",
+        "options": {
+          "0": "Beginner",
+          "1": "Intermediate",
+          "2": "Advanced",
+          "3": "Expert"
+        }
+      },
+      "yearsOfExperience": {
+        "label": "Years of Experience",
+        "validation": {
+          "0": "Must be a number"
+        }
+      }
+    },
+    "uiConfig": {
+      "addButtonText": "Add Skill Category"
+    }
+  },
+  "cover-letter": {
+    "name": "Cover Letter",
+    "fields": {
+      "content": {
+        "label": "Cover Letter Content",
+        "placeholder": "Your personalized cover letter content will appear here...",
+        "prompts": {
+          "0": "Make it more compelling",
+          "1": "Add specific examples",
+          "2": "Tailor to company culture",
+          "3": "Strengthen value proposition",
+          "4": "Improve flow and readability"
+        }
+      }
+    },
+    "uiConfig": {
+      "addButtonText": "Add Cover Letter"
+    }
+  }
 }

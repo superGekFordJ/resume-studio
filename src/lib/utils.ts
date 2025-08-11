@@ -6,6 +6,21 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
+ * Formats a camelCase or snake_case string into a human-readable label.
+ * e.g., 'jobTitle' -> 'Job Title', 'start_date' -> 'Start Date'
+ * @param id The string identifier to format.
+ * @returns A formatted, human-readable string.
+ */
+export function formatIdAsLabel(id: string): string {
+  if (!id) return '';
+  return id
+    .replace(/_/g, ' ')
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/^./, (str) => str.toUpperCase())
+    .trim();
+}
+
+/**
  * Generic LRU Cache implementation with O(1) operations
  * @template K - Key type
  * @template V - Value type

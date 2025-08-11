@@ -62,5 +62,75 @@
     "overallQuality": "整体质量评估",
     "actionableSuggestions": "可行的建议",
     "noContent": "没有可用的评审内容。请再试一次。"
+  },
+  "AISuggestionCard": {
+    "improving": "AI 正在改进您的 {{fieldName}}...",
+    "title": "AI 建议",
+    "noChanges": "未建议任何更改 - 您的内容看起来很棒！",
+    "apply": "应用",
+    "dismiss": "忽略"
+  },
+  "AvatarUploader": {
+    "selectImageError": "请选择一个图片文件。",
+    "fileSizeError": "文件大小必须小于 2MB。",
+    "fileReadError": "读取文件出错。",
+    "uploading": "上传中...",
+    "changePhoto": "更换照片",
+    "uploadPhoto": "上传照片",
+    "fileTypes": "JPG, PNG 或 GIF (最大 2MB)"
+  },
+  "BatchImprovementDialog": {
+    "schemaNotFound": "未找到 {{schemaId}} 的结构",
+    "item": "项目 {{index}}",
+    "modified": "已修改",
+    "title": "批量 AI 改进评审",
+    "reviewing": "正在评审 {{sectionTitle}} 部分的 AI 改进",
+    "prompt": "提示: \"{{prompt}}\"",
+    "aiSummary": "AI 摘要: ",
+    "improving": "AI 正在改进您的部分...",
+    "noImprovements": "没有可显示的改进",
+    "selectionStatus": "选择要应用的改进。已选择 {{stagedCount}} / {{totalCount}} 项更改。",
+    "reject": "拒绝更改",
+    "accept": "接受改进 ({{count}})"
+  },
+  "BatchImprovementPromptPopover": {
+    "title": "改进 '{{sectionTitle}}'",
+    "description": "输入提示以改进此部分。",
+    "promptLabel": "提示",
+    "promptPlaceholder": "例如，使其更简洁",
+    "improving": "改进中...",
+    "generate": "生成"
+  },
+  "TemplateSelector": {
+    "selectTemplate": "选择模板"
+  },
+  "PersonalDetailsEditor": {
+    "profilePhoto": "个人资料照片",
+    "fields": {
+      "fullName": "全名",
+      "jobTitle": "职位",
+      "email": "电子邮件",
+      "phone": "电话",
+      "address": "地址",
+      "website": "网站"
+    }
+  },
+  "SectionEditor": {
+    "editSection": "编辑部分",
+    "selectItemToEdit": "从左侧面板或简历中选择一个项目进行编辑。",
+    "sectionTitle": "部分标题",
+    "addItem": "添加项目",
+    "coverLetterGeneratorTitle": "AI 求职信生成器",
+    "coverLetterGeneratorDescription": "根据您的简历内容和目标职位信息生成个性化的求职信。",
+    "generating": "生成中...",
+    "generateCoverLetter": "生成求职信",
+    "coverLetterGeneratedTitle": "求职信已生成",
+    "coverLetterGeneratedDescription": "您的求职信已成功生成。",
+    "generationFailedTitle": "生成失败",
+    "generationFailedDescription": "生成求职信失败。请再试一次。",
+    "personalDetails": "个人信息",
+    "aiAutocomplete": "AI 自动补全",
+    "batchImprove": "批量改进",
+    "completionMode": "补全模式"
   }
 }

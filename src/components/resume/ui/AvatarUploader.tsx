@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Upload, X, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import { useToast } from '@/hooks/use-toast';
 
 interface AvatarUploaderProps {
   value?: string;
@@ -17,6 +19,8 @@ export default function AvatarUploader({
   onChange,
   className,
 }: AvatarUploaderProps) {
+  const { t } = useTranslation('components');
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -26,13 +30,21 @@ export default function AvatarUploader({
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      alert('Please select an image file.');
+      toast({
+        title: 'Error',
+        description: t('AvatarUploader.selectImageError'),
+        variant: 'destructive',
+      });
       return;
     }
 
     // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
-      alert('File size must be less than 2MB.');
+      toast({
+        title: 'Error',
+        description: t('AvatarUploader.fileSizeError'),
+        variant: 'destructive',
+      });
       return;
     }
 
@@ -45,7 +57,11 @@ export default function AvatarUploader({
       setIsLoading(false);
     };
     reader.onerror = () => {
-      alert('Error reading file.');
+      toast({
+        title: 'Error',
+        description: t('AvatarUploader.fileReadError'),
+        variant: 'destructive',
+      });
       setIsLoading(false);
     };
     reader.readAsDataURL(file);
@@ -104,7 +120,11 @@ export default function AvatarUploader({
         className="text-xs"
       >
         <Upload className="mr-2 h-3 w-3" />
-        {isLoading ? 'Uploading...' : value ? 'Change Photo' : 'Upload Photo'}
+        {isLoading
+          ? t('AvatarUploader.uploading')
+          : value
+            ? t('AvatarUploader.changePhoto')
+            : t('AvatarUploader.uploadPhoto')}
       </Button>
 
       {/* Hidden File Input */}
@@ -118,7 +138,7 @@ export default function AvatarUploader({
 
       {/* File Info */}
       <p className="text-xs text-muted-foreground text-center">
-        JPG, PNG or GIF (max 2MB)
+        {t('AvatarUploader.fileTypes')}
       </p>
     </div>
   );

@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { PersonalDetails } from '@/types/resume';
 import type { DynamicResumeSection } from '@/types/schema';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,8 @@ import AutocompleteModelSelector from './AutocompleteModelSelector';
 import { FloatingLayer } from '@/components/ui/floating/FloatingLayer';
 
 export default function SectionEditor() {
+  const { t } = useTranslation('components');
+  const { t: tSchema } = useTranslation('schemas');
   const { toast } = useToast();
   const schemaRegistry = SchemaRegistry.getInstance();
 
@@ -120,7 +123,7 @@ export default function SectionEditor() {
       if (generationSummary) {
         toast({
           variant: 'ai',
-          title: 'Cover Letter Generated',
+          title: t('SectionEditor.coverLetterGeneratedTitle'),
           description: (
             <div className="flex items-start gap-2">
               <Sparkles className="h-4 w-4 mt-0.5 flex-shrink-0" />
@@ -130,15 +133,15 @@ export default function SectionEditor() {
         });
       } else {
         toast({
-          title: 'Cover Letter Generated',
-          description: 'Your cover letter has been generated successfully.',
+          title: t('SectionEditor.coverLetterGeneratedTitle'),
+          description: t('SectionEditor.coverLetterGeneratedDescription'),
         });
       }
     } catch {
       toast({
         variant: 'destructive',
-        title: 'Generation Failed',
-        description: 'Failed to generate cover letter. Please try again.',
+        title: t('SectionEditor.generationFailedTitle'),
+        description: t('SectionEditor.generationFailedDescription'),
       });
     }
   };
@@ -217,11 +220,13 @@ export default function SectionEditor() {
     return (
       <Card className="sticky top-[calc(theme(spacing.16)+1rem)] h-fit no-print">
         <CardHeader>
-          <CardTitle className="font-headline text-xl">Edit Section</CardTitle>
+          <CardTitle className="font-headline text-xl">
+            {t('SectionEditor.editSection')}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">
-            Select an item from the left panel or resume to edit.
+            {t('SectionEditor.selectItemToEdit')}
           </p>
         </CardContent>
       </Card>
@@ -241,7 +246,9 @@ export default function SectionEditor() {
     return (
       <>
         <div>
-          <Label htmlFor="sectionTitle">Section Title</Label>
+          <Label htmlFor="sectionTitle">
+            {t('SectionEditor.sectionTitle')}
+          </Label>
           <Input
             id="sectionTitle"
             value={section.title}
@@ -292,7 +299,8 @@ export default function SectionEditor() {
             onClick={handleAddItem}
             className="mt-2"
           >
-            <PlusCircle size={16} className="mr-2" /> Add Item
+            <PlusCircle size={16} className="mr-2" />{' '}
+            {t('SectionEditor.addItem')}
           </Button>
         )}
 
@@ -303,12 +311,11 @@ export default function SectionEditor() {
               <div className="flex items-center space-x-2">
                 <Sparkles className="h-5 w-5 text-blue-600" />
                 <h3 className="text-sm font-semibold text-blue-900">
-                  AI Cover Letter Generator
+                  {t('SectionEditor.coverLetterGeneratorTitle')}
                 </h3>
               </div>
               <p className="text-xs text-blue-700">
-                Generate a personalized cover letter based on your resume
-                content and target job information.
+                {t('SectionEditor.coverLetterGeneratorDescription')}
               </p>
               <Button
                 onClick={handleGenerateCoverLetter}
@@ -319,8 +326,8 @@ export default function SectionEditor() {
               >
                 <Sparkles size={14} className="mr-2" />
                 {isGeneratingCoverLetter
-                  ? 'Generating...'
-                  : 'Generate Cover Letter'}
+                  ? t('SectionEditor.generating')
+                  : t('SectionEditor.generateCoverLetter')}
               </Button>
             </div>
           </div>
@@ -330,10 +337,10 @@ export default function SectionEditor() {
   };
 
   const editorTitle = isCurrentlyEditingPersonalDetails
-    ? 'Personal Details'
+    ? t('SectionEditor.personalDetails')
     : currentEditingData && 'title' in currentEditingData
-      ? currentEditingData.title
-      : 'Edit Section';
+      ? tSchema(currentEditingData.title)
+      : t('SectionEditor.editSection');
 
   const canBatchImprove =
     currentEditingData &&
@@ -369,7 +376,7 @@ export default function SectionEditor() {
                   htmlFor="autocomplete-toggle-nav"
                   className="text-xs cursor-pointer"
                 >
-                  AI Autocomplete
+                  {t('SectionEditor.aiAutocomplete')}
                 </Label>
               </div>
               <FloatingLayer
@@ -390,7 +397,7 @@ export default function SectionEditor() {
               >
                 <div className="flex items-center gap-3">
                   <span className="text-xs font-medium">
-                    Completion&nbsp;Mode
+                    {t('SectionEditor.completionMode')}
                   </span>
                   <AutocompleteModelSelector className="w-[100px]" />
                 </div>
@@ -412,7 +419,7 @@ export default function SectionEditor() {
                   className="hover:bg-[#FF9800] hover:text-white hover:border-[#FF9800] focus:bg-[#FF9800] focus:text-white focus:border-[#FF9800]"
                 >
                   <Wand2 size={16} className="mr-2" />
-                  Batch Improve
+                  {t('SectionEditor.batchImprove')}
                 </Button>
               </BatchImprovementPromptPopover>
             )}

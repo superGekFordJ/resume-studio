@@ -62,5 +62,75 @@
     "overallQuality": "Overall Quality Assessment",
     "actionableSuggestions": "Actionable Suggestions",
     "noContent": "No review content available. Please try again."
+  },
+  "AISuggestionCard": {
+    "improving": "AI is improving your {{fieldName}}...",
+    "title": "AI Suggestion",
+    "noChanges": "No changes suggested - your content looks great!",
+    "apply": "Apply",
+    "dismiss": "Dismiss"
+  },
+  "AvatarUploader": {
+    "selectImageError": "Please select an image file.",
+    "fileSizeError": "File size must be less than 2MB.",
+    "fileReadError": "Error reading file.",
+    "uploading": "Uploading...",
+    "changePhoto": "Change Photo",
+    "uploadPhoto": "Upload Photo",
+    "fileTypes": "JPG, PNG or GIF (max 2MB)"
+  },
+  "BatchImprovementDialog": {
+    "schemaNotFound": "Schema not found for {{schemaId}}",
+    "item": "Item {{index}}",
+    "modified": "Modified",
+    "title": "Batch AI Improvement Review",
+    "reviewing": "Reviewing AI improvements for {{sectionTitle}} section",
+    "prompt": "Prompt: \"{{prompt}}\"",
+    "aiSummary": "AI Summary: ",
+    "improving": "AI is improving your section...",
+    "noImprovements": "No improvements to show",
+    "selectionStatus": "Select the improvements to apply. {{stagedCount}} of {{totalCount}} changes selected.",
+    "reject": "Reject Changes",
+    "accept": "Accept Improvements ({{count}})"
+  },
+  "BatchImprovementPromptPopover": {
+    "title": "Improve '{{sectionTitle}}'",
+    "description": "Enter a prompt to improve this section.",
+    "promptLabel": "Prompt",
+    "promptPlaceholder": "e.g., Make it more concise",
+    "improving": "Improving...",
+    "generate": "Generate"
+  },
+  "TemplateSelector": {
+    "selectTemplate": "Select Template"
+  },
+  "PersonalDetailsEditor": {
+    "profilePhoto": "Profile Photo",
+    "fields": {
+      "fullName": "Full Name",
+      "jobTitle": "Job Title",
+      "email": "Email",
+      "phone": "Phone",
+      "address": "Address",
+      "website": "Website"
+    }
+  },
+  "SectionEditor": {
+    "editSection": "Edit Section",
+    "selectItemToEdit": "Select an item from the left panel or resume to edit.",
+    "sectionTitle": "Section Title",
+    "addItem": "Add Item",
+    "coverLetterGeneratorTitle": "AI Cover Letter Generator",
+    "coverLetterGeneratorDescription": "Generate a personalized cover letter based on your resume content and target job information.",
+    "generating": "Generating...",
+    "generateCoverLetter": "Generate Cover Letter",
+    "coverLetterGeneratedTitle": "Cover Letter Generated",
+    "coverLetterGeneratedDescription": "Your cover letter has been generated successfully.",
+    "generationFailedTitle": "Generation Failed",
+    "generationFailedDescription": "Failed to generate cover letter. Please try again.",
+    "personalDetails": "Personal Details",
+    "aiAutocomplete": "AI Autocomplete",
+    "batchImprove": "Batch Improve",
+    "completionMode": "Completion Mode"
   }
 }

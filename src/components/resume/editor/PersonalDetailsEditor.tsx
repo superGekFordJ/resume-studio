@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { PersonalDetails } from '@/types/resume';
 import { Label } from '@/components/ui/label';
 import { useResumeStore } from '@/stores/resumeStore';
@@ -14,6 +15,7 @@ interface PersonalDetailsEditorProps {
 function PersonalDetailsEditor({
   personalDetails,
 }: PersonalDetailsEditorProps) {
+  const { t } = useTranslation('components');
   const updateField = useResumeStore((state) => state.updateField);
   const isAutocompleteEnabled = useResumeStore(
     (state) => state.isAutocompleteEnabled
@@ -39,7 +41,9 @@ function PersonalDetailsEditor({
     <>
       {/* Avatar Upload Section */}
       <div className="mb-6">
-        <Label className="text-sm font-medium">Profile Photo</Label>
+        <Label className="text-sm font-medium">
+          {t('PersonalDetailsEditor.profilePhoto')}
+        </Label>
         <div className="mt-2">
           <AvatarUploader
             value={personalDetails.avatar}
@@ -61,9 +65,7 @@ function PersonalDetailsEditor({
               <AIFieldWrapper
                 key={uniqueFieldId}
                 uniqueFieldId={uniqueFieldId}
-                label={key
-                  .replace(/([A-Z])/g, ' $1')
-                  .replace(/^./, (str) => str.toUpperCase())}
+                label={t(`PersonalDetailsEditor.fields.${key}`)}
                 value={currentValue}
                 onValueChange={(value: string) => handleFieldChange(key, value)}
                 fieldId={key}

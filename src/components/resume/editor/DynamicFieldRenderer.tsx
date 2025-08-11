@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -40,6 +41,8 @@ export default function DynamicFieldRenderer({
   itemId,
   sectionId,
 }: DynamicFieldRendererProps) {
+  const { t: tSchema } = useTranslation('schemas');
+  const { t: tCommon } = useTranslation('common');
   const localFieldId = field.id;
   const isRequired = field.required || false;
   const aiEnabled =
@@ -58,7 +61,11 @@ export default function DynamicFieldRenderer({
             type={field.type === 'text' ? 'text' : field.type}
             value={(value as string) || ''}
             onChange={(e) => onChange(e.target.value)}
-            placeholder={field.uiProps?.placeholder}
+            placeholder={
+              field.uiProps?.placeholder
+                ? tSchema(field.uiProps.placeholder)
+                : ''
+            }
             maxLength={field.uiProps?.maxLength}
             required={isRequired}
             className={className}
@@ -85,7 +92,11 @@ export default function DynamicFieldRenderer({
             <AutocompleteTextarea
               value={(value as string) || ''}
               onValueChange={onChange}
-              placeholder={field.uiProps?.placeholder}
+              placeholder={
+                field.uiProps?.placeholder
+                  ? tSchema(field.uiProps.placeholder)
+                  : ''
+              }
               rows={field.uiProps?.rows || 3}
               isAutocompleteEnabledGlobally={isAutocompleteEnabled}
               className={className}
@@ -103,7 +114,11 @@ export default function DynamicFieldRenderer({
               id={localFieldId}
               value={value || ''}
               onChange={(e) => onChange(e.target.value)}
-              placeholder={field.uiProps?.placeholder}
+              placeholder={
+                field.uiProps?.placeholder
+                  ? tSchema(field.uiProps.placeholder)
+                  : ''
+              }
               rows={field.uiProps?.rows || 3}
               required={isRequired}
               className={`flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${className || ''}`}
@@ -117,14 +132,16 @@ export default function DynamicFieldRenderer({
             <SelectTrigger className={className}>
               <SelectValue
                 placeholder={
-                  field.uiProps?.placeholder || `Select ${field.label}`
+                  field.uiProps?.placeholder
+                    ? tSchema(field.uiProps.placeholder)
+                    : `${tCommon('select')} ${tSchema(field.label)}`
                 }
               />
             </SelectTrigger>
             <SelectContent>
               {field.uiProps?.options?.map((option) => (
                 <SelectItem key={option} value={option}>
-                  {option}
+                  {tSchema(option)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -134,8 +151,8 @@ export default function DynamicFieldRenderer({
       case 'combobox':
         const comboboxOptions = (field.uiProps?.options || []).map(
           (option) => ({
-            value: option,
-            label: option,
+            value: tSchema(option),
+            label: tSchema(option),
           })
         );
 
@@ -145,10 +162,10 @@ export default function DynamicFieldRenderer({
             value={(value as string) || ''}
             onValueChange={onChange}
             placeholder={
-              field.uiProps?.placeholder || `Select or enter ${field.label}`
+              field.uiProps?.placeholder
+                ? tSchema(field.uiProps.placeholder)
+                : `${tCommon('select')} ${tSchema(field.label)}`
             }
-            searchPlaceholder={`Search ${field.label}...`}
-            emptyText={`No ${field.label.toLowerCase()} found.`}
             allowCustomValue={true}
             className={className}
             dropdownMode="floating"
@@ -166,7 +183,11 @@ export default function DynamicFieldRenderer({
               <Input
                 value={customInput}
                 onChange={(e) => setCustomInput(e.target.value)}
-                placeholder={field.uiProps?.placeholder || `Add ${field.label}`}
+                placeholder={
+                  field.uiProps?.placeholder
+                    ? tSchema(field.uiProps.placeholder)
+                    : `${tCommon('add')} ${tSchema(field.label)}`
+                }
                 className="flex-1"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && customInput.trim()) {
@@ -196,7 +217,7 @@ export default function DynamicFieldRenderer({
                   selectedValues.includes(customInput.trim())
                 }
               >
-                Add
+                {tCommon('add')}
               </Button>
             </div>
 
@@ -217,7 +238,7 @@ export default function DynamicFieldRenderer({
                     .filter((option) => !selectedValues.includes(option))
                     .map((option) => (
                       <SelectItem key={option} value={option}>
-                        {option}
+                        {tSchema(option)}
                       </SelectItem>
                     ))}
                 </SelectContent>
@@ -267,7 +288,7 @@ export default function DynamicFieldRenderer({
                     newArray[index] = e.target.value;
                     onChange(newArray);
                   }}
-                  placeholder={`${field.label} ${index + 1}`}
+                  placeholder={`${tSchema(field.label)} ${index + 1}`}
                   className="flex-1"
                 />
                 <Button
@@ -289,7 +310,7 @@ export default function DynamicFieldRenderer({
               size="sm"
               onClick={() => onChange([...arrayValues, ''])}
             >
-              Add {field.label}
+              {tCommon('add')} {tSchema(field.label)}
             </Button>
           </div>
         );
@@ -314,7 +335,11 @@ export default function DynamicFieldRenderer({
             id={localFieldId}
             value={value || ''}
             onChange={(e) => onChange(e.target.value)}
-            placeholder={field.uiProps?.placeholder}
+            placeholder={
+              field.uiProps?.placeholder
+                ? tSchema(field.uiProps.placeholder)
+                : ''
+            }
             className={className}
           />
         );
@@ -324,14 +349,14 @@ export default function DynamicFieldRenderer({
   return (
     <div className="space-y-2">
       <Label htmlFor={localFieldId} className="text-sm font-medium">
-        {field.label}
+        {tSchema(field.label)}
         {isRequired && <span className="text-destructive ml-1">*</span>}
       </Label>
       {renderField()}
       {field.validation && (
         <div className="text-xs text-muted-foreground">
           {field.validation.map((rule, index) => (
-            <div key={index}>{rule.message}</div>
+            <div key={index}>{tSchema(rule.message)}</div>
           ))}
         </div>
       )}

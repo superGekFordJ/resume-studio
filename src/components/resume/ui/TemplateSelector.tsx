@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { templates, type TemplateInfo } from '@/types/resume';
 import { CheckCircle } from 'lucide-react';
@@ -8,6 +9,7 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useResumeStore } from '@/stores/resumeStore';
 
 export default function TemplateSelector() {
+  const { t } = useTranslation('components');
   const selectedTemplateId = useResumeStore(
     (state) => state.selectedTemplateId
   );
@@ -17,7 +19,9 @@ export default function TemplateSelector() {
   return (
     <Card className="no-print">
       <CardHeader>
-        <CardTitle className="font-headline text-xl">Select Template</CardTitle>
+        <CardTitle className="font-headline text-xl">
+          {t('TemplateSelector.selectTemplate')}
+        </CardTitle>
       </CardHeader>
       <CardContent className="p-4">
         <ScrollArea className="w-full whitespace-nowrap">

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import dynamic from 'next/dynamic';
+import { useTranslation } from 'react-i18next';
 import * as AccordionPrimitive from '@radix-ui/react-accordion';
 import { ChevronDown } from 'lucide-react';
 import {
@@ -47,11 +48,18 @@ function ItemDiff({
   isChecked,
   onCheckedChange,
 }: ItemDiffProps) {
+  const { t } = useTranslation('components');
   const schemaRegistry = SchemaRegistry.getInstance();
   const sectionSchema = schemaRegistry.getSectionSchema(original.schemaId);
 
   if (!sectionSchema) {
-    return <div>Schema not found for {original.schemaId}</div>;
+    return (
+      <div>
+        {t('BatchImprovementDialog.schemaNotFound', {
+          schemaId: original.schemaId,
+        })}
+      </div>
+    );
   }
 
   // Convert item data to readable format for comparison
@@ -109,7 +117,7 @@ function ItemDiff({
     } else if (titleValue) {
       return titleValue as string;
     } else {
-      return `Item ${index + 1}`;
+      return t('BatchImprovementDialog.item', { index: index + 1 });
     }
   };
 
@@ -135,7 +143,9 @@ function ItemDiff({
             {getItemTitle()}
           </span>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Modified</span>
+            <span className="text-xs text-muted-foreground">
+              {t('BatchImprovementDialog.modified')}
+            </span>
             <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
           </div>
         </AccordionPrimitive.Trigger>
@@ -232,6 +242,7 @@ function ItemDiff({
 }
 
 export default function BatchImprovementDialog() {
+  const { t } = useTranslation('components');
   const batchReview = useResumeStore((state) => state.batchImprovementReview);
   const acceptBatchImprovement = useResumeStore(
     (state) => state.acceptBatchImprovement
@@ -325,14 +336,13 @@ export default function BatchImprovementDialog() {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-blue-500" />
-            Batch AI Improvement Review
+            {t('BatchImprovementDialog.title')}
           </DialogTitle>
           <DialogDescription>
-            Reviewing AI improvements for{' '}
-            <span className="font-semibold">{sectionTitle}</span> section
+            {t('BatchImprovementDialog.reviewing', { sectionTitle })}
             {prompt && (
               <span className="block text-sm mt-1 font-mono bg-muted px-2 py-1 rounded">
-                Prompt: &quot;{prompt}&quot;
+                {t('BatchImprovementDialog.prompt', { prompt })}
               </span>
             )}
           </DialogDescription>
@@ -340,7 +350,9 @@ export default function BatchImprovementDialog() {
             <div className="flex items-start gap-2 p-3 mt-2 text-sm text-blue-800 rounded-lg bg-blue-50 border border-blue-200">
               <Sparkles className="h-4 w-4 mt-0.5 flex-shrink-0" />
               <p className="flex-grow">
-                <span className="font-semibold">AI Summary:</span>{' '}
+                <span className="font-semibold">
+                  {t('BatchImprovementDialog.aiSummary')}
+                </span>{' '}
                 {improvementSummary}
               </p>
             </div>
@@ -353,7 +365,7 @@ export default function BatchImprovementDialog() {
               <div className="text-center">
                 <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-blue-500" />
                 <p className="text-sm text-muted-foreground">
-                  AI is improving your section...
+                  {t('BatchImprovementDialog.improving')}
                 </p>
               </div>
             </div>
@@ -361,13 +373,15 @@ export default function BatchImprovementDialog() {
             <ScrollArea className="h-full pr-4">
               {changedItemsCount === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  <p>No improvements to show</p>
+                  <p>{t('BatchImprovementDialog.noImprovements')}</p>
                 </div>
               ) : (
                 <div className="space-y-2">
                   <div className="text-sm text-muted-foreground mb-3">
-                    Select the improvements to apply. {stagedItems.length} of{' '}
-                    {changedItemsCount} changes selected.
+                    {t('BatchImprovementDialog.selectionStatus', {
+                      stagedCount: stagedItems.length,
+                      totalCount: changedItemsCount,
+                    })}
                   </div>
                   <AccordionPrimitive.Root
                     type="multiple"
@@ -421,7 +435,7 @@ export default function BatchImprovementDialog() {
         <DialogFooter className="gap-2 pt-4 border-t">
           <Button variant="outline" onClick={handleReject} disabled={isLoading}>
             <X className="h-4 w-4 mr-1" />
-            Reject Changes
+            {t('BatchImprovementDialog.reject')}
           </Button>
           <Button
             onClick={handleAccept}
@@ -429,7 +443,9 @@ export default function BatchImprovementDialog() {
             className="bg-blue-600 hover:bg-blue-700"
           >
             <Check className="h-4 w-4 mr-1" />
-            Accept Improvements ({stagedItems.length})
+            {t('BatchImprovementDialog.accept', {
+              count: stagedItems.length,
+            })}
           </Button>
         </DialogFooter>
       </DialogContent>

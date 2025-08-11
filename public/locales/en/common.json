@@ -7,5 +7,7 @@
   },
   "dialog": {
     "close": "Close"
-  }
+  },
+  "select": "Select",
+  "add": "Add"
 }

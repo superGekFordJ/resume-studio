@@ -2,6 +2,7 @@
 
 import React from 'react';
 import dynamic from 'next/dynamic';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -40,6 +41,7 @@ export default function AISuggestionCard({
   onReject,
   className,
 }: AISuggestionCardProps) {
+  const { t } = useTranslation('components');
   const hasChanges = originalValue !== suggestedValue;
 
   return (
@@ -54,7 +56,9 @@ export default function AISuggestionCard({
           <div className="flex items-center justify-center space-x-2">
             <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
             <span className="text-sm text-blue-700">
-              AI is improving your {fieldName || 'field'}...
+              {t('AISuggestionCard.improving', {
+                fieldName: fieldName || 'field',
+              })}
             </span>
           </div>
         </CardContent>
@@ -64,7 +68,7 @@ export default function AISuggestionCard({
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="h-4 w-4 text-blue-600" />
               <span className="text-sm font-medium text-blue-900">
-                AI Suggestion
+                {t('AISuggestionCard.title')}
               </span>
               {prompt && (
                 <Badge variant="secondary" className="text-xs">
@@ -157,7 +161,7 @@ export default function AISuggestionCard({
               </div>
             ) : (
               <div className="text-center py-3 text-sm text-muted-foreground bg-white rounded border border-gray-200">
-                No changes suggested - your content looks great!
+                {t('AISuggestionCard.noChanges')}
               </div>
             )}
           </CardContent>
@@ -171,7 +175,7 @@ export default function AISuggestionCard({
               className="bg-blue-600 hover:bg-blue-700 text-xs"
             >
               <Check className="h-3 w-3 mr-1" />
-              Apply
+              {t('AISuggestionCard.apply')}
             </Button>
             <Button
               size="sm"
@@ -180,7 +184,7 @@ export default function AISuggestionCard({
               className="text-xs"
             >
               <X className="h-3 w-3 mr-1" />
-              Dismiss
+              {t('AISuggestionCard.dismiss')}
             </Button>
           </CardFooter>
         </>
