@@ -132,5 +132,15 @@
     "aiAutocomplete": "AI 自动补全",
     "batchImprove": "批量改进",
     "completionMode": "补全模式"
+  },
+  "SectionManager": {
+    "title": "管理部分",
+    "personalDetails": "个人信息",
+    "editPersonalDetails": "编辑个人信息",
+    "edit": "编辑 {{title}}",
+    "hide": "隐藏 {{title}}",
+    "show": "显示 {{title}}",
+    "delete": "删除 {{title}}",
+    "addNewSection": "添加新部分"
   }
 }

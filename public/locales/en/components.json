@@ -132,5 +132,15 @@
     "aiAutocomplete": "AI Autocomplete",
     "batchImprove": "Batch Improve",
     "completionMode": "Completion Mode"
+  },
+  "SectionManager": {
+    "title": "Manage Sections",
+    "personalDetails": "Personal Details",
+    "editPersonalDetails": "Edit Personal Details",
+    "edit": "Edit {{title}}",
+    "hide": "Hide {{title}}",
+    "show": "Show {{title}}",
+    "delete": "Delete {{title}}",
+    "addNewSection": "Add New Section"
   }
 }

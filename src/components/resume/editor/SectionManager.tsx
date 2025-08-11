@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import type { DynamicResumeSection } from '@/types/schema';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -45,6 +46,8 @@ function SortableSectionItem({
   onSetEditingTarget,
   onRemove,
 }: SortableSectionItemProps) {
+  const { t: tSchema } = useTranslation('schemas');
+  const { t } = useTranslation('components');
   const schemaRegistry = SchemaRegistry.getInstance();
   const {
     attributes,
@@ -64,6 +67,7 @@ function SortableSectionItem({
   const schema = schemaRegistry.getSectionSchema(section.schemaId);
   const iconName = schema?.uiConfig?.icon || 'FileText';
   const IconComponent = getIconComponent(iconName);
+  const translatedTitle = tSchema(section.title);
 
   return (
     <div
@@ -76,7 +80,7 @@ function SortableSectionItem({
           <GripVertical size={18} className="text-muted-foreground" />
         </div>
         <IconComponent className="h-5 w-5 text-primary flex-shrink-0" />
-        <span className="font-medium truncate">{section.title}</span>
+        <span className="font-medium truncate">{translatedTitle}</span>
         <span className="text-xs bg-primary/10 text-primary px-1 py-0.5 rounded">
           {section.schemaId}
         </span>
@@ -86,7 +90,7 @@ function SortableSectionItem({
           variant="ghost"
           size="icon"
           onClick={() => onSetEditingTarget(section.id)}
-          aria-label={`Edit ${section.title}`}
+          aria-label={t('SectionManager.edit', { title: translatedTitle })}
         >
           <Edit3 size={16} />
         </Button>
@@ -94,9 +98,10 @@ function SortableSectionItem({
           variant="ghost"
           size="icon"
           onClick={() => onToggleVisibility(section.id)}
-          aria-label={
-            section.visible ? `Hide ${section.title}` : `Show ${section.title}`
-          }
+          aria-label={t(
+            section.visible ? 'SectionManager.hide' : 'SectionManager.show',
+            { title: translatedTitle }
+          )}
         >
           {section.visible ? <Eye size={16} /> : <EyeOff size={16} />}
         </Button>
@@ -105,7 +110,7 @@ function SortableSectionItem({
           size="icon"
           onClick={() => onRemove(section.id)}
           className="text-destructive hover:text-destructive/80 opacity-0 group-hover:opacity-100 transition-opacity"
-          aria-label={`Delete ${section.title}`}
+          aria-label={t('SectionManager.delete', { title: translatedTitle })}
         >
           <Trash2 size={16} />
         </Button>
@@ -115,6 +120,8 @@ function SortableSectionItem({
 }
 
 export default function SectionManager() {
+  const { t } = useTranslation('components');
+  const { t: tSchema } = useTranslation('schemas');
   const resumeData = useResumeStore((state) => state.resumeData);
   const updateResumeData = useResumeStore((state) => state.updateResumeData);
   const setEditingTarget = useResumeStore((state) => state.setEditingTarget);
@@ -190,20 +197,24 @@ export default function SectionManager() {
   return (
     <Card className="no-print">
       <CardHeader>
-        <CardTitle className="font-headline text-xl">Manage Sections</CardTitle>
+        <CardTitle className="font-headline text-xl">
+          {t('SectionManager.title')}
+        </CardTitle>
       </CardHeader>
       <CardContent className="pr-1">
         {/* Personal Details - Fixed */}
         <div className="flex items-center justify-between p-2 mb-2 border rounded-md shadow-sm bg-card">
           <div className="flex items-center gap-2">
             <LucideIcons.UserCircle2 className="h-5 w-5 text-primary ml-2" />
-            <span className="font-medium">Personal Details</span>
+            <span className="font-medium">
+              {t('SectionManager.personalDetails')}
+            </span>
           </div>
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setEditingTarget('personalDetails')}
-            aria-label="Edit Personal Details"
+            aria-label={t('SectionManager.editPersonalDetails')}
           >
             <Edit3 size={16} />
           </Button>
@@ -231,7 +242,9 @@ export default function SectionManager() {
         </DndContext>
 
         <div className="mt-4">
-          <h4 className="font-headline text-md mb-2">Add New Section</h4>
+          <h4 className="font-headline text-md mb-2">
+            {t('SectionManager.addNewSection')}
+          </h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {availableSectionTypes.map((schema) => {
               const IconComponent = getIconComponent(
@@ -247,7 +260,7 @@ export default function SectionManager() {
                 >
                   <PlusCircle size={16} className="mr-2 flex-shrink-0" />
                   <IconComponent size={16} className="mr-2 flex-shrink-0" />
-                  <span className="truncate">{schema.name}</span>
+                  <span className="truncate">{tSchema(schema.name)}</span>
                 </Button>
               );
             })}
