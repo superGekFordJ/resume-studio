@@ -1,5 +1,4 @@
 {
-  "hello": "Hello",
   "combobox": {
     "searchPlaceholder": "Type to search or select...",
     "noOptionFound": "No option found.",

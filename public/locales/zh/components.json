@@ -1,9 +1,9 @@
 {
   "Header": {
     "resumeStudio": "简历工坊",
-    "versions": "版本",
+    "versions": "版本历史",
     "settings": "设置",
-    "exportSchema": "导出结构",
+    "exportSchema": "导出 Schema",
     "export": "导出",
     "downloadPdf": "下载 PDF",
     "printResume": "打印简历",
@@ -14,29 +14,29 @@
   },
   "SettingsPanel": {
     "title": "设置",
-    "description": "配置 AI 提供商设置并为 AI 操作提供全局上下文。",
+    "description": "配置 AI 提供商，并为 AI 功能提供全局上下文。",
     "aiProviderConfigTitle": "AI 提供商配置",
     "aiProviderLabel": "AI 提供商",
     "aiProviderPlaceholder": "选择 AI 提供商",
-    "googleAiLabel": "Google AI (Gemini)",
-    "ollamaLabel": "Ollama (本地)",
-    "anthropicLabel": "Anthropic (Claude)",
+    "googleAiLabel": "Google AI（Gemini）",
+    "ollamaLabel": "Ollama（本地）",
+    "anthropicLabel": "Anthropic（Claude）",
     "modelLabel": "模型",
     "modelPlaceholder": "选择模型",
     "apiKeyLabel": "API 密钥",
     "apiKeyPlaceholder": "输入您的 {{provider}} API 密钥",
-    "apiKeyWarning": "目前，API 密钥必须通过环境文件（.env.local 或 .env.production）进行配置。由于 Genkit 生命周期限制，基于 UI 的配置暂时禁用。",
+    "apiKeyWarning": "目前需在环境文件（.env.local 或 .env.production）中配置 API 密钥。受 Genkit 生命周期限制，暂不支持在 UI 中配置。",
     "ollamaServerAddressLabel": "Ollama 服务器地址",
-    "ollamaServerDescription": "请确保 Ollama 正在您的本地计算机上运行。",
+    "ollamaServerDescription": "请确保 Ollama 已在本机运行。",
     "globalAiContextTitle": "全局 AI 上下文",
-    "globalAiContextDescription": "此信息将用于 AI 提供更个性化的建议。",
+    "globalAiContextDescription": "这些信息将用于 AI 生成更个性化的建议。",
     "targetJobInfoLabel": "目标职位信息",
-    "targetJobInfoDescription": "描述您正在申请的职位，或粘贴/拖动职位发布的图片。",
+    "targetJobInfoDescription": "描述您正在申请的职位，或粘贴、拖拽职位发布的截图。",
     "professionalBioLabel": "专业简介",
-    "uploadButton": "上传文档/PDF",
+    "uploadButton": "上传文档或 PDF",
     "professionalBioPlaceholder": "简要描述您的专业背景、专长和职业目标...",
-    "professionalBioDescription": "提供关于您自己的背景信息，AI 可以利用这些信息来定制建议。",
-    "generatingButton": "生成中...",
+    "professionalBioDescription": "提供您的背景信息，以便 AI 个性化给出建议。",
+    "generatingButton": "生成中…",
     "generateSnapshotButton": "使用 AI 生成简历快照",
     "apiKeyMemoryWarning": "API 密钥仅存储在内存中，不会被持久化。刷新页面后需要重新输入。",
     "languageAppearanceTitle": "语言与外观",
@@ -51,61 +51,61 @@
   "ImageUploadArea": {
     "invalidFileType": "文件类型无效",
     "pleaseUploadImage": "请上传图片文件。",
-    "processingImage": "正在处理图片...",
+    "processingImage": "正在处理图片…",
     "releaseToUpload": "松开以上传",
     "clickToType": "点击输入",
-    "pasteOrDrag": "，粘贴，或拖放职位截图。"
+    "pasteOrDrag": "、粘贴或拖拽职位截图。"
   },
   "AIReviewDialog": {
     "title": "AI 简历评审",
-    "description": "这是由 AI 驱动的简历分析，包含改进建议。",
+    "description": "基于 AI 的简历分析与改进建议。",
     "overallQuality": "整体质量评估",
-    "actionableSuggestions": "可行的建议",
+    "actionableSuggestions": "可操作建议",
     "noContent": "没有可用的评审内容。请再试一次。"
   },
   "AISuggestionCard": {
-    "improving": "AI 正在改进您的 {{fieldName}}...",
+    "improving": "AI 正在改进您的 {{fieldName}}…",
     "title": "AI 建议",
-    "noChanges": "未建议任何更改 - 您的内容看起来很棒！",
-    "apply": "应用",
-    "dismiss": "放弃"
+    "noChanges": "未建议任何更改，您的内容已很出色！",
+    "apply": "应用更改",
+    "dismiss": "忽略建议"
   },
   "AvatarUploader": {
     "selectImageError": "请选择一个图片文件。",
-    "fileSizeError": "文件大小必须小于 2MB。",
+    "fileSizeError": "文件大小必须小于 2 MB。",
     "fileReadError": "读取文件出错。",
-    "uploading": "上传中...",
+    "uploading": "上传中…",
     "changePhoto": "更换照片",
     "uploadPhoto": "上传照片",
-    "fileTypes": "JPG, PNG 或 GIF (最大 2MB)"
+    "fileTypes": "JPG、PNG 或 GIF（最大 2 MB）"
   },
   "BatchImprovementDialog": {
-    "schemaNotFound": "未找到 {{schemaId}} 的结构",
-    "item": "项目 {{index}}",
+    "schemaNotFound": "未找到 Schema：{{schemaId}}",
+    "item": "第 {{index}} 项",
     "modified": "已修改",
-    "title": "批量 AI 改进评审",
-    "reviewing": "正在评审 {{sectionTitle}} 部分的 AI 改进",
-    "prompt": "提示: \"{{prompt}}\"",
-    "aiSummary": "AI 摘要: ",
-    "improving": "AI 正在改进您的部分...",
-    "noImprovements": "没有可显示的改进",
-    "selectionStatus": "选择要应用的改进。已选择 {{stagedCount}} / {{totalCount}} 项更改。",
-    "reject": "放弃所有更改",
-    "accept": "接受改进 ({{count}})"
+    "title": "批量 AI 改进审阅",
+    "reviewing": "正在审阅 {{sectionTitle}} 的 AI 改进",
+    "prompt": "提示词：“{{prompt}}”",
+    "aiSummary": "AI 摘要：",
+    "improving": "AI 正在为该部分生成改进…",
+    "noImprovements": "暂无可显示的改进",
+    "selectionStatus": "选择要应用的改进。已选择 {{stagedCount}}/{{totalCount}} 项更改。",
+    "reject": "放弃更改",
+    "accept": "应用改进（{{count}}）"
   },
   "BatchImprovementPromptPopover": {
-    "title": "改进 '{{sectionTitle}}'",
-    "description": "输入提示以改进此部分。",
-    "promptLabel": "提示",
-    "promptPlaceholder": "例如，使其更简洁",
-    "improving": "改进中...",
+    "title": "改进“{{sectionTitle}}”",
+    "description": "输入提示词以改进此部分。",
+    "promptLabel": "提示词",
+    "promptPlaceholder": "例如：使其更简洁",
+    "improving": "改进中…",
     "generate": "生成"
   },
   "TemplateSelector": {
     "selectTemplate": "选择模板"
   },
   "PersonalDetailsEditor": {
-    "profilePhoto": "个人资料照片",
+    "profilePhoto": "个人头像",
     "fields": {
       "fullName": "全名",
       "jobTitle": "职位",
@@ -115,17 +115,17 @@
       "website": "网站",
       "linkedin": "领英",
       "github": "GitHub",
-      "portfolio": "个人作品集"
+      "portfolio": "作品集"
     }
   },
   "SectionEditor": {
-    "editSection": "编辑部分",
+    "editSection": "编辑模块",
     "selectItemToEdit": "从左侧面板或简历中选择一个项目进行编辑。",
-    "sectionTitle": "部分标题",
-    "addItem": "添加项目",
+    "sectionTitle": "模块标题",
+    "addItem": "添加条目",
     "coverLetterGeneratorTitle": "AI 求职信生成器",
     "coverLetterGeneratorDescription": "根据您的简历内容和目标职位信息生成个性化的求职信。",
-    "generating": "生成中...",
+    "generating": "生成中…",
     "generateCoverLetter": "生成求职信",
     "coverLetterGeneratedTitle": "求职信已生成",
     "coverLetterGeneratedDescription": "您的求职信已成功生成。",
@@ -137,47 +137,47 @@
     "completionMode": "补全模式"
   },
   "SectionManager": {
-    "title": "管理部分",
+    "title": "管理模块",
     "personalDetails": "个人信息",
     "editPersonalDetails": "编辑个人信息",
     "edit": "编辑 {{title}}",
     "hide": "隐藏 {{title}}",
     "show": "显示 {{title}}",
     "delete": "删除 {{title}}",
-    "addNewSection": "添加新部分"
+    "addNewSection": "添加新模块"
   },
   "AIFieldWrapper": {
-    "promptEmptyTitle": "AI 提示为空",
-    "promptEmptyDescription": "请输入提示以获取AI改进建议。",
-    "placeholder": "输入 {{label}}...",
-    "promptPlaceholder": "AI 提示 (例如，使其更简洁)",
+    "promptEmptyTitle": "AI 提示词为空",
+    "promptEmptyDescription": "请输入提示词以获取 AI 改进建议。",
+    "placeholder": "输入 {{label}}…",
+    "promptPlaceholder": "AI 提示词（例如：使其更简洁）",
     "improving": "改进中...",
-    "suggested": "已建议",
-    "improve": "改进"
+    "suggested": "已生成建议",
+    "improve": "优化"
   },
   "MarkdownFloatingToolbar": {
     "bold": "加粗",
     "italic": "斜体",
-    "bulletedList": "项目符号列表",
-    "numberedList": "编号列表",
+    "bulletedList": "无序列表",
+    "numberedList": "有序列表",
     "inlineCode": "行内代码",
     "link": "链接",
-    "aiModify": "AI 修改"
+    "aiModify": "AI 改写"
   },
   "AIHubHoverMenu": {
     "aiReview": "AI 评审",
-    "dialogueAgent": "对话代理",
-    "dialogueAgentComingSoon": "对话代理 (即将推出)"
+    "dialogueAgent": "AI 对话助手",
+    "dialogueAgentComingSoon": "AI 对话助手（即将上线）"
   },
   "VersionSnapshotDialog": {
     "title": "版本历史",
     "description": "保存和恢复您简历的不同版本。每个版本都包含您所有的内容和设置。",
     "restoreConfirm": "您确定要恢复此版本吗？您当前的工作将被替换。",
     "deleteConfirm": "您确定要删除此版本吗？此操作无法撤销。",
-    "placeholder": "输入版本名称...",
+    "placeholder": "输入版本名称…",
     "saveButton": "保存当前版本",
     "noVersions": "尚未保存任何版本。在上方创建您的第一个快照。",
-    "schemaVersion": "结构版本 v{{version}}",
+    "schemaVersion": "Schema 版本 v{{version}}",
     "restore": "恢复"
   }
 }

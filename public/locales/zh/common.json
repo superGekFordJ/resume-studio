@@ -1,9 +1,8 @@
 {
-  "hello": "你好",
   "combobox": {
-    "searchPlaceholder": "输入以搜索或选择...",
-    "noOptionFound": "未找到选项。",
-    "useValue": "使用 \"{{inputValue}}\""
+    "searchPlaceholder": "输入关键字以搜索或选择…",
+    "noOptionFound": "未找到匹配项。",
+    "useValue": "使用“{{inputValue}}”"
   },
   "dialog": {
     "close": "关闭"
