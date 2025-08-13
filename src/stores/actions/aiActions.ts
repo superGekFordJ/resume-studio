@@ -254,17 +254,18 @@ export const createAIActions: StateCreator<
 
     const { sectionId } = state.batchImprovementReview;
 
-    // Apply the staged improvements to the resume data
-    const updatedResumeData = AIDataBridge.mergeImprovedSection(
-      state.resumeData,
-      sectionId,
-      itemsToAccept
-    );
+    set((currentState) => {
+      const updatedResumeData = AIDataBridge.applyFieldLevelImprovements(
+        currentState.resumeData,
+        sectionId,
+        itemsToAccept
+      );
 
-    set({
-      resumeData: updatedResumeData,
-      batchImprovementReview: null,
-      aiPrompt: '',
+      return {
+        resumeData: updatedResumeData,
+        batchImprovementReview: null,
+        aiPrompt: '',
+      };
     });
   },
 

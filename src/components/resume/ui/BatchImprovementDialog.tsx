@@ -37,59 +37,62 @@ interface ItemDiffProps {
   original: DynamicSectionItem;
   improved: DynamicSectionItem['data'];
   index: number;
-  isChecked: boolean;
-  onCheckedChange: (checked: boolean) => void;
+  stagedFields: Record<string, unknown> | undefined;
+  onStagedFieldsChange: (
+    acceptedFields: Record<string, unknown> | null
+  ) => void;
 }
 
 function ItemDiff({
   original,
   improved,
   index,
-  isChecked,
-  onCheckedChange,
+  stagedFields,
+  onStagedFieldsChange,
 }: ItemDiffProps) {
   const { t } = useTranslation('components');
   const { t: tSchema } = useTranslation('schemas');
   const schemaRegistry = SchemaRegistry.getInstance();
   const sectionSchema = schemaRegistry.getSectionSchema(original.schemaId);
 
-  if (!sectionSchema) {
-    return (
-      <div>
-        {t('BatchImprovementDialog.schemaNotFound', {
-          schemaId: original.schemaId,
-        })}
-      </div>
-    );
-  }
-
-  // Convert item data to readable format for comparison
-  const formatItem = (itemData: Record<string, unknown>) => {
-    const lines: string[] = [];
-
-    for (const field of sectionSchema.fields) {
-      const value = itemData[field.id];
-      if (value !== undefined && value !== '') {
-        if (Array.isArray(value)) {
-          lines.push(`${tSchema(field.label)}: ${value.join(', ')}`);
-        } else {
-          lines.push(`${tSchema(field.label)}: ${value}`);
+  const allChangedFields = React.useMemo(() => {
+    const fields: Record<string, unknown> = {};
+    if (sectionSchema) {
+      for (const field of sectionSchema.fields) {
+        const originalValue = original.data[field.id];
+        const improvedValue = improved[field.id];
+        if (JSON.stringify(originalValue) !== JSON.stringify(improvedValue)) {
+          fields[field.id] = improvedValue;
         }
       }
     }
+    return fields;
+  }, [original.data, improved, sectionSchema]);
 
-    return lines.join('\n');
+  const handleToggleAll = (isChecked: boolean) => {
+    onStagedFieldsChange(isChecked ? allChangedFields : null);
   };
 
-  const originalText = formatItem(original.data);
-  const improvedText = formatItem(improved);
+  const handleToggleField = (
+    fieldId: string,
+    improvedValue: unknown,
+    isChecked: boolean
+  ) => {
+    const newStagedFields = { ...(stagedFields || {}) };
+    if (isChecked) {
+      newStagedFields[fieldId] = improvedValue;
+    } else {
+      delete newStagedFields[fieldId];
+    }
+    onStagedFieldsChange(
+      Object.keys(newStagedFields).length > 0 ? newStagedFields : null
+    );
+  };
 
-  // Skip if both texts are the same
-  if (originalText === improvedText) {
+  if (!sectionSchema || Object.keys(allChangedFields).length === 0) {
     return null;
   }
 
-  // Generate a summary title for the accordion item
   const getItemTitle = (): string => {
     const titleField = sectionSchema.fields.find(
       (f) =>
@@ -122,6 +125,12 @@ function ItemDiff({
     }
   };
 
+  const isAllSelected =
+    stagedFields &&
+    Object.keys(stagedFields).length === Object.keys(allChangedFields).length;
+  const isIndeterminate =
+    stagedFields && Object.keys(stagedFields).length > 0 && !isAllSelected;
+
   return (
     <AccordionPrimitive.Item
       value={`item-${index}`}
@@ -130,9 +139,10 @@ function ItemDiff({
       <AccordionPrimitive.Header className="flex w-full items-center">
         <div className="pl-4">
           <Checkbox
-            checked={isChecked}
-            onCheckedChange={onCheckedChange}
-            aria-label={`Select item ${index + 1}`}
+            checked={isAllSelected}
+            onCheckedChange={handleToggleAll}
+            aria-label={`Select all fields for item ${index + 1}`}
+            data-state={isIndeterminate ? 'indeterminate' : 'unchecked'}
           />
         </div>
         <AccordionPrimitive.Trigger
@@ -151,91 +161,127 @@ function ItemDiff({
           </div>
         </AccordionPrimitive.Trigger>
       </AccordionPrimitive.Header>
-      <AccordionPrimitive.Content className="overflow-hidden text-sm transition-all data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
-        <div className="w-[60rem] px-4 pb-4">
-          <div className="rounded overflow-hidden border border-gray-200">
-            <DiffViewer
-              oldValue={originalText}
-              newValue={improvedText}
-              splitView={false}
-              hideLineNumbers={true}
-              showDiffOnly={false}
-              compareMethod={DiffMethod.WORDS}
-              useDarkTheme={false}
-              styles={{
-                variables: {
-                  light: {
-                    diffViewerBackground: '#fafbfc',
-                    diffViewerColor: '#2d3748',
+      <AccordionPrimitive.Content className="overflow-hidden text-sm data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
+        <div className="px-4 pb-4 space-y-4 min-w-0">
+          {sectionSchema.fields.map((field) => {
+            const originalValue = original.data[field.id] || '';
+            const improvedValue = improved[field.id];
 
-                    // AI Suggestions - Brand Orange (what we recommend)
-                    addedBackground: '#fff7ed', // Very light orange
-                    addedColor: '#1e293b', // Darker for better contrast
-                    wordAddedBackground: '#fb923c', // Soft orange for AI suggestions
+            if (
+              improvedValue === undefined ||
+              JSON.stringify(originalValue) === JSON.stringify(improvedValue)
+            ) {
+              return null;
+            }
 
-                    // Original Text - Sky Blue (current state)
-                    removedBackground: '#f0f9ff', // Very light sky blue
-                    removedColor: '#64748b', // Subtle slate gray
-                    wordRemovedBackground: '#0ea5e9', // Sky blue for user's original text
+            return (
+              <div
+                key={field.id}
+                className="pl-2 border-l-2 border-slate-200 min-w-0"
+              >
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    id={`field-${original.id}-${field.id}`}
+                    checked={!!stagedFields?.[field.id]}
+                    onCheckedChange={(checked) =>
+                      handleToggleField(field.id, improvedValue, !!checked)
+                    }
+                  />
+                  <label
+                    htmlFor={`field-${original.id}-${field.id}`}
+                    className="font-medium text-sm text-slate-700"
+                  >
+                    {tSchema(field.label)}
+                  </label>
+                </div>
+                <div className="mt-2 rounded overflow-hidden border border-gray-200 min-w-0 w-full max-w-full [contain:inline-size]">
+                  <DiffViewer
+                    oldValue={String(originalValue)}
+                    newValue={String(improvedValue)}
+                    splitView={false}
+                    hideLineNumbers={true}
+                    showDiffOnly={false}
+                    compareMethod={DiffMethod.WORDS}
+                    useDarkTheme={false}
+                    styles={{
+                      variables: {
+                        light: {
+                          diffViewerBackground: '#fafbfc',
+                          diffViewerColor: '#2d3748',
 
-                    // Structure - Invisible integration
-                    gutterBackground: 'transparent', // Completely seamless
-                    gutterBackgroundDark: 'transparent',
-                    gutterColor: 'transparent', // Hide line numbers entirely
-                    addedGutterBackground: 'transparent',
-                    removedGutterBackground: 'transparent',
+                          // AI Suggestions - Brand Orange (what we recommend)
+                          addedBackground: '#fff7ed', // Very light orange
+                          addedColor: '#1e293b', // Darker for better contrast
+                          wordAddedBackground: '#fb923c', // Soft orange for AI suggestions
 
-                    // Interactive states - Sophisticated hover
-                    highlightBackground: '#fff7ed', // Warm cream on hover
-                    highlightGutterBackground: 'transparent',
+                          // Original Text - Sky Blue (current state)
+                          removedBackground: '#f0f9ff', // Very light sky blue
+                          removedColor: '#64748b', // Subtle slate gray
+                          wordRemovedBackground: '#0ea5e9', // Sky blue for user's original text
 
-                    // Clean minimalism
-                    codeFoldGutterBackground: 'transparent',
-                    codeFoldBackground: '#f8fafc',
-                    emptyLineBackground: '#fafbfc',
-                    codeFoldContentColor: '#3F51B5',
-                    diffViewerTitleBackground: 'transparent',
-                    diffViewerTitleColor: '#1e293b',
-                    diffViewerTitleBorderColor: 'transparent',
-                  },
-                },
-                diffContainer: {
-                  fontSize: '14px',
-                  lineHeight: '1.7', // More spacious for readability
-                  fontFamily: 'Inter, sans-serif', // Match our brand fonts
-                },
-                line: {
-                  padding: '8px 16px', // More generous padding
-                  borderRadius: '6px', // Subtle rounding
-                  margin: '2px 0', // Slight separation between lines
-                  '&:hover': {
-                    backgroundColor: '#f1f5f9',
-                    transition: 'background-color 0.15s ease',
-                  },
-                },
-                contentText: {
-                  width: '93%',
-                  padding: '0 16px 0 0',
-                  wordBreak: 'break-word',
-                  whiteSpace: 'pre-wrap',
-                  fontFamily: 'Inter, sans-serif',
-                },
-                wordAdded: {
-                  color: '#ffffff', // White text on orange background
-                  fontWeight: '600', // Slightly bolder for AI suggestions
-                  borderRadius: '4px',
-                  padding: '2px 6px',
-                },
-                wordRemoved: {
-                  color: '#ffffff', // White text on blue background
-                  fontWeight: '500',
-                  borderRadius: '4px',
-                  padding: '2px 6px',
-                  textDecoration: 'line-through',
-                },
-              }}
-            />
-          </div>
+                          // Structure - Invisible integration
+                          gutterBackground: 'transparent', // Completely seamless
+                          gutterBackgroundDark: 'transparent',
+                          gutterColor: 'transparent', // Hide line numbers entirely
+                          addedGutterBackground: 'transparent',
+                          removedGutterBackground: 'transparent',
+
+                          // Interactive states - Sophisticated hover
+                          highlightBackground: '#fff7ed', // Warm cream on hover
+                          highlightGutterBackground: 'transparent',
+
+                          // Clean minimalism
+                          codeFoldGutterBackground: 'transparent',
+                          codeFoldBackground: '#f8fafc',
+                          emptyLineBackground: '#fafbfc',
+                          codeFoldContentColor: '#3F51B5',
+                          diffViewerTitleBackground: 'transparent',
+                          diffViewerTitleColor: '#1e293b',
+                          diffViewerTitleBorderColor: 'transparent',
+                        },
+                      },
+                      diffContainer: {
+                        fontSize: '14px',
+                        lineHeight: '1.7', // More spacious for readability
+                        fontFamily: 'Inter, sans-serif', // Match our brand fonts
+                      },
+                      line: {
+                        padding: '8px 16px', // More generous padding
+                        borderRadius: '6px', // Subtle rounding
+                        margin: '2px 0', // Slight separation between lines
+                        '&:hover': {
+                          backgroundColor: '#f1f5f9',
+                          transition: 'background-color 0.15s ease',
+                        },
+                      },
+                      contentText: {
+                        width: '93%',
+                        boxSizing: 'border-box',
+                        padding: '0 16px 0 0',
+                        overflowWrap: 'anywhere',
+                        wordBreak: 'break-word',
+                        whiteSpace: 'pre-wrap',
+                        fontFamily: 'Inter, sans-serif',
+                      },
+                      wordAdded: {
+                        color: '#ffffff', // White text on orange background
+                        fontWeight: '600', // Slightly bolder for AI suggestions
+                        borderRadius: '4px',
+                        padding: '2px 6px',
+                      },
+                      wordRemoved: {
+                        color: '#ffffff', // White text on blue background
+                        fontWeight: '500',
+                        borderRadius: '4px',
+                        padding: '2px 6px',
+                        textDecoration: 'line-through',
+                      },
+                    }}
+                  />
+                </div>
+              </div>
+            );
+          })}
         </div>
       </AccordionPrimitive.Content>
     </AccordionPrimitive.Item>
@@ -254,43 +300,53 @@ export default function BatchImprovementDialog() {
 
   const isOpen = !!batchReview;
 
-  const getChangedItems = React.useCallback(() => {
+  const [stagedItems, setStagedItems] = React.useState<
+    Map<string, Record<string, unknown>>
+  >(new Map());
+
+  const allChangedItems = React.useMemo(() => {
     if (!batchReview) return [];
     const { originalItems, improvedItems } = batchReview;
-
-    if (originalItems.length !== improvedItems.length) {
-      console.warn(
-        'Batch improvement returned a different number of items than the original.',
-        {
-          originalCount: originalItems.length,
-          improvedCount: improvedItems.length,
-        }
-      );
-      // Return empty array to prevent crash
-      return [];
-    }
-
     return improvedItems
       .map((improvedData, index) => ({
         id: originalItems[index].id,
-        data: improvedData,
+        original: originalItems[index],
+        improved: improvedData,
       }))
       .filter(
-        (_, index) =>
-          JSON.stringify(originalItems[index].data) !==
-          JSON.stringify(improvedItems[index])
+        ({ original, improved }) =>
+          JSON.stringify(original.data) !== JSON.stringify(improved)
       );
   }, [batchReview]);
 
-  const [stagedItems, setStagedItems] = React.useState<
-    Array<{ id: string; data: Record<string, unknown> }>
-  >([]);
-
   React.useEffect(() => {
     if (batchReview) {
-      setStagedItems(getChangedItems());
+      const initialStaged = new Map<string, Record<string, unknown>>();
+      const schemaRegistry = SchemaRegistry.getInstance();
+      for (const { id, original, improved } of allChangedItems) {
+        const sectionSchema = schemaRegistry.getSectionSchema(
+          original.schemaId
+        );
+        if (!sectionSchema) continue;
+
+        const changedFields: Record<string, unknown> = {};
+        for (const field of sectionSchema.fields) {
+          const originalValue = original.data[field.id];
+          const improvedValue = improved[field.id];
+          if (
+            improvedValue !== undefined &&
+            JSON.stringify(originalValue) !== JSON.stringify(improvedValue)
+          ) {
+            changedFields[field.id] = improvedValue;
+          }
+        }
+        if (Object.keys(changedFields).length > 0) {
+          initialStaged.set(id, changedFields);
+        }
+      }
+      setStagedItems(initialStaged);
     }
-  }, [batchReview, getChangedItems]);
+  }, [batchReview, allChangedItems]);
 
   if (!batchReview) return null;
 
@@ -303,26 +359,37 @@ export default function BatchImprovementDialog() {
     improvementSummary,
   } = batchReview as Required<typeof batchReview>;
 
-  const handleToggleStagedItem = (
-    item: { id: string; data: Record<string, unknown> },
-    isChecked: boolean
+  const handleStagedFieldsChange = (
+    itemId: string,
+    acceptedFields: Record<string, unknown> | null
   ) => {
-    setStagedItems((prev) =>
-      isChecked
-        ? [...prev, item]
-        : prev.filter((staged) => staged.id !== item.id)
-    );
+    setStagedItems((prev) => {
+      const newMap = new Map(prev);
+      if (acceptedFields) {
+        newMap.set(itemId, acceptedFields);
+      } else {
+        newMap.delete(itemId);
+      }
+      return newMap;
+    });
   };
 
   const handleAccept = () => {
-    acceptBatchImprovement(stagedItems);
+    const payload = Array.from(stagedItems.entries()).map(
+      ([itemId, fields]) => ({
+        id: itemId,
+        data: fields,
+      })
+    );
+    acceptBatchImprovement(payload);
   };
 
   const handleReject = () => {
     rejectBatchImprovement();
   };
 
-  const changedItemsCount = getChangedItems().length;
+  const changedItemsCount = allChangedItems.length;
+  const acceptedCount = stagedItems.size;
 
   return (
     <Dialog
@@ -380,18 +447,20 @@ export default function BatchImprovementDialog() {
                 <div className="space-y-2">
                   <div className="text-sm text-muted-foreground mb-3">
                     {t('BatchImprovementDialog.selectionStatus', {
-                      stagedCount: stagedItems.length,
+                      stagedCount: acceptedCount,
                       totalCount: changedItemsCount,
                     })}
                   </div>
                   <AccordionPrimitive.Root
                     type="multiple"
-                    className="w-full"
-                    defaultValue={getChangedItems()
+                    className="w-full min-w-0"
+                    defaultValue={allChangedItems
                       .slice(0, 3)
                       .map(
-                        (item: { id: string }) =>
-                          `item-${originalItems.findIndex((orig) => orig.id === item.id)}`
+                        (item) =>
+                          `item-${originalItems.findIndex(
+                            (orig) => orig.id === item.id
+                          )}`
                       )}
                   >
                     {originalItems.map((originalItem, index) => {
@@ -403,25 +472,18 @@ export default function BatchImprovementDialog() {
                       )
                         return null;
 
-                      const improvedItemWithId: {
-                        id: string;
-                        data: DynamicSectionItem['data'];
-                      } = {
-                        id: originalItem.id,
-                        data: improvedItemData,
-                      };
-
                       return (
                         <ItemDiff
                           key={originalItem.id}
                           original={originalItem}
                           improved={improvedItemData}
                           index={index}
-                          isChecked={stagedItems.some(
-                            (staged) => staged.id === originalItem.id
-                          )}
-                          onCheckedChange={(checked) =>
-                            handleToggleStagedItem(improvedItemWithId, checked)
+                          stagedFields={stagedItems.get(originalItem.id)}
+                          onStagedFieldsChange={(acceptedFields) =>
+                            handleStagedFieldsChange(
+                              originalItem.id,
+                              acceptedFields
+                            )
                           }
                         />
                       );
@@ -440,12 +502,12 @@ export default function BatchImprovementDialog() {
           </Button>
           <Button
             onClick={handleAccept}
-            disabled={isLoading || stagedItems.length === 0}
+            disabled={isLoading || acceptedCount === 0}
             className="bg-blue-600 hover:bg-blue-700"
           >
             <Check className="h-4 w-4 mr-1" />
             {t('BatchImprovementDialog.accept', {
-              count: stagedItems.length,
+              count: acceptedCount,
             })}
           </Button>
         </DialogFooter>

@@ -88,6 +88,54 @@
 
 ---
 
-_最后更新: 2025-07-02_
-_文档版本: v1.0.0_
+## 高级功能演进：字段级批量审查
+
+为了进一步增强用户控制力，我们对 `BatchImprovementDialog` 进行了功能升级，允许用户对单个条目（Item）内的每个字段（Field）进行独立的接受或拒绝操作。
+
+### 1. 实现思路
+
+该功能的实现严格遵循了项目既有的架构模式，即“全局状态驱动数据，本地状态处理UI交互”。
+
+- **深化组件能力**: 不引入新组件，而是改造 `BatchImprovementDialog` 内部的 `ItemDiff` 子组件，使其能够遍历条目内的所有字段，并为每个字段提供独立的差异视图和复选框。
+- **调整本地状态**: `BatchImprovementDialog` 的本地状态 `stagedItems` 的数据结构从 `Array` 升级为 `Map<string, Record<string, any>>`，其中 `key` 是条目ID (`itemId`)，`value` 是一个对象，包含了该条目下所有被用户勾选的字段及其新值 (`{fieldId: newValue, ...}`）。
+- **更新Store Action**: 修改 `resumeStore` 中的 `acceptBatchImprovement` action，使其能够处理“部分更新”的逻辑。当接收到提交的数据时，它会使用 `Object.assign` 或对象扩展运算符（`...`）将修改的字段合并到原始数据中，而不是替换整个 `data` 对象。
+
+### 2. 深度剖析：解决Accordion内容溢出布局问题
+
+在实现字段级审查功能后，出现了一个顽固的布局bug：`Accordion` 的内容会撑破对话框的最大宽度。以下是该问题的根本原因及最终解决方案。
+
+#### 结论（真正根因）
+
+问题的根源**不是** `width: 93%` 的样式，也**不是** `ScrollArea` 组件，而是来自 Accordion 内容内部的“**不可压缩宽度**”。
+
+- **长Token问题**: `react-diff-viewer-continued` 组件在处理无空格的长串内容（如中文、URL、长单词、Markdown内联代码等）时，会产生一个超长的、不可断开的Token。
+
+- **Radix尺寸测量**: 当这些长Token无法在容器内正常换行时，Radix UI的 `Accordion` 组件在测量内容尺寸时，会得到一个非常大的“固有宽度”（intrinsic width）。这个值会被写入CSS变量（例如 `--radix-collapsible-content-width`），导致 `Accordion.Content` 认为自身需要很宽，从而撑破其父容器设定的 `max-width` 限制。
+
+- **Transition放大问题**: 如果在 `Accordion.Content` 上应用了 `transition-all`，`width` 属性的变化也会被包含在过渡动画中，这有时会从视觉上放大内容“撑破”容器的效果。
+
+总结：当Accordion内部存在“不可分割”的长行文本时，Radix的测量机制会导致其“内容固有宽度”变得非常大。如果外层容器没有明确声明“我可以收缩”或“我的宽度就是100%”，内容就会将手风琴项撑大，其计算出的宽度（`--radix-collapsible-content-width`）会远超父容器的限制。
+
+#### 最终解决方案：强制断行 + 允许容器收缩（避免宽度过渡）
+
+在多次尝试微调宽度和样式失败后，最终的解决方案是对内容断行与容器收缩做出明确约束，并避免宽度参与过渡：
+
+- **强制长内容可断行（关键）**：在 `ItemDiff` 的 `DiffViewer` 中，为 `styles.contentText` 增加 `overflowWrap: 'anywhere'`，并保持 `wordBreak: 'break-word'` 与 `whiteSpace: 'pre-wrap'`，确保无空格长串、中文、URL、长单词都能断行。
+
+- **让容器“愿意收缩”、且不超过父宽**：
+  - 在 `AccordionPrimitive.Root`、`AccordionPrimitive.Content` 的内层容器，以及 Diff 外层包裹层上补充 `min-w-0 w-full max-w-full`。
+  - 可选：在 Diff 外层包裹层添加 `[contain:inline-size]`，隔离内部固有宽度的影响。
+
+- **避免宽度参与过渡**：从 `AccordionPrimitive.Content` 移除 `transition-all`，仅保留 `data-[state=*]:animate-accordion-*` 的高度动画，避免 `width` 过渡放大视觉上的“撑破”问题。
+
+关键改动示例：
+
+- `AccordionPrimitive.Content`：去除 `transition-all`；其内层 `div` 增加 `min-w-0`。
+- `AccordionPrimitive.Root`：增加 `min-w-0`。
+- Diff 包裹层：增加 `min-w-0 w-full max-w-full [contain:inline-size]`。
+- `DiffViewer.styles.contentText`：增加 `overflowWrap: 'anywhere'`（与 `wordBreak: 'break-word'`、`whiteSpace: 'pre-wrap'` 配合）。
+
+
+_最后更新: 2025-08-13_
+_文档版本: v1.1.1_
 _相关组件: `AISuggestionCard`, `BatchImprovementDialog`, `AIFieldWrapper`_

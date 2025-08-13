@@ -315,14 +315,17 @@ ${fieldDefinitions.join(',\\n')}
   static mergeImprovedSection(
     originalResume: ResumeData,
     sectionId: string,
-    itemsToMerge: { id: string; data: Record<string, unknown> }[]
+    itemsToMerge: Array<{
+      id: string;
+      data: Partial<DynamicSectionItem['data']>;
+    }>
   ): ResumeData {
     const itemsToMergeMap = new Map(
       itemsToMerge.map((item) => [item.id, item.data])
     );
 
     if (itemsToMergeMap.size === 0) {
-      return originalResume; // No changes to apply
+      return originalResume;
     }
 
     const updatedSections = originalResume.sections.map((section) => {
@@ -330,13 +333,13 @@ ${fieldDefinitions.join(',\\n')}
 
       const dynamicSection = section as DynamicResumeSection;
 
-      // Map improved items back to original items
       const updatedItems = dynamicSection.items.map((originalItem) => {
-        const mergedData = itemsToMergeMap.get(originalItem.id);
-        if (!mergedData) return originalItem;
+        const fieldsToMerge = itemsToMergeMap.get(originalItem.id);
+        if (!fieldsToMerge) return originalItem;
+
         return {
           ...originalItem,
-          data: mergedData as Record<string, unknown>,
+          data: { ...originalItem.data, ...fieldsToMerge }, // Merge fields
           metadata: {
             ...originalItem.metadata,
             createdAt:
@@ -361,6 +364,33 @@ ${fieldDefinitions.join(',\\n')}
       ...originalResume,
       sections: updatedSections,
     };
+  }
+
+  /**
+   * Apply field-level improvements selected by the user (per-field accept flow).
+   * This aligns with BatchImprovementDialog v1.1.1 where users can accept a subset
+   * of fields per item. Accepts either:
+   * - a Map: itemId -> { fieldId: newValue, ... }
+   * - or an Array of { id, data } matching the store payload shape
+   *
+   * Internally delegates to mergeImprovedSection to perform the non-destructive merge
+   * and metadata updates (item.metadata.updatedAt, item.metadata.aiImproved, section.metadata.aiOptimized).
+   */
+  static applyFieldLevelImprovements(
+    originalResume: ResumeData,
+    sectionId: string,
+    selections:
+      | Map<string, Record<string, unknown>>
+      | Array<{ id: string; data: Record<string, unknown> }>
+  ): ResumeData {
+    const itemsArray: Array<{
+      id: string;
+      data: Partial<DynamicSectionItem['data']>;
+    }> = Array.isArray(selections)
+      ? selections
+      : Array.from(selections.entries()).map(([id, data]) => ({ id, data }));
+
+    return this.mergeImprovedSection(originalResume, sectionId, itemsArray);
   }
 
   /**
