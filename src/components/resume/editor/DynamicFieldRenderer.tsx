@@ -106,6 +106,7 @@ export default function DynamicFieldRenderer({
               // The autocompleteModel is fetched from the store inside the component
               // so we don't need to pass it down.
               autocompleteModel="lite"
+              isMarkdownEnabled={!!field.uiProps?.markdownEnabled}
             />
           );
         } else {

@@ -127,6 +127,7 @@ function SectionItemEditor({
                       ? tSchema(field.uiProps.placeholder)
                       : undefined
                   }
+                  isMarkdownEnabled={!!field.uiProps?.markdownEnabled}
                 />
               );
             }
@@ -242,6 +243,7 @@ function SectionItemEditor({
                     ? tSchema(field.uiProps.placeholder)
                     : undefined
                 }
+                isMarkdownEnabled={!!field.uiProps?.markdownEnabled}
               />
             );
           }

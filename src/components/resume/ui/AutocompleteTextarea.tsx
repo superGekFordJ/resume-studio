@@ -23,6 +23,7 @@ interface AutocompleteTextareaProps
   sectionId: string;
   itemId?: string;
   isFocusMode?: boolean;
+  isMarkdownEnabled?: boolean;
 }
 
 export default React.memo(function AutocompleteTextarea({
@@ -35,6 +36,7 @@ export default React.memo(function AutocompleteTextarea({
   itemId,
   className,
   isFocusMode,
+  isMarkdownEnabled = false,
   ...props
 }: AutocompleteTextareaProps) {
   // useRef to solve the timing issue: When a suggestion is accepted via Tab key,
@@ -171,7 +173,11 @@ export default React.memo(function AutocompleteTextarea({
         disabled={props.disabled}
         rows={props.rows}
         cols={props.cols}
-        insideSlateChildren={<MarkdownFloatingToolbar enableAIModifyButton />}
+        insideSlateChildren={
+          isMarkdownEnabled ? (
+            <MarkdownFloatingToolbar enableAIModifyButton />
+          ) : undefined
+        }
       />
       {/* REMOVED: forcedSuggestion UI hint - now using dialog-based approach */}
     </div>

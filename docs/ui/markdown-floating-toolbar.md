@@ -14,7 +14,10 @@
 
 ## 使用方式（当前实现）
 
-当前版本为独立组件 `src/components/resume/ui/MarkdownFloatingToolbar.tsx`，并在 `AutocompleteTextarea` 中通过 `insideSlateChildren={<MarkdownFloatingToolbar />}` 注入，无需额外配置即可生效。
+当前版本为独立组件 `src/components/resume/ui/MarkdownFloatingToolbar.tsx`，并在 `AutocompleteTextarea` 中按需注入：当 `AutocompleteTextarea` 接收到 `isMarkdownEnabled=true` 时，才通过 `insideSlateChildren={<MarkdownFloatingToolbar />}` 渲染 Toolbar；否则不注入。
+
+- 启用来源：`schema.uiProps.markdownEnabled === true`。
+- 传递链路：`SectionItemEditor` → `AIFieldWrapper` → `FocusView/AutocompleteTextarea`（以 `isMarkdownEnabled` 形式下发）。
 
 > 说明：若后续有跨模块复用需求，可再迁移至 `src/components/common/` 目录并沉淀公共样式与子组件。
 
@@ -51,5 +54,6 @@
 
 ## 变更记录
 
+- 2025-08-13：引入 schema 驱动的启用范围。仅当字段的 `uiProps.markdownEnabled` 为 `true` 时，`AutocompleteTextarea` 才会注入 Toolbar；非 Markdown 字段不再显示任意 Markdown UI。
 - 2025-08-11：迁移到通用 `FloatingLayer`，引入 Floating UI `inline()` 中间件，虚拟参考实现 `getClientRects()`；加入选区变更轻延时展示与“最后非零 rect”缓存；当 Cmd/Ctrl+K 按下时自动收起；AI 按钮模拟 Cmd/Ctrl+K 触发 Copilot；维持 `toggleWrap` 等纯文本变换模块。
 - 2025-08-09：抽取为独立组件 `src/components/resume/ui/MarkdownFloatingToolbar.tsx`；统一使用 `lucide-react` 图标；改进定位（`getClientRects` + 翻转 + 夹取 + 事件监听 + rAF）；新增纯文本变换模块 `src/lib/markdownTextTransforms.ts`；加入可选的“AI Modify”按钮（默认关闭）。

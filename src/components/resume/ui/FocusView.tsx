@@ -22,6 +22,7 @@ interface FocusViewProps {
     autocompleteModel: AutocompleteModel;
     sectionId: string;
     itemId?: string;
+    isMarkdownEnabled?: boolean;
   };
 }
 

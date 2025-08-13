@@ -27,6 +27,7 @@ interface AIFieldWrapperProps {
   className?: string;
   placeholder?: string;
   isAutocompleteEnabled: boolean;
+  isMarkdownEnabled?: boolean;
 }
 
 function AIFieldWrapper({
@@ -42,6 +43,7 @@ function AIFieldWrapper({
   className,
   placeholder,
   isAutocompleteEnabled,
+  isMarkdownEnabled = false,
 }: AIFieldWrapperProps) {
   const { t } = useTranslation('components');
   const { t: tSchema } = useTranslation('schemas');
@@ -136,6 +138,7 @@ function AIFieldWrapper({
     autocompleteModel: autocompleteModel,
     sectionId: sectionId,
     itemId: itemId,
+    isMarkdownEnabled: isMarkdownEnabled,
   };
 
   return (
@@ -159,10 +162,11 @@ function AIFieldWrapper({
           autocompleteModel={autocompleteModel}
           sectionId={sectionId}
           itemId={itemId}
+          isMarkdownEnabled={isMarkdownEnabled}
         />
       </motion.div>
       <AnimatePresence>
-        {isFocusMode && (
+        {isFocusMode && isMarkdownEnabled && (
           <FocusView
             layoutId={layoutId}
             onClose={handleFocusViewClose}
@@ -173,14 +177,16 @@ function AIFieldWrapper({
           />
         )}
       </AnimatePresence>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute top-0 right-0 z-10 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-        onClick={() => setIsFocusMode(true)}
-      >
-        <Maximize className="h-4 w-4" />
-      </Button>
+      {isMarkdownEnabled && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-0 right-0 z-10 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+          onClick={() => setIsFocusMode(true)}
+        >
+          <Maximize className="h-4 w-4" />
+        </Button>
+      )}
 
       {/* AI Improvement UI */}
       <div className="flex items-center gap-2 mt-1">
