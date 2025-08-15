@@ -53,8 +53,8 @@
     "pleaseUploadImage": "请上传图片文件。",
     "processingImage": "正在处理图片…",
     "releaseToUpload": "松开以上传",
-    "clickToType": "点击输入",
-    "pasteOrDrag": "、粘贴或拖拽职位截图。"
+    "clickToType": "点击输入职位描述",
+    "pasteOrDrag": "，或直接粘贴/拖拽职位截图"
   },
   "AIReviewDialog": {
     "title": "AI 简历评审",
@@ -179,5 +179,11 @@
     "noVersions": "尚未保存任何版本。在上方创建您的第一个快照。",
     "schemaVersion": "Schema 版本 v{{version}}",
     "restore": "恢复"
+  },
+  "AutocompleteModelSelector": {
+    "placeholder": "选择模式",
+    "lite": "快速",
+    "smart": "均衡",
+    "slow": "深度"
   }
 }

@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/select';
 import { useResumeStore } from '@/stores/resumeStore';
 import { AutocompleteModel } from '@/stores/types';
+import { useTranslation } from 'react-i18next';
 import { WheelEvent } from 'react';
 
 interface AutocompleteModelSelectorProps {
@@ -22,6 +23,7 @@ export default function AutocompleteModelSelector({
   className,
   onOpenChange,
 }: AutocompleteModelSelectorProps) {
+  const { t } = useTranslation('components');
   const autocompleteModel = useResumeStore(
     (state) => state.aiConfig.autocompleteModel
   );
@@ -50,12 +52,18 @@ export default function AutocompleteModelSelector({
         className={`h-8 text-xs ${className || ''}`}
         onWheel={handleWheel}
       >
-        <SelectValue placeholder="Select model" />
+        <SelectValue placeholder={t('AutocompleteModelSelector.placeholder')} />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="lite">Default</SelectItem>
-        <SelectItem value="smart">Smart</SelectItem>
-        <SelectItem value="slow">Slow(thinking)</SelectItem>
+        <SelectItem value="lite">
+          {t('AutocompleteModelSelector.lite')}
+        </SelectItem>
+        <SelectItem value="smart">
+          {t('AutocompleteModelSelector.smart')}
+        </SelectItem>
+        <SelectItem value="slow">
+          {t('AutocompleteModelSelector.slow')}
+        </SelectItem>
       </SelectContent>
     </Select>
   );

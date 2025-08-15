@@ -179,5 +179,11 @@
     "noVersions": "No versions saved yet. Create your first snapshot above.",
     "schemaVersion": "Schema v{{version}}",
     "restore": "Restore"
+  },
+  "AutocompleteModelSelector": {
+    "placeholder": "Select model",
+    "lite": "Default",
+    "smart": "Smart",
+    "slow": "Slow (thinking)"
   }
 }
