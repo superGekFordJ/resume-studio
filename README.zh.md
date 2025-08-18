@@ -1,6 +1,6 @@
 <div align="center">
 
-<h1>Resume Studio</h1>
+<h1>简历工坊</h1>
 
 <p>
   <a href="./README.md">English</a> | 中文
