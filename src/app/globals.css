@@ -62,7 +62,7 @@
 
 /* Subtle continuous hue drift (reduced-motion aware below) */
 .aihub-glow {
-  will-change: filter, box-shadow, transform;
+  will-change: auto;
 }
 
 /* Busy state: adds soft breathing glow */
@@ -80,13 +80,18 @@
 
 /* Normal motion: gentle hue drift + pulse */
 @media (prefers-reduced-motion: no-preference) {
-  .aihub-glow {
+  .aihub-glow:hover {
     animation: aihubHue var(--ai-hue-duration) ease-in-out infinite alternate;
   }
   .aihub-pulse {
     animation:
       aihubHue var(--ai-hue-duration) ease-in-out infinite alternate,
       aihubPulse var(--ai-pulse-duration) ease-in-out infinite;
+  }
+  /* Only promote to GPU when actually animating */
+  .aihub-glow:hover,
+  .aihub-pulse {
+    will-change: filter, box-shadow, transform;
   }
 
   @keyframes aihubHue {

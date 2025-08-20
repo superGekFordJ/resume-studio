@@ -52,7 +52,7 @@ export const FocusView = React.memo(function FocusView({
   return createPortal(
     <div className="fixed inset-0 flex items-center justify-center">
       <motion.div
-        className="fixed inset-0 bg-background/80 backdrop-blur-sm"
+        className="fixed inset-0 bg-background/80"
         onClick={handleClose}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

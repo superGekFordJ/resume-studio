@@ -47,7 +47,7 @@ export default function AIHubButton({
         // visual core: multi-color conic gradient disc
         'bg-[conic-gradient(from_0deg,_#675CFF,_#00D4FF,_#FF4D95,_#A8FF78,_#675CFF)]',
         // hover/active micro-interactions
-        'transition-transform duration-150 will-change-transform',
+        'transition-transform duration-150',
         'hover:scale-[1.03] active:scale-[0.97]',
         // subtle glow and focus treatment
         'focus-visible:ring-2 focus-visible:ring-primary/60',
@@ -62,7 +62,7 @@ export default function AIHubButton({
         aria-hidden="true"
         className={cn(
           'absolute inset-[2px] rounded-full pointer-events-none',
-          'bg-background/20 dark:bg-background/10 backdrop-blur-[1px]'
+          'bg-background/20 dark:bg-background/10'
         )}
       />
       {/* Current brand placeholder icon; can be replaced by custom SVG later */}
