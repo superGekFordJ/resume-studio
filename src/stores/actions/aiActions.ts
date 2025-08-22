@@ -5,6 +5,7 @@ import { AIDataBridge } from '@/lib/aiDataBridge';
 import type { DynamicResumeSection } from '@/types/schema';
 import { toast } from '@/hooks/use-toast';
 import { mapErrorToToast } from '@/lib/utils';
+import i18n from '@/i18n';
 
 // Helper function to read file as Base64
 const fileToBase64 = (file: File): Promise<string> => {
@@ -568,6 +569,27 @@ export const createAIActions: StateCreator<
           aiResult,
           schemaRegistry
         );
+
+        // Translate section titles into the current language for the snapshot
+        try {
+          newResumeData.sections = newResumeData.sections.map((s) => {
+            const originalTitle = s.title as string | undefined;
+            const looksLikeSchemaKey =
+              typeof originalTitle === 'string' && i18n.exists(originalTitle);
+
+            return {
+              ...s,
+              title: looksLikeSchemaKey
+                ? i18n.t(originalTitle)
+                : originalTitle || '',
+            } as DynamicResumeSection;
+          });
+        } catch (e) {
+          // Non-fatal; if translation fails, fallback to whatever title we have
+          // Keep a console warning to aid debugging
+
+          console.warn('Failed to localize section titles for snapshot', e);
+        }
 
         const snapshotName = `AI Generated - ${new Date().toLocaleDateString()}`;
         createSnapshot(snapshotName, newResumeData);
