@@ -111,7 +111,7 @@ Built on a **single source of truth** schema system that enables:
    ```
 
 5. **Open your browser**
-   Navigate to `http://localhost:9002` to start building your resume!
+   Navigate to `http://localhost:9332` to start building your resume!
 
 ### 🎯 Optimizing AI Performance
 
