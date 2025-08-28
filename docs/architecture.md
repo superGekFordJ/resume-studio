@@ -9,7 +9,7 @@ Resume Studio 是一个基于 Next.js 的现代化简历构建应用，集成了
 - **前端框架**: Next.js 15.3.3 (React 18.3.1)
 - **UI 组件库**: Radix UI + Tailwind CSS
 - **浮层定位**: Floating UI (@floating-ui/react)
-- **AI 集成**: Google Genkit, [`copilot-react-kit`](https://github.com/genkit-ai/copilot-react-kit) (a fork of `copilot-react-textarea` without cloud service hard-binding)
+- **AI 集成**: Google Genkit, `copilot-react-kit`(a fork of `copilot-react-textarea` without cloud service hard-binding)
 - **状态管理**: Zustand (with persistence)
 - **类型系统**: TypeScript
 - **样式**: Tailwind CSS + CSS Variables
