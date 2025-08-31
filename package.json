@@ -56,7 +56,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "copilot-react-textarea": "^1.5.5",
-    "date-fns": "^3.6.0",
+    "date-fns": "^4.1.0",
     "docx-preview": "^0.3.6",
     "dotenv": "^16.5.0",
     "express": "^4.21.2",
@@ -73,7 +73,7 @@
     "patch-package": "^8.0.0",
     "pdfjs-dist": "^5.4.149",
     "react": "^18.3.1",
-    "react-day-picker": "^8.10.1",
+    "react-day-picker": "^9.9.0",
     "react-diff-viewer-continued": "^4.0.6",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.62.0",
@@ -92,8 +92,8 @@
     "zustand": "^5.0.8"
   },
   "devDependencies": {
-    "@next/eslint-plugin-next": "^15.3.5",
-    "@types/node": "^20",
+    "@next/eslint-plugin-next": "^15.5.2",
+    "@types/node": "^22.18.0",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@typescript-eslint/eslint-plugin": "^8.41.0",
