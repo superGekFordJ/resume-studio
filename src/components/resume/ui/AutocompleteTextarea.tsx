@@ -11,6 +11,9 @@ import { useResumeStore } from '@/stores/resumeStore';
 import type { AutocompleteModel } from '@/stores/types';
 import { cn } from '@/lib/utils';
 import MarkdownFloatingToolbar from './MarkdownFloatingToolbar';
+import { toast } from '@/hooks/use-toast';
+import { streamFlow } from '@genkit-ai/next/client';
+import type { GenerateOrImproveTextStreamFlowType } from '@/ai/flows/generate-or-improve-text-stream';
 
 // Interface updated to remove large, unnecessary data props.
 interface AutocompleteTextareaProps
@@ -118,6 +121,104 @@ export default React.memo(function AutocompleteTextarea({
     ]
   );
 
+  const createInsertionOrEditing = async (
+    data: {
+      textBeforeCursor: string;
+      textAfterCursor: string;
+      selectedText: string;
+    },
+    prompt: string,
+    abortSignal?: AbortSignal
+  ): Promise<ReadableStream<string>> => {
+    // Guard: For personal details we don't have rich context; show a soft toast and no-op stream.
+    if (sectionType === 'personalDetailsField') {
+      toast({
+        title: 'AI edit not optimal for Personal Details',
+        description:
+          'This field usually contains private information. AI editing is disabled here to avoid unintended changes.',
+      });
+      return new ReadableStream<string>({
+        start(controller) {
+          controller.close();
+        },
+      });
+    }
+
+    try {
+      const { resumeData, aiConfig } = useResumeStore.getState();
+
+      // Build AI context for 'improve' task (builder-aligned)
+      const context = schemaRegistry.buildAIContext({
+        resumeData,
+        task: 'improve',
+        sectionId: sectionId,
+        fieldId: props.name || '',
+        itemId: itemId,
+        aiConfig: aiConfig,
+        inputText: data.selectedText || data.textBeforeCursor,
+        textAfterCursor: data.textAfterCursor,
+      });
+
+      // Use only the minimal field-centric context for this task
+      const slimContext = {
+        currentItemContext: context.currentItemContext,
+        userJobTitle: context.userJobTitle,
+        userJobInfo: context.userJobInfo,
+        userBio: context.userBio,
+      };
+
+      // Do not import server types at runtime to keep client bundle lean.
+      const payload = {
+        prompt,
+        context: slimContext,
+        textToImprove: data.selectedText || undefined,
+        textBeforeCursor: data.textBeforeCursor,
+        textAfterCursor: data.textAfterCursor,
+        sectionType: sectionType || '',
+      } as const;
+
+      // Use official Next client helper to stream from our flow route
+      const result = streamFlow<GenerateOrImproveTextStreamFlowType>({
+        url: '/api/ai/generate-or-improve/stream',
+        input: payload,
+      });
+
+      const gen = result.stream as AsyncGenerator<string>;
+
+      // Adapt AsyncGenerator<string> to a ReadableStream<string>
+      return new ReadableStream<string>({
+        start(controller) {
+          let cancelled = false;
+          const pump = async () => {
+            try {
+              for await (const chunk of gen) {
+                if (cancelled) break;
+                if (chunk) controller.enqueue(chunk);
+              }
+            } catch {
+              // Swallow to avoid UI crashes; errors are logged server-side
+            } finally {
+              controller.close();
+            }
+          };
+          pump();
+
+          const onAbort = () => {
+            cancelled = true;
+          };
+          abortSignal?.addEventListener('abort', onAbort, { once: true });
+        },
+      });
+    } catch (err) {
+      console.error('[AutocompleteTextarea] insertionOrEditing error:', err);
+      return new ReadableStream<string>({
+        start(controller) {
+          controller.close();
+        },
+      });
+    }
+  };
+
   const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
     onValueChange(newValue);
@@ -165,9 +266,7 @@ export default React.memo(function AutocompleteTextarea({
         createSuggestionFunction={createSuggestion}
         // This is a required prop. We return a rejected promise to effectively
         // disable it and prevent any further action or network requests.
-        insertionOrEditingFunction={async () => {
-          throw new Error('Insertion/Editing is not enabled.');
-        }}
+        insertionOrEditingFunction={createInsertionOrEditing}
         id={props.id}
         name={props.name}
         disabled={props.disabled}
