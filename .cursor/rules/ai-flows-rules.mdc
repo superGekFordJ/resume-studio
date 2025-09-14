@@ -62,6 +62,14 @@ const myFlow = ai.defineFlow(
   3.  **Flow 内部处理**: Flow 接收到包含字符串的对象后，在内部 `JSON.parse()` 该字符串，并使用更严格的内部 Schema (`AIBridgedResumeSchema`) 对其进行验证，最后返回这个被解析和验证过的对象。
 * **参考实现**: `generateResumeFromContext` Flow 和 `docs/ai/02-dynamic-content-generation.md`。
 
+## 8. Streaming Flow 规则（New, 2025-09）
+
+* **流式输出约定**：
+  - `streamSchema` 必须为 `z.string()`（每个 chunk 为纯文本）。
+  - 可选保留 `outputSchema`（如 `{ finalText }`）用于日志/对账/回退，前端可忽略。
+  - 内部实现中，需要处理发送的 chunk 文字，默认可以使用 `sendChunk` API 发送每个 chunk。
+* **注意**: `sendChunk` API 发送的 chunk 文字**不会**自动添加到最终的 `outputSchema` 中，`outputSchema` 只能用于日志/对账/回退。
+* **参考实现**: `generateOrImproveTextStream` Flow。
 ---
 请在提交新 Flow 或 Prompt 时遵循以上规则；CI 会对 `.prompt` 文件行尾、未注册 schema 名称等问题执行自动检查。
 
@@ -77,6 +85,5 @@ const myFlow = ai.defineFlow(
 
 3.  **由服务层调用**:
     -   这些 Flow 不能被任何 UI 组件直接 `import`。它们是 `SchemaRegistry` 服务层方法的内部实现细节。UI 组件通过调用 `SchemaRegistry` 的高级服务来间接触发这些 Flow。
-
 
 

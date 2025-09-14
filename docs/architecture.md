@@ -517,6 +517,7 @@ interface ResumeActions {
 - **CORS**: 适当的跨域资源共享配置
 
 ## 错误处理和加载状态 (Updated 2025-08-07)
+
 - Review 使用对话框骨架屏（AIReviewDialog）承载加载状态；AI 中枢入口处的按钮在“忙碌”状态可选择性展示轻量“呼吸式”辉光动效（遵从 reduced-motion 首选项）。动效参数与降级策略详见 docs/ui/header-ai-hub.md。
 
 应用程序采用了一套统一的机制来处理异步操作（尤其是AI交互）的加载状态和潜在错误，以确保流畅和可预测的用户体验。
@@ -567,7 +568,20 @@ The application now features a sophisticated AI provider system:
    - Ollama (local) - prepared for integration
    - Anthropic (Claude) - prepared for integration
 
+### Streaming Flows (Updated 2025-09-14)
+
+为满足“边生成边展示”的编辑体验，我们引入了基于 Genkit Flow 的流式输出（Streaming）方案：
+
+- 服务器：每个 Streaming Flow 使用 `ai.defineFlow({... streamSchema })` 声明流式输出，并通过 `@genkit-ai/next` 的 `appRoute()` 直接暴露为 Next 路由。例如：`src/app/api/ai/generate-or-improve/stream/route.ts` 中 `export const POST = appRoute(generateOrImproveTextStreamFlow);`。
+- 客户端：UI 通过 `@genkit-ai/next/client` 的 `streamFlow()` 获取一个 `AsyncGenerator<string>`，并在组件内适配为 `ReadableStream<string>`，以驱动实时 UI（如 `CopilotTextarea`）。
+- Prompt 约定：Prompt 使用 role 分隔（`system`/`user`），并用 `<CURSOR>` 与 `<IMPROVE>...</IMPROVE>` 明确光标和替换范围。模型仅返回“插入文本”或“替换文本”。
+- 上下文最小化：仅传递当前字段上下文（`currentItemContext`）与全局上下文（`userJobTitle`/`userJobInfo`/`userBio`），避免冗余。
+
+详细设计、示例与注意事项见：
+**[-> Streaming Flows: 实现与集成指南](./ai/streaming-flows.md)**
+
 ## Template System (Updated 2025-06-19)
+
 > 导航提示：与模板无直接耦合的 Header/AI 入口交互规范详见 docs/ui/header-ai-hub.md；模板渲染保持解耦，避免在模板内部实现全局入口或交互逻辑。
 
 ### Template Architecture

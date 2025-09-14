@@ -121,6 +121,17 @@ if (!apiKeyToUse && process.env.NODE_ENV === 'development') {
    - 根据状态更新 UI（如显示 AI 建议）
 ```
 
+### 5. 流式输出（Streaming Flows）概览（New, 2025-09）
+
+对于需要“边生成边展示”的场景（如内联插入/替换），我们采用 Genkit Flow 的 `streamSchema` 能力，并通过 `@genkit-ai/next` 提供的封装来暴露与消费：
+
+- 路由：`export const POST = appRoute(myStreamingFlow);`
+- 客户端：`const { stream, output } = streamFlow({ url, input })`
+- 适配：将 `stream`（`AsyncGenerator<string>`）适配为 `ReadableStream<string>` 驱动 UI
+- 上下文：字段中心 + 全局上下文；Prompt 以 `<CURSOR>`/`<IMPROVE>` 明确光标与替换范围
+
+详见：**[Streaming Flows: 实现与集成指南](./streaming-flows.md)**
+
 ## AI 功能详解
 
 ### 1. 自动补全 (Autocomplete) - 热路径优化
@@ -145,6 +156,26 @@ if (!apiKeyToUse && process.env.NODE_ENV === 'development') {
 - **v3 简化**: 随着 v3 改进系统的实施，旧的、基于 `forcedSuggestion` prop 的**双重建议系统已被移除**。组件现在只专注于处理其自身的内联自动补全逻辑，代码更简洁、职责更单一。
 
 关于此组件当前的局限性和未来的改进，请参阅 `docs/FIXES_SUMMARY.md` 文档。
+
+#### 内联插入/编辑（Streaming）- `createInsertionOrEditing`（New, 2025-09）
+
+- 实现位置
+  - 客户端：`src/components/resume/ui/AutocompleteTextarea.tsx` 中的 `createInsertionOrEditing()`
+  - 路由：`src/app/api/ai/generate-or-improve/stream/route.ts`（`export const POST = appRoute(generateOrImproveTextStreamFlow)`）
+  - Flow：`src/ai/flows/generate-or-improve-text-stream.ts`
+
+- 调用过程简述（避免重复上下文构建细节）
+  - 组件调用 `schemaRegistry.buildAIContext({ task: 'improve', ... })` 获取最小所需上下文（字段中心 + 全局信息）。上下文构建策略详见《AI Context Building》文档。
+  - 组装 payload：`prompt`（用户指令）、`context`、`textBeforeCursor`、`textAfterCursor`、可选 `textToImprove`、`sectionType`。
+  - 通过 `@genkit-ai/next/client` 的 `streamFlow({ url: '/api/ai/generate-or-improve/stream', input })` 发起流式请求。
+  - 将 `result.stream`（`AsyncGenerator<string>`）适配为 `ReadableStream<string>`，提供给 `CopilotTextarea` 进行逐字渲染。
+
+- 取消与错误处理
+  - 使用 `AbortSignal` 在组件侧停止消费；客户端吞掉消费异常（避免 UI 崩溃），服务端记录日志。
+
+- 体验与约束
+  - 个人信息字段（personal details）默认不启用 AI 编辑：组件以温和的 toast 提示并返回空流，保证安全与可预期行为。
+  - 返回的数据为“可直接插入/替换”的文本流，不包含元信息；组件负责将其应用到正确的光标位置或替换范围。
 
 ### 2. 内容改进与批量改进 (v3) - 冷路径标准流程
 
