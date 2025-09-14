@@ -15,6 +15,58 @@ export const AIBridgedSectionSchema = ai.defineSchema(
   })
 );
 
+// --- STREAMING FLOW: Generate or Improve Text ---
+
+export const StreamingTextChunkSchema = ai.defineSchema(
+  'StreamingTextChunkSchema',
+  z.string().describe('A single chunk of text streamed from the model')
+);
+
+export const GenerateOrImproveTextInputSchema = ai.defineSchema(
+  'GenerateOrImproveTextInputSchema',
+  z.object({
+    prompt: z
+      .string()
+      .describe('User instruction for generation or improvement'),
+    context: z
+      .object({
+        currentItemContext: z
+          .string()
+          .describe('Context about the current item being edited'),
+        userJobTitle: z
+          .string()
+          .optional()
+          .describe("The user's target job title"),
+        userJobInfo: z
+          .string()
+          .optional()
+          .describe("The user's target job info"),
+        userBio: z.string().optional().describe("The user's professional bio"),
+      })
+      .describe('Structured AI context from SchemaRegistry'),
+    textToImprove: z
+      .string()
+      .optional()
+      .describe('Selected text to be improved (Replacement mode).'),
+    textBeforeCursor: z
+      .string()
+      .describe('Text before the cursor (Insertion mode).'),
+    textAfterCursor: z
+      .string()
+      .describe('Text after the cursor (Insertion mode).'),
+    sectionType: z.string().describe('Current resume section type/schema id'),
+  })
+);
+
+export const GenerateOrImproveTextOutputSchema = ai.defineSchema(
+  'GenerateOrImproveTextOutputSchema',
+  z.object({
+    finalText: z
+      .string()
+      .describe('The complete final text produced by the model for this task.'),
+  })
+);
+
 export const AIBridgedResumeSchema = ai.defineSchema(
   'AIBridgedResumeSchema',
   z.object({
