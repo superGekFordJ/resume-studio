@@ -388,7 +388,7 @@ export default function SectionEditor() {
                 placement="bottom-end"
                 offset={8}
                 matchWidth={false}
-                className="min-w-[260px] w-auto p-4 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[side=bottom]:origin-top-right data-[side=top]:origin-bottom-right"
+                className="min-w-[300px] w-auto p-4 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 data-[side=bottom]:origin-top-right"
                 role="region"
                 withFocusManager={false}
                 closeOnOutsidePress={false}
@@ -396,7 +396,7 @@ export default function SectionEditor() {
                 onMouseLeaveContent={handleContentMouseLeave}
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-xs font-medium">
+                  <span className="text-xs font-medium min-w-[105px]">
                     {t('SectionEditor.completionMode')}
                   </span>
                   <AutocompleteModelSelector />
@@ -436,8 +436,6 @@ export default function SectionEditor() {
           renderSectionForm()
         )}
       </div>
-
-      {/* No more dialog component needed here */}
     </div>
   );
 }
