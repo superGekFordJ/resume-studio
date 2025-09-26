@@ -1,6 +1,6 @@
 ---
 # 为此 prompt 指定的 AI 模型。
-model: googleai/gemini-2.5-flash-lite
+model: googleai/gemini-flash-lite-latest
 
 # 模型的特定配置。
 config:
