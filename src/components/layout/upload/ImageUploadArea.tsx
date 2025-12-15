@@ -11,11 +11,10 @@ import { UploadCloud, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
-interface ImageUploadAreaProps
-  extends Omit<
-    React.TextareaHTMLAttributes<HTMLTextAreaElement>,
-    'onChange' | 'value'
-  > {
+interface ImageUploadAreaProps extends Omit<
+  React.TextareaHTMLAttributes<HTMLTextAreaElement>,
+  'onChange' | 'value'
+> {
   onImageUpload: (file: File) => void;
   value: string;
   onChange: (value: string) => void;

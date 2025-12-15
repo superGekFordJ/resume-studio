@@ -78,9 +78,8 @@ export const createAIActions: StateCreator<
 
       if (payload.isPersonalDetails) {
         // For personal details, use the legacy flow directly for now
-        const { improveResumeSection } = await import(
-          '@/ai/flows/improve-resume-section'
-        );
+        const { improveResumeSection } =
+          await import('@/ai/flows/improve-resume-section');
         const context = {
           currentItemContext: `Personal Details Field: ${payload.fieldId}`,
           otherSectionsContext: schemaRegistry.stringifyResumeForReview(
@@ -299,9 +298,8 @@ export const createAIActions: StateCreator<
 
       if (payload.isPersonalDetails) {
         // For personal details, use the legacy flow directly
-        const { improveResumeSection } = await import(
-          '@/ai/flows/improve-resume-section'
-        );
+        const { improveResumeSection } =
+          await import('@/ai/flows/improve-resume-section');
         const context = {
           currentItemContext: `Personal Details Field: ${payload.fieldId}`,
           otherSectionsContext: schemaRegistry.stringifyResumeForReview(
@@ -394,9 +392,8 @@ export const createAIActions: StateCreator<
     const state = get();
     const { AIDataBridge } = await import('@/lib/aiDataBridge');
     const { SchemaRegistry } = await import('@/lib/schemaRegistry');
-    const { batchImproveSection } = await import(
-      '@/ai/flows/batch-improve-section'
-    );
+    const { batchImproveSection } =
+      await import('@/ai/flows/batch-improve-section');
 
     const schemaRegistry = SchemaRegistry.getInstance();
 
@@ -471,9 +468,8 @@ export const createAIActions: StateCreator<
 
     try {
       const dataUri = await fileToBase64(file);
-      const { getJobInfoFromImage } = await import(
-        '@/ai/flows/getJobInfoFromImage'
-      );
+      const { getJobInfoFromImage } =
+        await import('@/ai/flows/getJobInfoFromImage');
       const extractedText = await getJobInfoFromImage({ dataUri });
 
       if (extractedText) {
@@ -551,9 +547,8 @@ export const createAIActions: StateCreator<
     }
 
     try {
-      const { generateResumeFromContext } = await import(
-        '@/ai/flows/generateResumeFromContext'
-      );
+      const { generateResumeFromContext } =
+        await import('@/ai/flows/generateResumeFromContext');
       const { AIDataBridge } = await import('@/lib/aiDataBridge');
       const { SchemaRegistry } = await import('@/lib/schemaRegistry');
 
@@ -606,9 +601,8 @@ export const createAIActions: StateCreator<
     const state = get();
     set({ isGeneratingCoverLetter: true });
     const { SchemaRegistry } = await import('@/lib/schemaRegistry');
-    const { generateCoverLetter } = await import(
-      '@/ai/flows/generateCoverLetter'
-    );
+    const { generateCoverLetter } =
+      await import('@/ai/flows/generateCoverLetter');
 
     const schemaRegistry = SchemaRegistry.getInstance();
 

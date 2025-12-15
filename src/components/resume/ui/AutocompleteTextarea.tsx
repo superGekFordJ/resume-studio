@@ -16,8 +16,10 @@ import { streamFlow } from '@genkit-ai/next/client';
 import type { GenerateOrImproveTextStreamFlowType } from '@/ai/flows/generate-or-improve-text-stream';
 
 // Interface updated to remove large, unnecessary data props.
-interface AutocompleteTextareaProps
-  extends Omit<React.ComponentProps<'textarea'>, 'onChange' | 'value'> {
+interface AutocompleteTextareaProps extends Omit<
+  React.ComponentProps<'textarea'>,
+  'onChange' | 'value'
+> {
   value: string;
   onValueChange: (value: string) => void;
   sectionType?: string; // Allow dynamic schema IDs

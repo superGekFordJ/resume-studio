@@ -314,9 +314,8 @@ export class SchemaRegistry implements ISchemaRegistry {
     const schemaId = section?.schemaId || '';
 
     // 3. Import and call the AI Flow
-    const { improveResumeSection } = await import(
-      '@/ai/flows/improve-resume-section'
-    );
+    const { improveResumeSection } =
+      await import('@/ai/flows/improve-resume-section');
 
     const result = await improveResumeSection({
       resumeSection: payload.currentValue,
@@ -354,9 +353,8 @@ export class SchemaRegistry implements ISchemaRegistry {
     }
 
     // Import the new batch improvement flow and AIDataBridge
-    const { batchImproveSection } = await import(
-      '@/ai/flows/batch-improve-section'
-    );
+    const { batchImproveSection } =
+      await import('@/ai/flows/batch-improve-section');
 
     // Convert section to AI-friendly format
     const aiSection = AIDataBridge.fromSection(section, this);
