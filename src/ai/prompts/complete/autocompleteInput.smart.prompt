@@ -1,13 +1,13 @@
 ---
 # 为此 prompt 指定的 AI 模型。
-model: googleai/gemini-2.5-flash
+model: googleai/gemini-3-flash-preview
 
 # 模型的特定配置。
 config:
   temperature: 0.1
   topP: 0.85
   thinkingConfig:
-    thinkingBudget: 0
+    thinkingLevel: minimal
 
 # 定义此 prompt 模板所需的输入变量。
 # `schema` 指向一个已注册的 Zod schema 名称。

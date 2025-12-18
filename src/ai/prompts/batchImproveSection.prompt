@@ -1,6 +1,6 @@
 ---
 # 为此 prompt 指定的 AI 模型。
-model: googleai/gemini-3.0-pro-preview
+model: googleai/gemini-3-pro-preview
 
 # 定义此 prompt 模板所需的输入变量。
 # `schema` 指向一个已注册的 Zod schema 名称。

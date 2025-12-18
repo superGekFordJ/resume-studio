@@ -1,10 +1,9 @@
 ---
-model: googleai/gemini-flash-latest
+model: googleai/gemini-3-flash-preview
 config:
   temperature: 0.2
   topP: 0.9
-  thinkingConfig:
-    thinkingBudget: -1
+
 input:
   schema: GenerateOrImproveTextInputSchema
 ---

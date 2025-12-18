@@ -1,6 +1,6 @@
 ---
 # 为此 prompt 指定的 AI 模型。
-model: googleai/gemini-3.0-pro-preview
+model: googleai/gemini-3-pro-preview
 
 # 模型的特定配置。
 config:
